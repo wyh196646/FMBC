@@ -16,7 +16,7 @@ import pandas as pd
 import numpy as np
 import json
 import os
-from PIL import ImageFile
+from PIL import Image, ImageFile
 import collections
 from collections import Counter
 import h5py
@@ -27,8 +27,16 @@ from sklearn.cluster import KMeans
 import os
 import json
 import torch
+import re
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+def check_Image(path):
+  try:
+    im = Image.open(path)
+    return True
+  except:
+
+    return False
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "1,2,3,4,5,6"
 local_rank = int(os.environ["LOCAL_RANK"])
@@ -40,7 +48,7 @@ def extract_feature_pipeline(args):
         pth_transforms.ToTensor(),
         pth_transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
     ])
-    dataset_train = ReturnIndexDataset(args.data_path, transform=transform)
+    dataset_train = ReturnIndexDataset(args.data_path, transform=transform, is_valid_file=check_Image)
     
     sampler = torch.utils.data.DistributedSampler(dataset_train, shuffle=False)
     data_loader_train = torch.utils.data.DataLoader(
@@ -87,10 +95,12 @@ def extract_feature_pipeline(args):
 def cluster_features(train_json_data, train_feature,args):
     patch_slide_list = [os.path.basename(os.path.dirname(x)) for x in train_json_data]
     patch_number_dict = collections.OrderedDict(Counter(patch_slide_list))
-    patch_name_list = [os.path.splitext(os.path.basename(x))[0] for x in train_json_data]
-    patch_position_list = [
-        tuple(map(int, name.split('_', 1)[1].split('_'))) for name in patch_name_list
-    ]
+    # patch_name_list = [os.path.splitext(os.path.basename(x))[0] for x in train_json_data]
+    # patch_position_list = [
+    #     tuple(map(int, name.split('_', 1)[1].split('_'))) for name in patch_name_list
+    # ]
+    batch_pos_list=[os.path.splitext(os.path.basename(x))[0] for x in train_json_data]
+    patch_position_list=[ tuple(map(int,re.sub('[a-zA-Z]','',name).split('_')) )for name in batch_pos_list]
     start_index = 0
     for wsi_name, wsi_count in patch_number_dict.items():
         wsi_feature = train_feature[start_index:start_index + wsi_count]
@@ -158,22 +168,22 @@ def extract_features(model, data_loader, use_cuda=True, multiscale=False):
 
 
 class ReturnIndexDataset(datasets.ImageFolder):
+    
     def __getitem__(self, idx):
         img, lab = super(ReturnIndexDataset, self).__getitem__(idx)
+        
         return img, idx
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Evaluation with weighted k-NN on ImageNet')
-    parser.add_argument('--batch_size_per_gpu', default=1,type=int, help='Per-GPU batch-size')
-    parser.add_argument('--nb_knn', default=[10, 20, 100, 200], nargs='+', type=int,
-        help='Number of NN to use. 20 is usually working the best.')
+    parser.add_argument('--batch_size_per_gpu', default=380,type=int, help='Per-GPU batch-size')
     parser.add_argument('--temperature', default=0.07, type=float,
         help='Temperature used in the voting coefficient')
-    parser.add_argument('--pretrained_weights', default='/home/yuhaowang/project/FMBC/trash/WSI_preprocessed_code/feature_extractor/checkpoint0030.pth', type=str, help="Path to pretrained weights to evaluate.")
+    parser.add_argument('--pretrained_weights', default='/home/yuhaowang/project/FMBC/preprocess/WSI_preprocessed_code/feature_extractor/checkpoint0030.pth', type=str, help="Path to pretrained weights to evaluate.")
     parser.add_argument('--use_cuda', default=True, type=utils.bool_flag,
         help="Should we store the features on GPU? We recommend setting this to False if you encounter OOM")
-    parser.add_argument('--archHW', default='vit_small', type=str, help='Architecture')
+    parser.add_argument('--arch', default='vit_small', type=str, help='Architecture')
     parser.add_argument('--patch_size', default=8, type=int, help='Patch resolution of the model.')
     parser.add_argument("--checkpoint_key", default="teacher", type=str,
         help='Key to use in the checkpoint (example: "teacher")')
@@ -184,7 +194,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_workers', default=10, type=int, help='Number of data loading workers per GPU.')
     parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
         distributed training; see https://pytorch.org/docs/stable/distributed.html""")
-    parser.add_argument('--data_path', default='/home/yuhaowang/data/raw_data/TCGA-BRCA-Patch', type=str)
+    parser.add_argument('--data_path', default='/home/yuhaowang/data/processed_data/TCGA-LUAD', type=str)
     parser.add_argument('--cluster_num',default=50 ,type=int, help='Number of cluster')
     args = parser.parse_args()
 
@@ -202,4 +212,4 @@ if __name__ == '__main__':
     dist.barrier()
 
 # nohup torchrun --nproc_per_node=6 get_features.py &
-# TCGA-LUAD 387G
+# TCGA-LUAD 387GT

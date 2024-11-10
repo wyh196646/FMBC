@@ -45,24 +45,26 @@ def process_slide(slide, save_dir):
     print(f'slide {slide} has been tiled')
 
 if __name__ == '__main__':
-    dataset = 'TCGA-LUAD'
+    dataset = 'TCGA-Toy'
     raw_dir = '/home/yuhaowang/data/raw_data'
     output_dir = '/home/yuhaowang/data/processed_data'
     save_dir = os.path.join(output_dir, dataset)
     slide_dir = os.path.join(raw_dir, dataset)
     slide_list = glob.glob(os.path.join(slide_dir, '*/*.svs'))
 
-    # Use a larger pool size to maximize CPU usage
-    num_processes = 30
+    # # Use a larger pool size to maximize CPU usage
+    # num_processes = 20
 
-    # Use multiprocessing Pool to parallelize processing of slides
-    with Pool(processes=num_processes) as pool:
-        # Adjust chunksize based on the slide list length and number of processes
-        chunksize = max(1, len(slide_list) // (num_processes * 4))
-        pool.imap_unordered(partial(process_slide, save_dir=save_dir), slide_list, chunksize=chunksize)
-        pool.close()
-        pool.join()
+    # # Use multiprocessing Pool to parallelize processing of slides
+    # with Pool(processes=num_processes) as pool:
+    #     # Adjust chunksize based on the slide list length and number of processes
+    #     chunksize = max(1, len(slide_list) // (num_processes * 4))
+    #     pool.imap_unordered(partial(process_slide, save_dir=save_dir), slide_list, chunksize=chunksize)
+    #     pool.close()
+    #     pool.join()
 
-    print('All slides have been tiled')
+    # print('All slides have been tiled')
+    for slide in slide_list:
+        process_slide(slide, save_dir=save_dir)
 
 

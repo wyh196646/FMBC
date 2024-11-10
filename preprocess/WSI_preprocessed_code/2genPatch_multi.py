@@ -52,10 +52,10 @@ def process(path,args=None):
         max_level = 20
     else:
         raise ValueError('当前分辨率为{}，不存在该倍数设置'.format(str(mpp)))
-    X_slide, Y_slide = slide.level_dimensions[0]#最高分辨率层级下的宽度和高度
+    X_slide, Y_slide = slide.level_dimensions[0]
     rate = round(max_level // args.level)
     cur_level = round(rate / slide.level_downsamples[1] )
-    patch_level = round(X_slide / mask.shape[0])#原图的像素数/mask的像素数，mask本身已经经过降采样了,降采样后分割的图
+    patch_level = round(X_slide / mask.shape[0])
     patch_size = round(rate / slide.level_downsamples[cur_level]) * args.patch_size
     step = int(args.patch_size / patch_level)
     #print(path, slide.level_count, rate, X_slide, Y_slide)

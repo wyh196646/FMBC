@@ -16,15 +16,15 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../')
 
 parser = argparse.ArgumentParser(description='Get tissue mask of WSI and save'
                                  ' it in npy format')
-parser.add_argument('--wsi_path', default='/home/yuhaowang/data/raw_data/TCGA-LUAD', metavar='WSI_PATH', type=str,
+parser.add_argument('--wsi_path', default='/home/yuhaowang/data/raw_data/TCGA-Toy', metavar='WSI_PATH', type=str,
                     help='Path to the WSI file')
-parser.add_argument('--mask_path', default='/home/yuhaowang/data/test/TCGA-LUAD', metavar='GRAY_PATH', type=str,
+parser.add_argument('--mask_path', default='/home/yuhaowang/data/raw_data/TCGA-Toy-test-mask', metavar='GRAY_PATH', type=str,
                     help='Path to the output npy mask file')
 parser.add_argument('--level', default=2, type=int, help='at which WSI level'
                     ' to obtain the mask, default 6')
 parser.add_argument('--RGB_min', default=50, type=int, help='min value for RGB'
                     ' channel, default 50')
-parser.add_argument('--num_process', default=50, type=int,
+parser.add_argument('--num_process', default=1, type=int,
                     help='number of mutli-process, default 5')
 
 def getAllFile(img_dir, ext):
@@ -35,10 +35,6 @@ def getAllFile(img_dir, ext):
 				filelist.append(os.path.join(root, name))
 	return filelist
 
-def chunk_list(lst, n):
-    """Yield successive n-sized chunks from lst."""
-    for i in range(0, len(lst), n):
-        yield lst[i:i + n]
         
         
 def process(path,args=None):
@@ -52,17 +48,16 @@ def process(path,args=None):
     slide = openslide.OpenSlide(path)
 
     
-      # print(slide.level_count)
-    # note the shape of img_RGB is the transpose of slide.level_dimensions
+
     img_RGB = np.transpose(np.array(slide.read_region((0, 0),
                             min(args.level,slide.level_count-1),
                             slide.level_dimensions[min(args.level,slide.level_count-1)]).convert('RGB')),
                             axes=[1, 0, 2])
-    #print("111")
+
     slide.close()
-    #print("222")
+
     img_HSV = rgb2hsv(img_RGB)
-    #print("333")
+
 
     background_R = img_RGB[:, :, 0] > threshold_otsu(img_RGB[:, :, 0])
     background_G = img_RGB[:, :, 1] > threshold_otsu(img_RGB[:, :, 1])
