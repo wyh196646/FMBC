@@ -13,12 +13,14 @@ from PIL import Image
 import sys
 from utils import element_indices
 import h5py
-
+import glob
+from pathlib import Path
 class WSIDataset(Dataset):
     def __init__(self, feature_root,num_clusters=50,represent_ratio=0.1,stage='train'):
         self.num_cluster = num_clusters
         self.feature_root = feature_root
-        self.feature_path= os.listdir(self.feature_root)
+        self.feature_path= [f for f in Path(feature_root).rglob('*.h5')]
+
         self.represent_ratio=represent_ratio
         self.stage=stage
         

@@ -61,8 +61,7 @@ def train(dataloader, fold, args):
     print('Testing on {} samples'.format(len(test_loader.dataset))) if test_loader is not None else None
     print('Training starts!')
 
-    # test evaluate function
-    # val_records = evaluate(val_loader, model, fp16_scaler, loss_fn, 0, args)
+
 
     val_records, test_records = None, None
 
@@ -124,11 +123,7 @@ def train_one_epoch(train_loader, model, fp16_scaler, optimizer, loss_fn, epoch,
 
         with torch.cuda.amp.autocast(dtype=torch.float16 if args.fp16 else torch.float32):
             images=images[:,:1000,:]    
-            # get the logits
-            # logits=[]
-            # for chunk_data in chunk_batch(images,100):#
-            #     chunk_logits = model(chunk_data, img_coords)
-            #     logits = torch.cat((logits,chunk_logits),dim=1)
+
                 
             logits= model(images, img_coords)
             if isinstance(loss_fn, torch.nn.BCEWithLogitsLoss):

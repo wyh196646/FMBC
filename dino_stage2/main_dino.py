@@ -36,7 +36,7 @@ from vision_transformer import DINOHead
 from wsi_dataset import WSIDataset
 from utils import collate_fn
 #cuda avaliable
-os.environ["CUDA_VISIBLE_DEVICES"] = "2,3,4,6"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1,2,3,4,5,6"
 local_rank = int(os.environ["LOCAL_RANK"])
 torchvision_archs = sorted(name for name in torchvision_models.__dict__
     if name.islower() and not name.startswith("__")
@@ -91,7 +91,7 @@ def get_args_parser():
     parser.add_argument('--clip_grad', type=float, default=3.0, help="""Maximal parameter
         gradient norm if using gradient clipping. Clipping with norm .3 ~ 1.0 can
         help optimization for larger ViT architectures. 0 for disabling.""")
-    parser.add_argument('--batch_size_per_gpu', default=16, type=int,
+    parser.add_argument('--batch_size_per_gpu', default=120, type=int,
         help='Per-GPU batch-size : number of distinct images loaded on one GPU.')
     parser.add_argument('--epochs', default=200, type=int, help='Number of epochs of training.')
     parser.add_argument('--freeze_last_layer', default=1, type=int, help="""Number of epochs
@@ -121,7 +121,7 @@ def get_args_parser():
         Used for small local view cropping of multi-crop.""")
 
     # Misc
-    parser.add_argument('--data_path', default='/home/yuhaowang/data/test/TCGA-LUAD-AllFeature', type=str,
+    parser.add_argument('--data_path', default='/home/yuhaowang/data/embedding', type=str,
         help='Please specify path to the ImageNet training data.')
     parser.add_argument('--output_dir', default="./output", type=str, help='Path to save logs and checkpoints.')
     parser.add_argument('--saveckp_freq', default=20, type=int, help='Save checkpoint every x epochs.')
@@ -481,4 +481,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     train_dino(args)
-    #nohup torchrun --nproc_per_node=4 main_dino.py &
+    #nohup torchrun --nproc_per_node=6 main_dino.py &

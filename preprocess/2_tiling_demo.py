@@ -45,7 +45,7 @@ def process_slide(slide, save_dir):
     print(f'slide {slide} has been tiled')
 
 if __name__ == '__main__':
-    dataset = 'TCGA-LUAD'
+    dataset = 'TCGA-COAD'
     raw_dir = '/home/yuhaowang/data/raw_data'
     output_dir = '/home/yuhaowang/data/processed_data'
     save_dir = os.path.join(output_dir, dataset)
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     slide_list = glob.glob(os.path.join(slide_dir, '*/*.svs'))
 
     # Use a larger pool size to maximize CPU usage
-    num_processes = 30
+    num_processes = 20
 
     # Use multiprocessing Pool to parallelize processing of slides
     with Pool(processes=num_processes) as pool:

@@ -60,9 +60,7 @@ def extract_feature_pipeline(args):
         drop_last=False,
     )
 
-    #print(f"Data loaded with {len(dataset_train)} train and {len(dataset_val)} val imgs.")
 
-    # ============ building network ... ============
     if "vit" in args.arch:
         model = vits.__dict__[args.arch](patch_size=args.patch_size, num_classes=0)
         print(f"Model {args.arch} {args.patch_size}x{args.patch_size} built.")
@@ -95,12 +93,12 @@ def extract_feature_pipeline(args):
 def cluster_features(train_json_data, train_feature,args):
     patch_slide_list = [os.path.basename(os.path.dirname(x)) for x in train_json_data]
     patch_number_dict = collections.OrderedDict(Counter(patch_slide_list))
-    # patch_name_list = [os.path.splitext(os.path.basename(x))[0] for x in train_json_data]
-    # patch_position_list = [
-    #     tuple(map(int, name.split('_', 1)[1].split('_'))) for name in patch_name_list
-    # ]
     batch_pos_list=[os.path.splitext(os.path.basename(x))[0] for x in train_json_data]
-    patch_position_list=[ tuple(map(int,re.sub('[a-zA-Z]','',name).split('_')) )for name in batch_pos_list]
+
+    patch_position_list=[ tuple(re.sub('[a-zA-Z]','',name).split('_')) 
+                            for name in batch_pos_list]
+    patch_position_list =np.array([[int(i),int(j)] for i,j in patch_position_list])
+
     start_index = 0
     for wsi_name, wsi_count in patch_number_dict.items():
         wsi_feature = train_feature[start_index:start_index + wsi_count]
@@ -109,6 +107,7 @@ def cluster_features(train_json_data, train_feature,args):
         print(wsi_feature.shape)
         if wsi_feature.shape[0] < args.cluster_num:
             continue
+    
         
         kmeans = KMeans(n_clusters=args.cluster_num, random_state=0).fit(wsi_feature.cpu())
         data_dict={
@@ -119,7 +118,7 @@ def cluster_features(train_json_data, train_feature,args):
             'coords':wsi_position,
             'cluster_centers':kmeans.cluster_centers_
         }
-        with h5py.File(os.path.join(args.dump_features, wsi_name + '.h5'), 'w') as f:
+        with h5py.File(os.path.join(args.dump_features, wsi_name.split('.')[0] + '.h5'), 'w') as f:
             for key, value in data_dict.items():
                 f.create_dataset(key, data=value)
         print(wsi_name,'features saved')
@@ -177,7 +176,7 @@ class ReturnIndexDataset(datasets.ImageFolder):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Evaluation with weighted k-NN on ImageNet')
-    parser.add_argument('--batch_size_per_gpu', default=380,type=int, help='Per-GPU batch-size')
+    parser.add_argument('--batch_size_per_gpu', default=360,type=int, help='Per-GPU batch-size')
     parser.add_argument('--temperature', default=0.07, type=float,
         help='Temperature used in the voting coefficient')
     parser.add_argument('--pretrained_weights', default='/home/yuhaowang/project/FMBC/preprocess/WSI_preprocessed_code/feature_extractor/checkpoint0030.pth', type=str, help="Path to pretrained weights to evaluate.")
@@ -187,17 +186,21 @@ if __name__ == '__main__':
     parser.add_argument('--patch_size', default=8, type=int, help='Patch resolution of the model.')
     parser.add_argument("--checkpoint_key", default="teacher", type=str,
         help='Key to use in the checkpoint (example: "teacher")')
-    parser.add_argument('--dump_features', default='/home/yuhaowang/data/embedding',
+    parser.add_argument('--dump_features_dir', default='/home/yuhaowang/data/embedding',
         help='Path where to save computed features, empty for no saving')
     parser.add_argument('--load_features', default=None, help="""If the features have
         already been computed, where to find them.""")
     parser.add_argument('--num_workers', default=10, type=int, help='Number of data loading workers per GPU.')
     parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
         distributed training; see https://pytorch.org/docs/stable/distributed.html""")
-    parser.add_argument('--data_path', default='/home/yuhaowang/data/processed_data/TCGA-LUAD', type=str)
+    parser.add_argument('--data_path', default='/home/yuhaowang/data/processed_data', type=str)
     parser.add_argument('--cluster_num',default=50 ,type=int, help='Number of cluster')
-    args = parser.parse_args()
-
+    parser.add_argument('--dataset',default='TCGA-BRCA',type=str, help='dataset name')
+    
+    args=parser.parse_args()
+    args.dump_features = os.path.join(args.dump_features_dir, args.dataset)
+    args.data_path = os.path.join(args.data_path, args.dataset,'output')
+    
     utils.init_distributed_mode(args)
     print("git:\n  {}\n".format(utils.get_sha()))
     print("\n".join("%s: %s" % (k, str(v)) for k, v in sorted(dict(vars(args)).items())))
@@ -211,5 +214,5 @@ if __name__ == '__main__':
 
     dist.barrier()
 
-# nohup torchrun --nproc_per_node=6 get_features.py &
+# nohup torchrun --nproc_per_node=6 get_features.py --dataset TCGA-BRCA &
 # TCGA-LUAD 387GT
