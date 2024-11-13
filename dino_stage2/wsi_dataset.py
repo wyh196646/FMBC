@@ -20,7 +20,6 @@ class WSIDataset(Dataset):
         self.num_cluster = num_clusters
         self.feature_root = feature_root
         self.feature_path= [f for f in Path(feature_root).rglob('*.h5')]
-
         self.represent_ratio=represent_ratio
         self.stage=stage
         
@@ -39,8 +38,8 @@ class WSIDataset(Dataset):
         return assets, attrs
 
     def __getitem__(self, idx):
-        assets, _ = self.read_assets_from_h5(os.path.join(self.feature_root,self.feature_path[idx]))
- 
+        assets, _ = self.read_assets_from_h5(self.feature_path[idx])
+        #print(assets)
         if self.stage=='train':
             clustering_dict= element_indices(assets['labels'])
             student_index=[np.random.choice(value, int(len(value)*self.represent_ratio), replace=False) 

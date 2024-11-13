@@ -45,7 +45,7 @@ def process_slide(slide, save_dir):
     print(f'slide {slide} has been tiled')
 
 if __name__ == '__main__':
-    dataset = 'TCGA-COAD'
+    dataset = 'TCGA-THCA'
     raw_dir = '/home/yuhaowang/data/raw_data'
     output_dir = '/home/yuhaowang/data/processed_data'
     save_dir = os.path.join(output_dir, dataset)
