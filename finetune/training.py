@@ -122,8 +122,9 @@ def train_one_epoch(train_loader, model, fp16_scaler, optimizer, loss_fn, epoch,
         seq_len += images.shape[1]
 
         with torch.cuda.amp.autocast(dtype=torch.float16 if args.fp16 else torch.float32):
-            images=images[:,:1000,:]    
-
+            #images=images[:,:1000,:]    
+            #random select 2000 patches
+            #images=images[:,torch.randperm(images.shape[1])[:2000],:]
                 
             logits= model(images, img_coords)
             if isinstance(loss_fn, torch.nn.BCEWithLogitsLoss):

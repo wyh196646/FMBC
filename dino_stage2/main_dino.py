@@ -36,7 +36,7 @@ from vision_transformer import DINOHead
 from wsi_dataset import WSIDataset
 from utils import collate_fn
 #cuda avaliable
-os.environ["CUDA_VISIBLE_DEVICES"] = "1,2,3,4,5,6"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6"
 local_rank = int(os.environ["LOCAL_RANK"])
 torchvision_archs = sorted(name for name in torchvision_models.__dict__
     if name.islower() and not name.startswith("__")
@@ -67,7 +67,8 @@ def get_args_parser():
         We recommend setting a higher value with small batches: for example use 0.9995 with batch size of 256.""")
     parser.add_argument('--use_bn_in_head', default=False, type=utils.bool_flag,
         help="Whether to use batch normalizations in projection head (Default: False)")
-
+    parser.add_argument('--teacher_ratio', default=0.2,type=float, help="""Ratio of teacher knowledge to be used for the loss.""")
+    parser.add_argument('--student_ratio', default=0.1,type=float, help="""Ratio of student knowledge to be used for the loss.""")
     # Temperature teacher parameters
     parser.add_argument('--warmup_teacher_temp', default=0.04, type=float,
         help="""Initial value for the teacher temperature: 0.04 works well in most cases.
@@ -91,7 +92,7 @@ def get_args_parser():
     parser.add_argument('--clip_grad', type=float, default=3.0, help="""Maximal parameter
         gradient norm if using gradient clipping. Clipping with norm .3 ~ 1.0 can
         help optimization for larger ViT architectures. 0 for disabling.""")
-    parser.add_argument('--batch_size_per_gpu', default=120, type=int,
+    parser.add_argument('--batch_size_per_gpu', default=10, type=int,
         help='Per-GPU batch-size : number of distinct images loaded on one GPU.')
     parser.add_argument('--epochs', default=200, type=int, help='Number of epochs of training.')
     parser.add_argument('--freeze_last_layer', default=1, type=int, help="""Number of epochs
@@ -143,13 +144,9 @@ def train_dino(args):
     cudnn.benchmark = True
 
     # ============ preparing data ... ============
-    transform = DataAugmentationDINO(
-        args.global_crops_scale,
-        args.local_crops_scale,
-        args.local_crops_number,
-    )
+
     #dataset = datasets.ImageFolder(args.data_path, transform=transform)
-    dataset=WSIDataset(args.data_path)
+    dataset=WSIDataset(args.data_path,args.teacher_ratio,args.student_ratio)
     sampler = torch.utils.data.DistributedSampler(dataset, shuffle=True)
     data_loader = torch.utils.data.DataLoader(
         dataset,
@@ -328,7 +325,7 @@ def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loade
         # teacher and student forward passes + compute dino loss
         with torch.cuda.amp.autocast(fp16_scaler is not None):#image[0].shape [64, 3, 224, 224] , image[1].shape [64, 3, 96, 96]
             teacher_output = teacher((teacher_feat, teacher_mask))  # only the 2 global views pass through the teacher 128*65536
-            student_output = student((student_feat, student_mask))#  640*15536  
+            student_output = student((student_feat, student_mask))#  
             loss = dino_loss(student_output, teacher_output, epoch)
             # print('teacher_output sum', teacher_output.sum())
             # print('student_output sum', student_output.sum())

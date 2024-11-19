@@ -618,3 +618,8 @@ If you find this repository useful, please consider giving a star :star: and cit
   year={2023}
 }
 ```
+
+
+
+
+torchrun --nproc_per_node=4 dinov2/run/train/train.py     --config-file dinov2/configs/train/vitl16_short.yaml --output-dir ./output/     train.dataset_path=TileDataset:split=TRAIN:root=/yuhaowang/data/processed_data/private_chunk_7/output:extra=/yuhaowang/data/processed_data/private_chunk_7/output

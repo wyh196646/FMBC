@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 from torch.utils.data import Dataset
-
+from collections import defaultdict, deque
 
 class SlideDatasetForTasks(Dataset):
     def __init__(self,
@@ -15,6 +15,7 @@ class SlideDatasetForTasks(Dataset):
                  task_config: dict, 
                  slide_key: str='slide_id',
                  split_key: str='pat_id',
+                 sampling_ratio: float=0.2,
                  **kwargs
                  ):
         '''
@@ -39,6 +40,7 @@ class SlideDatasetForTasks(Dataset):
         self.split_key = split_key
         self.slide_key = slide_key
         self.task_cfg = task_config
+        self.sampling_ratio=sampling_ratio
 
         # get slides that have tile encodings
         valid_slides = self.get_valid_slides(root_path, data_df[slide_key].values)
@@ -168,6 +170,21 @@ class SlideDataset(SlideDatasetForTasks):
         sld_name = os.path.basename(sld).split('.h5')[0]
         return sld_name
     
+    def feature_select(self,assets,ratio):
+
+        clustering_dict=self.element_indices(assets['labels'])
+        student_index=[np.random.choice(value, int(len(value)*ratio), replace=False) 
+                    for key, value in clustering_dict.items()]
+        student_index=np.concatenate(student_index)
+        student_feature=assets['features'][student_index]
+        return student_feature,student_index
+    
+    def element_indices(self,lst):
+        index_dict = defaultdict(list)  
+        for i, value in enumerate(lst):
+            index_dict[value].append(i)  
+        return dict(index_dict)
+
     def get_images_from_path(self, img_path: str) -> dict:
         '''Get the images from the path'''
         if '.pt' in img_path:
@@ -175,13 +192,11 @@ class SlideDataset(SlideDatasetForTasks):
             coords = 0
         elif '.h5' in img_path:
             assets, _ = self.read_assets_from_h5(img_path)
+            assets['features'],_ = self.feature_select(assets,self.sampling_ratio)
             images = torch.from_numpy(assets['features'])
             coords = torch.from_numpy(assets['coords'])
-
-            # if shuffle the data
             if self.shuffle_tiles:
                 images, coords = self.shuffle_data(images, coords)
-
             if images.size(0) > self.max_tiles:
                 images = images[:self.max_tiles, :]
             if coords.size(0) > self.max_tiles:
@@ -207,7 +222,7 @@ class SlideDataset(SlideDatasetForTasks):
         data_dict = self.get_images_from_path(slide_path)
         # get the slide label
         label = torch.from_numpy(self.labels[idx])
-        # set the sample dict
+        
         sample = {'imgs': data_dict['imgs'],
                   'img_lens': data_dict['img_lens'],
                   'pad_mask': data_dict['pad_mask'],

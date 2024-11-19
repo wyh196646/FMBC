@@ -100,11 +100,7 @@ class ClassificationHead(nn.Module):
         assert len(images.shape) == 3
 
         mask=torch.zeros(images.shape[0], images.shape[1]+1, dtype=torch.bool).to(device=images.device)
-        img_enc = self.slide_encoder((images,mask ))
-        #img_enc = [img_enc[i] for i in self.feat_layer]
-        #img_enc = torch.cat(img_enc, dim=-1)
-        # classifier
-        #h = img_enc.reshape([-1, img_enc.size(-1)])
+        img_enc = self.slide_encoder((images,mask))
         logits = self.classifier(img_enc)
         return logits
 

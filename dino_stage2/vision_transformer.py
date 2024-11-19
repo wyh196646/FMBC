@@ -159,7 +159,7 @@ class VisionTransformer(nn.Module):
             if i < len(self.blocks) - 1:
                 x = blk(x)
             else:
-                # return attention of the last block
+           
                 return blk(x, return_attention=True)
 
     def get_intermediate_layers(self, x, n=1):

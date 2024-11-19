@@ -190,7 +190,7 @@ if __name__ == '__main__':
         help='Path where to save computed features, empty for no saving')
     parser.add_argument('--load_features', default=None, help="""If the features have
         already been computed, where to find them.""")
-    parser.add_argument('--num_workers', default=10, type=int, help='Number of data loading workers per GPU.')
+    parser.add_argument('--num_workers', default=12, type=int, help='Number of data loading workers per GPU.')
     parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
         distributed training; see https://pytorch.org/docs/stable/distributed.html""")
     parser.add_argument('--data_path', default='/home/yuhaowang/data/processed_data', type=str)

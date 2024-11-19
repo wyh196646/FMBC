@@ -844,7 +844,7 @@ def collate_fn(batch):
     padding the abtch
     return:B*[[teacher_dim]], B*[[student_dim]]
     """
-    wsi_teacher,wsi_student=zip(*batch)
+    wsi_student,wsi_teacher=zip(*batch)
     batch_size=len(wsi_teacher)
     embedding_dim=wsi_teacher[0].shape[1]
     max_teacher_len=max([wsi.shape[0] for wsi in wsi_teacher])
