@@ -40,7 +40,7 @@ class WSIDataset(Dataset):
 
     def __getitem__(self, idx):
         assets, _ = self.read_assets_from_h5(self.feature_path[idx])
-        #print(assets)
+
         if self.stage=='train':
             teacher_feature,_ = self.feature_select(assets,self.teacher_ratio)
             student_feature,_ = self.feature_select(assets,self.student_ratio)

@@ -37,7 +37,7 @@ from wsi_dataset import WSIDataset
 from utils import collate_fn
 #cuda avaliable
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6"
-local_rank = int(os.environ["LOCAL_RANK"])
+#local_rank = int(os.environ["LOCAL_RANK"])
 torchvision_archs = sorted(name for name in torchvision_models.__dict__
     if name.islower() and not name.startswith("__")
     and callable(torchvision_models.__dict__[name]))
