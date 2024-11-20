@@ -17,7 +17,7 @@ https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision
 """
 import math
 from functools import partial
-
+import torch.nn.functional as F
 import torch
 import torch.nn as nn
 
@@ -102,12 +102,14 @@ class Block(nn.Module):
 
 class VisionTransformer(nn.Module):
     """ Vision Transformer """
-    def __init__(self, num_classes=0, embed_dim=768, depth=12,
+    def __init__(self, num_classes=0, embed_dim=384, depth=12,
                  num_heads=12, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop_rate=0., attn_drop_rate=0.,
                  drop_path_rate=0., norm_layer=nn.LayerNorm, **kwargs):
         super().__init__()
-        self.num_features = self.embed_dim = embed_dim
+        self.embed_dim = embed_dim
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
+        self.mask_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
+    
         self.pos_drop = nn.Dropout(p=drop_rate)
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
         self.blocks = nn.ModuleList([
@@ -117,6 +119,8 @@ class VisionTransformer(nn.Module):
             for i in range(depth)])
         self.norm = norm_layer(embed_dim)
         self.head = nn.Linear(embed_dim, num_classes) if num_classes > 0 else nn.Identity()
+        
+        
         trunc_normal_(self.cls_token, std=.02)
         self.apply(self._init_weights)
 
@@ -139,19 +143,24 @@ class VisionTransformer(nn.Module):
 
 
 
-    def prepare_tokens(self, x):
-        B,length,dim = x.shape
+    def prepare_tokens(self, x,mlm_mask):
+        B, L, _ = x.shape
+        mask_token = self.mask_token.expand(B, L, -1)
+        w = mlm_mask.flatten(1).unsqueeze(-1).type_as(mask_token)
+        x = x * (1 - w) + mask_token * w
+
         cls_tokens = self.cls_token.expand(B, -1, -1)
         x = torch.cat((cls_tokens, x), dim=1)
-        return self.pos_drop(x)
+        return self.pos_drop(x),mask_token
 
     def forward(self, input):
-        x,mask= input
-        x = self.prepare_tokens(x)
+        x, mask,mlm_mask= input
+        x = self.prepare_tokens(x,mlm_mask)
         for blk in self.blocks:
             x = blk(x,mask)
         x = self.norm(x)
-        return x[:,0]
+        
+        return x[:,0],x[:,1:]
 
     def get_last_selfattention(self, x):
         x = self.prepare_tokens(x)
@@ -180,7 +189,7 @@ def vit_tiny(**kwargs):
     return model
 
 
-def vit_small( **kwargs):
+def vit_small(**kwargs):
     model = VisionTransformer(
         depth=12, num_heads=6, mlp_ratio=4,
         qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
@@ -230,3 +239,25 @@ class DINOHead(nn.Module):
         x = nn.functional.normalize(x, dim=-1, p=2)
         x = self.last_layer(x)
         return x
+
+
+
+class VITRMIM(VisionTransformer):
+    def __init__(self, encoder):
+        super().__init__()
+        self.encoder = encoder
+        self.decoder=nn.TransformerEncoderLayer(self.encoder.embed_dim, nhead=2,
+                                                dim_feedforward=2048, dropout=0.1, activation="relu")       
+
+    
+    def forward(self, input):
+        x, mask,mlm_mask= input
+        x = self.prepare_tokens(x,mlm_mask)
+        for blk in self.blocks:
+            x = blk(x,mask)
+        x = self.norm(x)
+        x_rec = self.decoder(x[:,1:])
+        loss_recon = F.l1_loss(x[:,1:], x_rec, reduction='none')
+        loss= (loss_recon * mlm_mask.unsqueeze(-1)).sum() / (mlm_mask.sum() + 1e-5)
+        return x[:,0], loss
+
