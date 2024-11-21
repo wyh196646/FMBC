@@ -36,7 +36,8 @@ from vision_transformer import DINOHead
 from wsi_dataset import WSIDataset,collate_fn
 
 from vision_transformer import VITRMIM
-#cuda avaliable
+#ORCH_DISTRIBUTED_DEBUG to either INFO or DETAIL to get more information
+os.environ["ORCH_DISTRIBUTED_DEBUG"] = "DETAIL"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6"
 #local_rank = int(os.environ["LOCAL_RANK"])
 torchvision_archs = sorted(name for name in torchvision_models.__dict__
@@ -80,7 +81,7 @@ def get_args_parser():
         starting with the default value of 0.04 and increase this slightly if needed.""")
     parser.add_argument('--warmup_teacher_temp_epochs', default=0, type=int,
         help='Number of warmup epochs for the teacher temperature (Default: 30).')
-
+    parser.add_argument('--cross_reconstruct',default=True, type=utils.bool_flag, help="""Whether or not to use cross reconstruct""")
     # Training/Optimization parameters
     parser.add_argument('--use_fp16', type=utils.bool_flag, default=False, help="""Whether or not
         to use half precision for training. Improves training time and memory requirements,
@@ -202,6 +203,10 @@ def train_dino(args):
         DINOHead(embed_dim, args.out_dim, args.use_bn_in_head),
     )
     # move networks to gpu
+
+    
+
+  
     student, teacher = student.cuda(), teacher.cuda()
     # synchronize batch norms (if any)
     if utils.has_batchnorms(student):
@@ -209,13 +214,13 @@ def train_dino(args):
         teacher = nn.SyncBatchNorm.convert_sync_batchnorm(teacher)
 
         # we need DDP wrapper to have synchro batch norms working...
-        teacher = nn.parallel.DistributedDataParallel(teacher, device_ids=[args.gpu])
+        teacher = nn.parallel.DistributedDataParallel(teacher, device_ids=[args.gpu],find_unused_parameters=True)
         teacher_without_ddp = teacher.module
     else:
         # teacher_without_ddp and teacher are the same thing
         teacher_without_ddp = teacher
-    student = nn.parallel.DistributedDataParallel(student, device_ids=[args.gpu])
-    # teacher and student start with the same weights
+    student = nn.parallel.DistributedDataParallel(student, device_ids=[args.gpu],find_unused_parameters=True)
+
     teacher_without_ddp.load_state_dict(student.module.state_dict())
     # there is no backpropagation through the teacher, so no need for gradients
     for p in teacher.parameters():
@@ -234,6 +239,7 @@ def train_dino(args):
 
     # ============ preparing optimizer ... ============
     params_groups = utils.get_params_groups(student)
+    #add cross reconstructor loss
     if args.optimizer == "adamw":
         optimizer = torch.optim.AdamW(params_groups)  # to use with ViTs
     elif args.optimizer == "sgd":
@@ -332,11 +338,12 @@ def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loade
         student_mlm = student_mlm.cuda(non_blocking=True)
         # teacher and student forward passes + compute dino loss
         with torch.cuda.amp.autocast(fp16_scaler is not None):#image[0].shape [64, 3, 224, 224] , image[1].shape [64, 3, 96, 96]
-            teacher_output,res_loss_teacher= teacher((teacher_feat, teacher_mask,teacher_mlm))  # only the 2 global views pass through the teacher 128*65536
-            student_output,res_loss_student = student((student_feat, student_mask,teacher_mlm))#  
-            loss = dino_loss(student_output, teacher_output, epoch)+res_loss_student+res_loss_teacher
-            # print('teacher_output sum', teacher_output.sum())
-            # print('student_output sum', student_output.sum())
+            teacher_output,mlm_loss_teacher,crsc_loss_teacher= teacher((teacher_feat, teacher_mask,teacher_mlm,student_feat))  
+            student_output,mlms_loss_student,crsc_loss_student = student((student_feat, student_mask,student_mlm,teacher_feat)) 
+
+            loss = dino_loss(student_output, teacher_output, epoch)+mlms_loss_student+mlm_loss_teacher\
+                                +crsc_loss_student+crsc_loss_teacher    
+
             '''
             for p in student.named_parameters():
                 #check grad is available

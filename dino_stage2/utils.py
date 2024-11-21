@@ -625,9 +625,9 @@ class MultiCropWrapper(nn.Module):
         #     # accumulate outputs
         #     output = torch.cat((output, _out))
         #     start_idx = end_idx
-        output = self.backbone(x)
+        output,mlm_loss,crsc_loss= self.backbone(x)
         # Run the head forward on the concatenated features.
-        return self.head(output)
+        return self.head(output),mlm_loss,crsc_loss
 
 
 def get_params_groups(model):

@@ -151,7 +151,7 @@ class VisionTransformer(nn.Module):
 
         cls_tokens = self.cls_token.expand(B, -1, -1)
         x = torch.cat((cls_tokens, x), dim=1)
-        return self.pos_drop(x),mask_token
+        return self.pos_drop(x)
 
     def forward(self, input):
         x, mask,mlm_mask= input
@@ -168,7 +168,6 @@ class VisionTransformer(nn.Module):
             if i < len(self.blocks) - 1:
                 x = blk(x)
             else:
-           
                 return blk(x, return_attention=True)
 
     def get_intermediate_layers(self, x, n=1):
@@ -247,17 +246,38 @@ class VITRMIM(VisionTransformer):
         super().__init__()
         self.encoder = encoder
         self.decoder=nn.TransformerEncoderLayer(self.encoder.embed_dim, nhead=2,
-                                                dim_feedforward=2048, dropout=0.1, activation="relu")       
+                                                dim_feedforward=2048, dropout=0.1, activation="relu")
+        self.cross_decoder = nn.TransformerDecoder(nn.TransformerDecoderLayer(self.encoder.embed_dim, 2), num_layers=2) 
+             
 
+    def length_adjustment(self, x, target_len):
+        current_len = x.size(1)
+        if current_len == target_len:
+            return x
+        elif current_len < target_len:
+            return nn.functional.interpolate(x.permute(0, 2, 1), \
+                                             size=target_len, mode='linear').permute(0, 2, 1)
+        else:
+            return x[:, :target_len, :]
     
     def forward(self, input):
-        x, mask,mlm_mask= input
-        x = self.prepare_tokens(x,mlm_mask)
+        x, mask,mlm_mask,y= input
+        z = self.prepare_tokens(x,mlm_mask)
         for blk in self.blocks:
-            x = blk(x,mask)
-        x = self.norm(x)
-        x_rec = self.decoder(x[:,1:])
-        loss_recon = F.l1_loss(x[:,1:], x_rec, reduction='none')
-        loss= (loss_recon * mlm_mask.unsqueeze(-1)).sum() / (mlm_mask.sum() + 1e-5)
-        return x[:,0], loss
+            z = blk(z,mask)
+        z = self.norm(z)
+        
+        #mlm reconstruction
+        x_rec = self.decoder(z[:,1:])
+        loss_recon = F.l1_loss(x, x_rec, reduction='none')
+        mlm_loss= (loss_recon * mlm_mask.unsqueeze(-1)).sum() / (mlm_mask.sum() + 1e-5)/loss_recon.size(-1)
+
+        #cross reconstruction
+        memory = self.length_adjustment(z, y.size(1))
+        output = self.cross_decoder(y, memory)
+        crsc_loss = F.mse_loss(output, y)
+        
+        return z[:,0], mlm_loss,crsc_loss
+
+
 
