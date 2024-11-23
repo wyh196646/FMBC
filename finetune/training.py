@@ -113,20 +113,19 @@ def train_one_epoch(train_loader, model, fp16_scaler, optimizer, loss_fn, epoch,
             adjust_learning_rate(optimizer, batch_idx / len(train_loader) + epoch, args)
 
         # load the batch and transform this batch
-        images, img_coords, label = batch['imgs'], batch['coords'], batch['labels']
+        images, img_coords, pad_mask, label = batch['imgs'], batch['coords'],batch['pad_mask'], batch['labels']
         images = images.to(args.device, non_blocking=True)
         img_coords = img_coords.to(args.device, non_blocking=True)
+        pad_mask = pad_mask.to(args.device, non_blocking=True)
         label = label.to(args.device, non_blocking=True).long()
+
 
         # add the sequence length
         seq_len += images.shape[1]
 
         with torch.cuda.amp.autocast(dtype=torch.float16 if args.fp16 else torch.float32):
-            #images=images[:,:1000,:]    
-            #random select 2000 patches
-            #images=images[:,torch.randperm(images.shape[1])[:2000],:]
-                
-            logits= model(images, img_coords)
+            # print(pad_mask.shape)
+            logits = model(images, img_coords, pad_mask)
             if isinstance(loss_fn, torch.nn.BCEWithLogitsLoss):
                 label = label.squeeze(-1).float()
             else:
@@ -175,15 +174,15 @@ def evaluate(loader, model, fp16_scaler, loss_fn, epoch, args):
     with torch.no_grad():
         for batch_idx, batch in enumerate(loader):
             # load the batch and transform this batch
-            images, img_coords, label = batch['imgs'], batch['coords'], batch['labels']
+            images, img_coords, pad_mask, label = batch['imgs'], batch['coords'],batch['pad_mask'], batch['labels']
             images = images.to(args.device, non_blocking=True)
             img_coords = img_coords.to(args.device, non_blocking=True)
+            pad_mask = pad_mask.to(args.device, non_blocking=True)
             label = label.to(args.device, non_blocking=True).long()
+            
 
             with torch.cuda.amp.autocast(fp16_scaler is not None, dtype=torch.float16):
-                # get the logits
-                images=images[:,:1000,:] 
-                logits = model(images, img_coords)
+                logits = model(images, img_coords, pad_mask)
                 # get the loss
                 if isinstance(loss_fn, torch.nn.BCEWithLogitsLoss):
                     label = label.squeeze(-1).float()

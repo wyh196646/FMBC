@@ -8,7 +8,7 @@ from params import get_finetune_params
 from task_configs.utils import load_task_config
 from finetune_utils import seed_torch, get_exp_code, get_splits, get_loader, save_obj
 from datasets.slide_datatset import SlideDataset
-os.environ["CUDA_VISIBLE_DEVICES"] = "3,4"
+os.environ["CUDA_VISIBLE_DEVICES"] = "6"
 
 if __name__ == '__main__':
     args = get_finetune_params()

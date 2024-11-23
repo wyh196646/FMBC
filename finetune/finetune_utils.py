@@ -84,7 +84,7 @@ def pad_tensors(imgs, coords):
         padded_tensor[:N_i] = tensor
         padded_coord[:N_i] = coord
         # the mask is filled with ones at the same indices as the original tensor
-        mask[:N_i] = torch.ones(N_i)
+        mask[:N_i] = torch.zeros(N_i)
         padded_tensors.append(padded_tensor)
         padded_coords.append(padded_coord)
         masks.append(mask)
@@ -93,6 +93,7 @@ def pad_tensors(imgs, coords):
     padded_tensors = torch.stack(padded_tensors)
     padded_coords = torch.stack(padded_coords)
     masks = torch.stack(masks)
+
     # convert masks to bool type
     masks = masks.bool()
     return padded_tensors, padded_coords, masks

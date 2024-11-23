@@ -73,7 +73,7 @@ class ClassificationHead(nn.Module):
         self.feat_dim = len(self.feat_layer) * latent_dim
         #self.slide_encoder = slide_encoder.create_model(pretrained, model_arch, in_chans=input_dim, **kwargs)
         self.slide_encoder=vits.__dict__[model_arch](embed_dim=input_dim)
-        self.slide_encoder=load_pretrained_weights(self.slide_encoder, pretrained, 'teacher')
+        load_pretrained_weights(self.slide_encoder, pretrained, 'teacher')
         # whether to freeze the pretrained model
         if freeze:
             print("Freezing Pretrained GigaPath model")
@@ -85,7 +85,7 @@ class ClassificationHead(nn.Module):
         self.encoder_num_layers= len(list(self.slide_encoder.named_parameters()))
         self.classifier = nn.Sequential(*[nn.Linear(latent_dim, n_classes)])
         #
-    def forward(self, images: torch.Tensor, coords: torch.Tensor) -> torch.Tensor:
+    def forward(self, images: torch.Tensor, coords: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
         """
         Arguments:
         ----------
@@ -99,8 +99,7 @@ class ClassificationHead(nn.Module):
             images = images.unsqueeze(0)
         assert len(images.shape) == 3
 
-        mask=torch.zeros(images.shape[0], images.shape[1]+1, dtype=torch.bool).to(device=images.device)
-        img_enc = self.slide_encoder((images,mask))
+        img_enc = self.slide_encoder.inference((images, coords, mask))
         logits = self.classifier(img_enc)
         return logits
 

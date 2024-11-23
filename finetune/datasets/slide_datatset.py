@@ -3,9 +3,10 @@ import h5py
 import torch
 import pandas as pd
 import numpy as np
-
+import sys
 from torch.utils.data import Dataset
 from collections import defaultdict, deque
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..','dino_stage2'))
 
 class SlideDatasetForTasks(Dataset):
     def __init__(self,
@@ -170,14 +171,14 @@ class SlideDataset(SlideDatasetForTasks):
         sld_name = os.path.basename(sld).split('.h5')[0]
         return sld_name
     
-    def feature_select(self,assets,ratio):
-
-        clustering_dict=self.element_indices(assets['labels'])
-        student_index=[np.random.choice(value, int(len(value)*ratio), replace=False) 
+    def feature_select(self,assets,selct_ratio=0.2):
+        clustering_dict= self.element_indices(assets['labels'])
+        feature_index=[np.random.choice(value, int(len(value)*selct_ratio), replace=False) 
                     for key, value in clustering_dict.items()]
-        student_index=np.concatenate(student_index)
-        student_feature=assets['features'][student_index]
-        return student_feature,student_index
+        feature_index=np.concatenate(feature_index)
+        feature=assets['features'][feature_index]
+        feature_coods=assets['coords'][feature_index]
+        return feature,feature_coods
     
     def element_indices(self,lst):
         index_dict = defaultdict(list)  
@@ -192,9 +193,10 @@ class SlideDataset(SlideDatasetForTasks):
             coords = 0
         elif '.h5' in img_path:
             assets, _ = self.read_assets_from_h5(img_path)
-            assets['features'],_ = self.feature_select(assets,self.sampling_ratio)
+            #print('read assets from h5',img_path)
+            assets['features'],coords= self.feature_select(assets)
             images = torch.from_numpy(assets['features'])
-            coords = torch.from_numpy(assets['coords'])
+            coords = torch.from_numpy(coords)
             if self.shuffle_tiles:
                 images, coords = self.shuffle_data(images, coords)
             if images.size(0) > self.max_tiles:
@@ -205,13 +207,14 @@ class SlideDataset(SlideDatasetForTasks):
         # set the input dict
         data_dict = {'imgs': images,
                 'img_lens': images.size(0),
-                'pad_mask': 0,
                 'coords': coords}
+        
         return data_dict
     
     def get_one_sample(self, idx: int) -> dict:
         '''Get one sample from the dataset'''
         # get the slide id
+
         slide_id = self.images[idx]
         # get the slide path
         if 'pt_files' in self.root_path.split('/')[-1]:
@@ -225,7 +228,6 @@ class SlideDataset(SlideDatasetForTasks):
         
         sample = {'imgs': data_dict['imgs'],
                   'img_lens': data_dict['img_lens'],
-                  'pad_mask': data_dict['pad_mask'],
                   'coords': data_dict['coords'],
                   'slide_id': slide_id,
                   'labels': label}

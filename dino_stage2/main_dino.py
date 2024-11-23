@@ -29,17 +29,18 @@ import torch.backends.cudnn as cudnn
 import torch.nn.functional as F
 from torchvision import datasets, transforms
 from torchvision import models as torchvision_models
-
+import warnings
 import utils
 import vision_transformer as vits
 from vision_transformer import DINOHead
+warnings.filterwarnings("ignore")
 from wsi_dataset import WSIDataset,collate_fn
-
 from vision_transformer import VITRMIM
-#ORCH_DISTRIBUTED_DEBUG to either INFO or DETAIL to get more information
+
 os.environ["ORCH_DISTRIBUTED_DEBUG"] = "DETAIL"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6"
-#local_rank = int(os.environ["LOCAL_RANK"])
+local_rank = int(os.environ["LOCAL_RANK"])
+
 torchvision_archs = sorted(name for name in torchvision_models.__dict__
     if name.islower() and not name.startswith("__")
     and callable(torchvision_models.__dict__[name]))
@@ -48,7 +49,7 @@ def get_args_parser():
     parser = argparse.ArgumentParser('DINO', add_help=False)
 
     # Model parameters
-    parser.add_argument('--arch', default='vit_small', type=str,
+    parser.add_argument('--arch', default='vit_mtask', type=str,
         choices=['vit_tiny', 'vit_small', 'vit_base', 'xcit', 'deit_tiny', 'deit_small'] \
                 + torchvision_archs + torch.hub.list("facebookresearch/xcit:main"),
         help="""Name of architecture to train. For quick experiments with ViTs,
@@ -174,9 +175,7 @@ def train_dino(args):
         )
         teacher = vits.__dict__[args.arch](embed_dim=args.embed_dim)
         embed_dim = student.embed_dim
-        teacher=VITRMIM(teacher)
-        student=VITRMIM(student)
-    
+
     # if the network is a XCiT
     elif args.arch in torch.hub.list("facebookresearch/xcit:main"):
         student = torch.hub.load('facebookresearch/xcit:main', args.arch,
@@ -214,12 +213,12 @@ def train_dino(args):
         teacher = nn.SyncBatchNorm.convert_sync_batchnorm(teacher)
 
         # we need DDP wrapper to have synchro batch norms working...
-        teacher = nn.parallel.DistributedDataParallel(teacher, device_ids=[args.gpu],find_unused_parameters=True)
+        teacher = nn.parallel.DistributedDataParallel(teacher, device_ids=[args.gpu])
         teacher_without_ddp = teacher.module
     else:
         # teacher_without_ddp and teacher are the same thing
         teacher_without_ddp = teacher
-    student = nn.parallel.DistributedDataParallel(student, device_ids=[args.gpu],find_unused_parameters=True)
+    student = nn.parallel.DistributedDataParallel(student, device_ids=[args.gpu])
 
     teacher_without_ddp.load_state_dict(student.module.state_dict())
     # there is no backpropagation through the teacher, so no need for gradients
@@ -320,7 +319,8 @@ def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loade
                     fp16_scaler, args):
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Epoch: [{}/{}]'.format(epoch, args.epochs)
-    for it, (teacher_feat,teacher_mask,teacher_mlm,student_feat,student_mask,student_mlm) in enumerate(metric_logger.log_every(data_loader, 10, header)):
+    for it, (teacher_feat,teacher_coords,teacher_mask,teacher_mlm,student_feat,
+             student_coords,student_mask,student_mlm) in enumerate(metric_logger.log_every(data_loader, 10, header)):
         # update weight decay and learning rate according to their schedule
         it = len(data_loader) * epoch + it  # global training iteration
         for i, param_group in enumerate(optimizer.param_groups):
@@ -336,23 +336,19 @@ def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loade
         student_mask = student_mask.cuda(non_blocking=True)
         teacher_mlm = teacher_mlm.cuda(non_blocking=True)
         student_mlm = student_mlm.cuda(non_blocking=True)
+        teacher_coords = teacher_coords.cuda(non_blocking=True)
+        student_coords = student_coords.cuda(non_blocking=True)
         # teacher and student forward passes + compute dino loss
         with torch.cuda.amp.autocast(fp16_scaler is not None):#image[0].shape [64, 3, 224, 224] , image[1].shape [64, 3, 96, 96]
-            teacher_output,mlm_loss_teacher,crsc_loss_teacher= teacher((teacher_feat, teacher_mask,teacher_mlm,student_feat))  
-            student_output,mlms_loss_student,crsc_loss_student = student((student_feat, student_mask,student_mlm,teacher_feat)) 
+            teacher_output,mlm_loss_teacher,crsc_loss_teacher= \
+                teacher((teacher_feat, teacher_coords,teacher_mask,teacher_mlm,student_feat))  
+            student_output,mlms_loss_student,crsc_loss_student = \
+                student((student_feat, student_coords,student_mask,student_mlm,teacher_feat)) 
 
-            loss = dino_loss(student_output, teacher_output, epoch)+mlms_loss_student+mlm_loss_teacher\
-                                +crsc_loss_student+crsc_loss_teacher    
+            loss = dino_loss(student_output, teacher_output, epoch) + mlms_loss_student + mlm_loss_teacher\
+                                + crsc_loss_student + crsc_loss_teacher    
 
-            '''
-            for p in student.named_parameters():
-                #check grad is available
-                print(p[1].requires_grad)
-                if p[1].requires_grad==False:
-                    print(p[0])
-                # if p.requires_grad:
-                #     print(p.grad)
-            '''
+
 
         if not math.isfinite(loss.item()):
             print("Loss is {}, stopping training".format(loss.item()), force=True)

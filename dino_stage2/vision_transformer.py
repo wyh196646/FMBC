@@ -22,7 +22,28 @@ import torch
 import torch.nn as nn
 
 from utils import trunc_normal_
+from pos_embed import get_2d_sincos_pos_embed
 
+class PatchEmbed(nn.Module):
+    """Slide Patch Embedding"""
+
+    def __init__(
+        self,
+        in_chans=384,
+        embed_dim=384,
+        norm_layer=None,
+        bias=True,
+    ):
+        super().__init__()
+
+        self.proj = nn.Linear(in_chans, embed_dim, bias=bias)
+        self.norm = norm_layer(embed_dim) if norm_layer else nn.Identity()
+
+    def forward(self, x):
+        B, L, D = x.shape
+        x = self.proj(x)
+        x = self.norm(x)
+        return x
 
 def drop_path(x, drop_prob: float = 0., training: bool = False):
     if drop_prob == 0. or not training:
@@ -38,11 +59,12 @@ class Attention(nn.Module):
     def __init__(self, dim, num_heads=8, qkv_bias=False, qk_scale=None, attn_drop=0., proj_drop=0.):
         super().__init__()
         self.num_heads = num_heads
-        self.multihead_attn = nn.MultiheadAttention(dim, num_heads, dropout=attn_drop,batch_first=True)
+        self.multihead_attn = nn.MultiheadAttention(dim, num_heads,
+                                                    dropout=attn_drop,batch_first=True)
         
-    def forward(self, x,mask=None):
+    def forward(self, x, mask=None):
         B, N, C = x.shape
-        value, attn = self.multihead_attn(x, x, x,key_padding_mask=mask)
+        value, attn = self.multihead_attn(x, x, x, key_padding_mask=mask)
                                       
         return value, attn
 
@@ -91,7 +113,7 @@ class Block(nn.Module):
         mlp_hidden_dim = int(dim * mlp_ratio)
         self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
 
-    def forward(self, x,mask, return_attention=False):
+    def forward(self, x, mask, return_attention=False):
         y, attn = self.attn(self.norm1(x),mask)
         if return_attention:
             return attn
@@ -107,7 +129,7 @@ class VisionTransformer(nn.Module):
                  drop_path_rate=0., norm_layer=nn.LayerNorm, **kwargs):
         super().__init__()
         self.embed_dim = embed_dim
-        self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
+        self.cls_token = nn.Parameter(torch.randn(1, 1, embed_dim))
         self.mask_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
     
         self.pos_drop = nn.Dropout(p=drop_rate)
@@ -143,18 +165,19 @@ class VisionTransformer(nn.Module):
 
 
 
-    def prepare_tokens(self, x,mlm_mask):
-        B, L, _ = x.shape
-        mask_token = self.mask_token.expand(B, L, -1)
-        w = mlm_mask.flatten(1).unsqueeze(-1).type_as(mask_token)
-        x = x * (1 - w) + mask_token * w
-
-        cls_tokens = self.cls_token.expand(B, -1, -1)
-        x = torch.cat((cls_tokens, x), dim=1)
-        return self.pos_drop(x)
+    # def prepare_tokens(self, x, mlm_mask=None):
+    #     B, L, _ = x.shape
+    #     if mlm_mask is not None:
+    #         mask_token = self.mask_token.expand(B, L, -1)
+    #         w = mlm_mask.flatten(1).unsqueeze(-1).type_as(mask_token)
+    #         x = x * (1 - w) + mask_token * w
+    #     cls_tokens = self.cls_token.expand(B, -1, -1)
+    #     x = torch.cat((cls_tokens, x), dim=1)
+    #     self.pos_drop(x)
+    #     return 
 
     def forward(self, input):
-        x, mask,mlm_mask= input
+        x, mask, mlm_mask= input
         x = self.prepare_tokens(x,mlm_mask)
         for blk in self.blocks:
             x = blk(x,mask)
@@ -179,28 +202,6 @@ class VisionTransformer(nn.Module):
             if len(self.blocks) - i <= n:
                 output.append(self.norm(x))
         return output
-
-
-def vit_tiny(**kwargs):
-    model = VisionTransformer(
-          depth=12, num_heads=3, mlp_ratio=4,
-        qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
-    return model
-
-
-def vit_small(**kwargs):
-    model = VisionTransformer(
-        depth=12, num_heads=6, mlp_ratio=4,
-        qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
-    return model
-
-
-def vit_base(embed_dim, **kwargs):
-    model = VisionTransformer(embed_dim=embed_dim, depth=12, num_heads=12, mlp_ratio=4,
-        qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
-    return model
-
-
 
 
 class DINOHead(nn.Module):
@@ -242,13 +243,25 @@ class DINOHead(nn.Module):
 
 
 class VITRMIM(VisionTransformer):
-    def __init__(self, encoder):
-        super().__init__()
-        self.encoder = encoder
-        self.decoder=nn.TransformerEncoderLayer(self.encoder.embed_dim, nhead=2,
-                                                dim_feedforward=2048, dropout=0.1, activation="relu")
-        self.cross_decoder = nn.TransformerDecoder(nn.TransformerDecoderLayer(self.encoder.embed_dim, 2), num_layers=2) 
-             
+    def __init__(self, num_classes=0, embed_dim=384, depth=12,
+                 num_heads=12, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop_rate=0., attn_drop_rate=0.,
+                 drop_path_rate=0.,norm_layer=nn.LayerNorm,slide_ngrids=1000,  **kwargs):
+        super().__init__(num_classes, embed_dim, depth,
+                 num_heads, mlp_ratio, qkv_bias, qk_scale, drop_rate, attn_drop_rate,
+                 drop_path_rate,norm_layer)
+        
+        self.slide_ngrids = slide_ngrids
+        num_patches = slide_ngrids**2
+        self.patch_embed = PatchEmbed(self.embed_dim, self.embed_dim)
+        self.register_buffer('pos_embed', torch.zeros(1, num_patches + 1, self.embed_dim), persistent=False)
+        pos_embed = get_2d_sincos_pos_embed(self.pos_embed.shape[-1], slide_ngrids, cls_token=True)
+        self.pos_embed.data.copy_(torch.from_numpy(pos_embed).float().unsqueeze(0))
+        self.decoder=nn.TransformerEncoderLayer(self.embed_dim, nhead=2,
+                dim_feedforward=2048, dropout=0.1, activation="relu")
+        self.cross_decoder = nn.TransformerEncoderLayer(self.embed_dim, nhead=2,
+                dim_feedforward=2048, dropout=0.1, activation="relu")
+
+
 
     def length_adjustment(self, x, target_len):
         current_len = x.size(1)
@@ -259,10 +272,40 @@ class VITRMIM(VisionTransformer):
                                              size=target_len, mode='linear').permute(0, 2, 1)
         else:
             return x[:, :target_len, :]
-    
+        
+    def coords_to_pos(self, coords, tile_size: int = 256):
+        """
+        This function is used to convert the coordinates to the positional indices
+
+        Arguments:
+        ----------
+        coords: torch.Tensor
+            The coordinates of the patches, of shape [N, L, 2]
+        output: torch.Tensor
+            The positional indices of the patches, of shape [N, L]
+        """
+        coords_ = torch.floor(coords / tile_size)
+        pos = coords_[..., 0] * self.slide_ngrids + coords_[..., 1]
+        return pos.long() + 1  # add 1 for the cls token
+
     def forward(self, input):
-        x, mask,mlm_mask,y= input
-        z = self.prepare_tokens(x,mlm_mask)
+        x, coords, mask, mlm_mask, y= input
+        
+        z = self.patch_embed(x)
+        pos=self.coords_to_pos(coords)
+        z = z + self.pos_embed[:, pos, :].squeeze(0)
+        #z = self.prepare_tokens(x, mlm_mask)
+        ##prepare cls token 
+        B, L, _ = z.shape
+        if mlm_mask is not None:
+            mask_token = self.mask_token.expand(B, L, -1)
+            w = mlm_mask.flatten(1).unsqueeze(-1).type_as(mask_token)
+            z = z * w + mask_token * (1 - w)
+        cls_token = self.cls_token + self.pos_embed[:, :1, :]
+        cls_tokens = cls_token.expand(B, -1, -1)
+        z = self.pos_drop(torch.cat((cls_tokens, z), dim=1))
+
+        
         for blk in self.blocks:
             z = blk(z,mask)
         z = self.norm(z)
@@ -270,14 +313,61 @@ class VITRMIM(VisionTransformer):
         #mlm reconstruction
         x_rec = self.decoder(z[:,1:])
         loss_recon = F.l1_loss(x, x_rec, reduction='none')
-        mlm_loss= (loss_recon * mlm_mask.unsqueeze(-1)).sum() / (mlm_mask.sum() + 1e-5)/loss_recon.size(-1)
+        mlm_loss= (loss_recon * (~mlm_mask).unsqueeze(-1)).sum() / ((~mlm_mask).sum() + 1e-5)/loss_recon.size(-1)
 
         #cross reconstruction
         memory = self.length_adjustment(z, y.size(1))
-        output = self.cross_decoder(y, memory)
+        output = self.cross_decoder(memory)
         crsc_loss = F.mse_loss(output, y)
-        
-        return z[:,0], mlm_loss,crsc_loss
 
+        return z[:,0], mlm_loss, crsc_loss
+    
+    def inference(self, input):
+        x, coords, mask= input
+        mask = torch.cat([torch.zeros_like(mask[:, :1]), mask], dim=1)
+        
+        z = self.patch_embed(x)
+        pos=self.coords_to_pos(coords)
+        z = z + self.pos_embed[:, pos, :].squeeze(0)
+        #z = self.prepare_tokens(x, mlm_mask)
+        ##prepare cls token 
+        B, L, _ = z.shape
+        cls_token = self.cls_token + self.pos_embed[:, :1, :]
+        cls_tokens = cls_token.expand(B, -1, -1)
+        z = self.pos_drop(torch.cat((cls_tokens, z), dim=1))
+
+        
+        for blk in self.blocks:
+            z = blk(z,mask)
+        z = self.norm(z)
+
+        return z[:,0]
+        
+        
+
+def vit_tiny(**kwargs):
+    model = VisionTransformer(
+          depth=12, num_heads=3, mlp_ratio=4,
+        qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+    return model
+
+
+def vit_small(**kwargs):
+    model = VisionTransformer(
+        depth=12, num_heads=6, mlp_ratio=4,
+        qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+    return model
+
+
+def vit_base(**kwargs):
+    model = VisionTransformer(embed_dim=384, depth=12, num_heads=12, mlp_ratio=4,
+        qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+    return model
+
+
+def vit_mtask(**kwargs):
+    model = VITRMIM( depth=12, num_heads=12, mlp_ratio=4,
+        qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+    return model
 
 
