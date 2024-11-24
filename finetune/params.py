@@ -51,4 +51,6 @@ def get_finetune_params():
     parser.add_argument('--fp16',           action='store_true', default=True, help='Fp16 training')
     parser.add_argument('--weighted_sample',action='store_true', default=False, help='Weighted sampling')
 
+    
+    parser.add_argument('--experiment', type=str, default='finetune', help='Experiment name')
     return parser.parse_args()

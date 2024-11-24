@@ -150,8 +150,8 @@ def train_dino(args):
     # ============ preparing data ... ============
 
     #dataset = datasets.ImageFolder(args.data_path, transform=transform)
-    dataset=WSIDataset(args.data_path,args.teacher_ratio,args.student_ratio,
-                       args.num_clusters,args.mlm_ratio)
+    dataset=WSIDataset(args.data_path, args.teacher_ratio, args.student_ratio,
+                       args.num_clusters, args.mlm_ratio)
     sampler = torch.utils.data.DistributedSampler(dataset, shuffle=True)
     data_loader = torch.utils.data.DataLoader(
         dataset,
@@ -342,12 +342,13 @@ def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loade
         with torch.cuda.amp.autocast(fp16_scaler is not None):#image[0].shape [64, 3, 224, 224] , image[1].shape [64, 3, 96, 96]
             teacher_output,mlm_loss_teacher,crsc_loss_teacher= \
                 teacher((teacher_feat, teacher_coords,teacher_mask,teacher_mlm,student_feat))  
-            student_output,mlms_loss_student,crsc_loss_student = \
+            student_output,mlm_loss_student,crsc_loss_student = \
                 student((student_feat, student_coords,student_mask,student_mlm,teacher_feat)) 
-
-            loss = dino_loss(student_output, teacher_output, epoch) + mlms_loss_student + mlm_loss_teacher\
-                                + crsc_loss_student + crsc_loss_teacher    
-
+            mlm_loss= mlm_loss_student + mlm_loss_teacher
+            crsc_loss= crsc_loss_student + crsc_loss_teacher
+            dio_loss= dino_loss(student_output, teacher_output, epoch)
+            loss = dio_loss + 0*mlm_loss + 0*crsc_loss
+                                
 
 
         if not math.isfinite(loss.item()):
@@ -385,6 +386,10 @@ def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loade
         metric_logger.update(loss=loss.item())
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
         metric_logger.update(wd=optimizer.param_groups[0]["weight_decay"])
+        metric_logger.update(crsc_loss=crsc_loss.item())
+        metric_logger.update(mlm_loss=mlm_loss.item())
+        metric_logger.update(dio_loss=dio_loss.item())
+
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)
