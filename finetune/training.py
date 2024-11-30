@@ -77,8 +77,12 @@ def train(dataloader, fold, args):
             log_dict.update({'val_' + k: v for k, v in val_records.items() if 'prob' not in k and 'label' not in k})
             log_writer(log_dict, i, args.report_to, writer)
             # update the monitor scores
-            scores = val_records['macro_auroc']
-
+            task_setting = args.task_config.get('setting', 'multi_class')
+            if task_setting == 'regression':
+                scores=val_records['mae']
+            else:
+                scores = val_records['macro_auroc']
+                
         if args.model_select == 'val' and val_loader is not None:
             monitor(scores, model, ckpt_name=os.path.join(args.save_dir, 'fold_' + str(fold), "checkpoint.pt"))
         elif args.model_select == 'last_epoch' and i == args.epochs - 1:
@@ -127,6 +131,8 @@ def train_one_epoch(train_loader, model, fp16_scaler, optimizer, loss_fn, epoch,
             # print(pad_mask.shape)
             logits = model(images, img_coords, pad_mask)
             if isinstance(loss_fn, torch.nn.BCEWithLogitsLoss):
+                label = label.squeeze(-1).float()
+            elif isinstance(loss_fn, torch.nn.MSELoss):
                 label = label.squeeze(-1).float()
             else:
                 label = label.squeeze(-1).long()
@@ -202,12 +208,16 @@ def evaluate(loader, model, fp16_scaler, loss_fn, epoch, args):
                 # convert label to one-hot
                 label_ = torch.zeros_like(Y_prob).scatter_(1, label.cpu().unsqueeze(1), 1)
                 records['label'][batch_idx] = label_.numpy()
-
+            elif task_setting == 'regression':
+                records['prob'][batch_idx] = logits.cpu().numpy()
+                records['label'][batch_idx] = label.cpu().numpy()
     records.update(calculate_metrics_with_task_cfg(records['prob'], records['label'], args.task_config))
     records['loss'] = records['loss'] / len(loader)
 
     if task_setting == 'multi_label':
         info = 'Epoch: {}, Loss: {:.4f}, Micro AUROC: {:.4f}, Macro AUROC: {:.4f}, Micro AUPRC: {:.4f}, Macro AUPRC: {:.4f}'.format(epoch, records['loss'], records['micro_auroc'], records['macro_auroc'], records['micro_auprc'], records['macro_auprc'])
+    elif task_setting =='regression':
+        info = 'Epoch: {}, Loss: {:.4f}, MAE: {:.4f}, RMSE: {:.4f}'.format(epoch, records['loss'], records['mae'], records['mse'], records['rmse'])
     else:
         info = 'Epoch: {}, Loss: {:.4f}, AUROC: {:.4f}, ACC: {:.4f}, BACC: {:.4f}'.format(epoch, records['loss'], records['macro_auroc'], records['acc'], records['bacc'])
         for metric in args.task_config.get('add_metrics', []):

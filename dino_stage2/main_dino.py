@@ -29,18 +29,15 @@ import torch.backends.cudnn as cudnn
 import torch.nn.functional as F
 from torchvision import datasets, transforms
 from torchvision import models as torchvision_models
-import warnings
+
 import utils
 import vision_transformer as vits
 from vision_transformer import DINOHead
-warnings.filterwarnings("ignore")
-from wsi_dataset import WSIDataset,collate_fn
-from vision_transformer import VITRMIM
-
-os.environ["ORCH_DISTRIBUTED_DEBUG"] = "DETAIL"
+from wsi_dataset import WSIDataset
+from utils import collate_fn
+#cuda avaliable
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6"
 local_rank = int(os.environ["LOCAL_RANK"])
-
 torchvision_archs = sorted(name for name in torchvision_models.__dict__
     if name.islower() and not name.startswith("__")
     and callable(torchvision_models.__dict__[name]))
@@ -49,7 +46,7 @@ def get_args_parser():
     parser = argparse.ArgumentParser('DINO', add_help=False)
 
     # Model parameters
-    parser.add_argument('--arch', default='vit_mtask', type=str,
+    parser.add_argument('--arch', default='vit_small', type=str,
         choices=['vit_tiny', 'vit_small', 'vit_base', 'xcit', 'deit_tiny', 'deit_small'] \
                 + torchvision_archs + torch.hub.list("facebookresearch/xcit:main"),
         help="""Name of architecture to train. For quick experiments with ViTs,
@@ -72,8 +69,7 @@ def get_args_parser():
         help="Whether to use batch normalizations in projection head (Default: False)")
     parser.add_argument('--teacher_ratio', default=0.2,type=float, help="""Ratio of teacher knowledge to be used for the loss.""")
     parser.add_argument('--student_ratio', default=0.1,type=float, help="""Ratio of student knowledge to be used for the loss.""")
-    parser.add_argument('--mlm_ratio', default=0.25,type=float, help="""Ratio of Masking language Model ratio""")
-    parser.add_argument('--num_clusters', default=50,type=int, help="""Number of clusters for the loss""")
+    # Temperature teacher parameters
     parser.add_argument('--warmup_teacher_temp', default=0.04, type=float,
         help="""Initial value for the teacher temperature: 0.04 works well in most cases.
         Try decreasing it if the training loss does not decrease.""")
@@ -82,7 +78,7 @@ def get_args_parser():
         starting with the default value of 0.04 and increase this slightly if needed.""")
     parser.add_argument('--warmup_teacher_temp_epochs', default=0, type=int,
         help='Number of warmup epochs for the teacher temperature (Default: 30).')
-    parser.add_argument('--cross_reconstruct',default=True, type=utils.bool_flag, help="""Whether or not to use cross reconstruct""")
+
     # Training/Optimization parameters
     parser.add_argument('--use_fp16', type=utils.bool_flag, default=False, help="""Whether or not
         to use half precision for training. Improves training time and memory requirements,
@@ -96,7 +92,7 @@ def get_args_parser():
     parser.add_argument('--clip_grad', type=float, default=3.0, help="""Maximal parameter
         gradient norm if using gradient clipping. Clipping with norm .3 ~ 1.0 can
         help optimization for larger ViT architectures. 0 for disabling.""")
-    parser.add_argument('--batch_size_per_gpu', default=10, type=int,
+    parser.add_argument('--batch_size_per_gpu', default=20, type=int,
         help='Per-GPU batch-size : number of distinct images loaded on one GPU.')
     parser.add_argument('--epochs', default=200, type=int, help='Number of epochs of training.')
     parser.add_argument('--freeze_last_layer', default=1, type=int, help="""Number of epochs
@@ -150,8 +146,7 @@ def train_dino(args):
     # ============ preparing data ... ============
 
     #dataset = datasets.ImageFolder(args.data_path, transform=transform)
-    dataset=WSIDataset(args.data_path, args.teacher_ratio, args.student_ratio,
-                       args.num_clusters, args.mlm_ratio)
+    dataset=WSIDataset(args.data_path,args.teacher_ratio,args.student_ratio)
     sampler = torch.utils.data.DistributedSampler(dataset, shuffle=True)
     data_loader = torch.utils.data.DataLoader(
         dataset,
@@ -175,7 +170,6 @@ def train_dino(args):
         )
         teacher = vits.__dict__[args.arch](embed_dim=args.embed_dim)
         embed_dim = student.embed_dim
-
     # if the network is a XCiT
     elif args.arch in torch.hub.list("facebookresearch/xcit:main"):
         student = torch.hub.load('facebookresearch/xcit:main', args.arch,
@@ -202,10 +196,6 @@ def train_dino(args):
         DINOHead(embed_dim, args.out_dim, args.use_bn_in_head),
     )
     # move networks to gpu
-
-    
-
-  
     student, teacher = student.cuda(), teacher.cuda()
     # synchronize batch norms (if any)
     if utils.has_batchnorms(student):
@@ -219,7 +209,7 @@ def train_dino(args):
         # teacher_without_ddp and teacher are the same thing
         teacher_without_ddp = teacher
     student = nn.parallel.DistributedDataParallel(student, device_ids=[args.gpu])
-
+    # teacher and student start with the same weights
     teacher_without_ddp.load_state_dict(student.module.state_dict())
     # there is no backpropagation through the teacher, so no need for gradients
     for p in teacher.parameters():
@@ -238,7 +228,6 @@ def train_dino(args):
 
     # ============ preparing optimizer ... ============
     params_groups = utils.get_params_groups(student)
-    #add cross reconstructor loss
     if args.optimizer == "adamw":
         optimizer = torch.optim.AdamW(params_groups)  # to use with ViTs
     elif args.optimizer == "sgd":
@@ -319,8 +308,7 @@ def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loade
                     fp16_scaler, args):
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Epoch: [{}/{}]'.format(epoch, args.epochs)
-    for it, (teacher_feat,teacher_coords,teacher_mask,teacher_mlm,student_feat,
-             student_coords,student_mask,student_mlm) in enumerate(metric_logger.log_every(data_loader, 10, header)):
+    for it, (teacher_feat,teacher_mask,student_feat,student_mask) in enumerate(metric_logger.log_every(data_loader, 10, header)):
         # update weight decay and learning rate according to their schedule
         it = len(data_loader) * epoch + it  # global training iteration
         for i, param_group in enumerate(optimizer.param_groups):
@@ -334,22 +322,22 @@ def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loade
         teacher_mask = teacher_mask.cuda(non_blocking=True)
         student_feat = student_feat.cuda(non_blocking=True)
         student_mask = student_mask.cuda(non_blocking=True)
-        teacher_mlm = teacher_mlm.cuda(non_blocking=True)
-        student_mlm = student_mlm.cuda(non_blocking=True)
-        teacher_coords = teacher_coords.cuda(non_blocking=True)
-        student_coords = student_coords.cuda(non_blocking=True)
         # teacher and student forward passes + compute dino loss
         with torch.cuda.amp.autocast(fp16_scaler is not None):#image[0].shape [64, 3, 224, 224] , image[1].shape [64, 3, 96, 96]
-            teacher_output,mlm_loss_teacher,crsc_loss_teacher= \
-                teacher((teacher_feat, teacher_coords,teacher_mask,teacher_mlm,student_feat))  
-            student_output,mlm_loss_student,crsc_loss_student = \
-                student((student_feat, student_coords,student_mask,student_mlm,teacher_feat)) 
-            mlm_loss= mlm_loss_student + mlm_loss_teacher
-            crsc_loss= crsc_loss_student + crsc_loss_teacher
-            dio_loss= dino_loss(student_output, teacher_output, epoch)
-            loss = dio_loss + 0*mlm_loss + 0*crsc_loss
-                                
-
+            teacher_output = teacher((teacher_feat, teacher_mask))  # only the 2 global views pass through the teacher 128*65536
+            student_output = student((student_feat, student_mask))#  
+            loss = dino_loss(student_output, teacher_output, epoch)
+            # print('teacher_output sum', teacher_output.sum())
+            # print('student_output sum', student_output.sum())
+            '''
+            for p in student.named_parameters():
+                #check grad is available
+                print(p[1].requires_grad)
+                if p[1].requires_grad==False:
+                    print(p[0])
+                # if p.requires_grad:
+                #     print(p.grad)
+            '''
 
         if not math.isfinite(loss.item()):
             print("Loss is {}, stopping training".format(loss.item()), force=True)
@@ -386,10 +374,6 @@ def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loade
         metric_logger.update(loss=loss.item())
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
         metric_logger.update(wd=optimizer.param_groups[0]["weight_decay"])
-        metric_logger.update(crsc_loss=crsc_loss.item())
-        metric_logger.update(mlm_loss=mlm_loss.item())
-        metric_logger.update(dio_loss=dio_loss.item())
-
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)

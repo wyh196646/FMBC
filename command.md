@@ -1,13 +1,26 @@
 # validation the TCGA-LUAD 5 gene mutation
 ```
-CUDA_VISIBLE_DEVICES=6 python main.py --task_cfg_path task_configs/mutation_5_gene.yaml --dataset_csv dataset_csv/mutation/LUAD-5-gene_TCGA.csv --root_path /home/yuhaowang/data/embedding/TCGA-LUAD --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.1 --epochs 30 --input_dim 384 --latent_dim 384 --feat_layer 11 --warmup_epochs 1 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 1 --save_dir outputs/LUAD-5-gene --max_wsi_size 250000 --pretrained /home/yuhaowang/project/FMBC/dino_stage2/output/checkpoint0060.pth --model_arch vit_mtask --lr 0.0005
+CUDA_VISIBLE_DEVICES=6 python main.py --task_cfg_path task_configs/mutation_5_gene.yaml --dataset_csv dataset_csv/mutation/LUAD-5-gene_TCGA.csv --root_path /home/yuhaowang/data/embedding/TCGA-LUAD --blr 0.004 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 \
+--drop_path_rate 0.0 --val_r 0.1 --epochs 20 --input_dim 384 --latent_dim 384 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 1 \
+--save_dir outputs/LUAD-5-gene --max_wsi_size 250000 --pretrained /home/yuhaowang/project/FMBC/dino_stage2/output/checkpoint0140.pth --model_arch vit_mtask 
 ```
 
 # Valid on TCGA-BRCA 6 gene mutation
 ```
 
-CUDA_VISIBLE_DEVICES=6 python main.py --task_cfg_path task_configs/mutation_6_gene_brca.yaml --dataset_csv dataset_csv/mutation/BRCA-6-gene_TCGA.csv --root_path /home/yuhaowang/data/embedding/TCGA-BRCA --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.1 --epochs 30 --input_dim 384 --latent_dim 384 --feat_layer 11 --warmup_epochs 1 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 1 --save_dir outputs/BRCA-6-gene --max_wsi_size 250000 --pretrained /home/yuhaowang/project/FMBC/dino_stage2/output/checkpoint0060.pth --model_arch vit_mtask --lr 0.001
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/mutation_6_gene_brca.yaml --dataset_csv dataset_csv/mutation/BRCA-6-gene_TCGA.csv --root_path /home/yuhaowang/data/embedding/TCGA-BRCA --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.1 --epochs 30 --input_dim 384 --latent_dim 384 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 1 --save_dir outputs/BRCA-6-gene-muatation --max_wsi_size 250000 --pretrained /home/yuhaowang/project/FMBC/dino_stage2/output/checkpoint0160.pth --model_arch vit_small 
 ```
+
+
+```
+
+CUDA_VISIBLE_DEVICES=6 python main.py --task_cfg_path task_configs/tcga-brca-gene_expression.yaml --dataset_csv dataset_csv/expression_prediction/COUNT_Symbol_matrix_transpose_slide_id.csv --root_path /home/yuhaowang/data/embedding/TCGA-BRCA --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.1 --epochs 30 --input_dim 384 --latent_dim 384 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 1 --save_dir outputs/BRCA-6-gene --max_wsi_size 250000 --pretrained /home/yuhaowang/project/FMBC/dino_stage2/output/checkpoint0160.pth --model_arch vit_small 
+```
+```
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bracs_coarse.yaml --dataset_csv dataset_csv/subtype/BRACS_coarse.csv --root_path /home/yuhaowang/data/embedding/BRACS --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.1 --epochs 30 --input_dim 384 --latent_dim 384 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 1 --save_dir outputs/BRACS_Subtype --max_wsi_size 250000 --pretrained /home/yuhaowang/project/FMBC/dino_stage2/output/checkpoint0160.pth --model_arch vit_small 
+
+```
+
 
 
 ## 跨采样（模态）数量重建有两种方式

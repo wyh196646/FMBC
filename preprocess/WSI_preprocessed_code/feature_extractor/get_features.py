@@ -38,8 +38,8 @@ def check_Image(path):
 
     return False
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1,2,3,4,5,6"
-local_rank = int(os.environ["LOCAL_RANK"])
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5"
+#local_rank = int(os.environ["LOCAL_RANK"])
 def extract_feature_pipeline(args):
     # ============ preparing data ... ============
     transform = pth_transforms.Compose([
@@ -84,7 +84,7 @@ def extract_feature_pipeline(args):
     if utils.get_rank() == 0:
         train_features = nn.functional.normalize(train_features, dim=1, p=2)
     if args.dump_features and dist.get_rank() == 0:
-        cluster_features(train_labels,train_features,args)
+        cluster_features(train_labels, train_features, args)
     print("all features have been extracted")
     return train_features, train_labels
 
@@ -107,8 +107,7 @@ def cluster_features(train_json_data, train_feature,args):
         print(wsi_feature.shape)
         if wsi_feature.shape[0] < args.cluster_num:
             continue
-    
-        
+
         kmeans = KMeans(n_clusters=args.cluster_num, random_state=0).fit(wsi_feature.cpu())
         data_dict={
             'features':wsi_feature.cpu(),
@@ -176,7 +175,7 @@ class ReturnIndexDataset(datasets.ImageFolder):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Evaluation with weighted k-NN on ImageNet')
-    parser.add_argument('--batch_size_per_gpu', default=360,type=int, help='Per-GPU batch-size')
+    parser.add_argument('--batch_size_per_gpu', default=400,type=int, help='Per-GPU batch-size')
     parser.add_argument('--temperature', default=0.07, type=float,
         help='Temperature used in the voting coefficient')
     parser.add_argument('--pretrained_weights', default='/home/yuhaowang/project/FMBC/preprocess/WSI_preprocessed_code/feature_extractor/checkpoint0030.pth', type=str, help="Path to pretrained weights to evaluate.")

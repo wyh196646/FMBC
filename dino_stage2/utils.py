@@ -625,9 +625,9 @@ class MultiCropWrapper(nn.Module):
         #     # accumulate outputs
         #     output = torch.cat((output, _out))
         #     start_idx = end_idx
-        output, mlm_loss, crsc_loss= self.backbone(x)
+        output = self.backbone(x)
         # Run the head forward on the concatenated features.
-        return self.head(output), mlm_loss, crsc_loss
+        return self.head(output)
 
 
 def get_params_groups(model):
@@ -835,3 +835,28 @@ def element_indices(lst):
     for i, value in enumerate(lst):
         index_dict[value].append(i)  
     return dict(index_dict)
+
+
+
+def collate_fn(batch):
+    """
+    batch:[B*[teacher_dim,student_dm]]
+    padding the abtch
+    return:B*[[teacher_dim]], B*[[student_dim]]
+    """
+    wsi_student,wsi_teacher=zip(*batch)
+    batch_size=len(wsi_teacher)
+    embedding_dim=wsi_teacher[0].shape[1]
+    max_teacher_len=max([wsi.shape[0] for wsi in wsi_teacher])
+    max_student_len=max([wsi.shape[0] for wsi in wsi_student])
+    teacher_batch=torch.zeros((batch_size,max_teacher_len,embedding_dim))
+    student_batch=torch.zeros((batch_size,max_student_len,embedding_dim))
+    for i in range(batch_size):
+        teacher_batch[i,:wsi_teacher[i].shape[0]]=wsi_teacher[i]
+        student_batch[i,:wsi_student[i].shape[0]]=wsi_student[i]
+    teacher_mask=torch.arange(max_teacher_len).expand(batch_size,-1)>torch.tensor([wsi.shape[0] for wsi in wsi_teacher]).unsqueeze(1)
+    student_mask=torch.arange(max_student_len).expand(batch_size,-1)>torch.tensor([wsi.shape[0] for wsi in wsi_student]).unsqueeze(1)
+    #add cls token mask
+    teacher_mask=torch.cat((torch.zeros((batch_size,1),dtype=torch.bool),teacher_mask),dim=1)
+    student_mask=torch.cat((torch.zeros((batch_size,1),dtype=torch.bool),student_mask),dim=1)
+    return teacher_batch,teacher_mask,student_batch,student_mask

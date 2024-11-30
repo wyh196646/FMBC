@@ -1,6 +1,11 @@
 name: mutation_6_gene_brca
 setting: multi_label
 label_dict:
+  # BRAF: 0
+  # EGFR: 1
+  # FAT1: 2
+  # KRAS: 3 
+  # LRP1B: 4
   TP53: 0
   HRD: 1
 max_tiles: 1000000

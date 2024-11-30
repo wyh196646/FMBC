@@ -6,7 +6,7 @@ def get_finetune_params():
     parser = argparse.ArgumentParser(description='Finetune on downstream tasks')
 
     # task settings
-    parser.add_argument('--task_cfg_path',  type=str, default='finetune/task_configs/mutation_5_gene.yaml', help='Path to the task configuration file')
+    parser.add_argument('--task_cfg_path',  type=str, default='', help='Path to the task configuration file')
     parser.add_argument('--exp_name',       type=str, default='', help='Experiment name')
     parser.add_argument('--pat_strat',      action='store_true', default=False, help='Patient stratification')
 

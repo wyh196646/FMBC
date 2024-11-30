@@ -41,7 +41,7 @@ class SlideDatasetForTasks(Dataset):
         self.split_key = split_key
         self.slide_key = slide_key
         self.task_cfg = task_config
-        self.sampling_ratio=sampling_ratio
+        self.sampling_ratio =sampling_ratio
 
         # get slides that have tile encodings
         valid_slides = self.get_valid_slides(root_path, data_df[slide_key].values)
@@ -67,6 +67,7 @@ class SlideDatasetForTasks(Dataset):
                 print('Missing: ', sld_path)
             else:
                 valid_slides.append(slides[i])
+                print('valid: {} success'.format(sld_path))
         return valid_slides
     
     def setup_data(self, df: pd.DataFrame, splits: list, task: str='multi_class'):
@@ -76,10 +77,34 @@ class SlideDatasetForTasks(Dataset):
             prepare_data_func = self.prepare_multi_class_or_binary_data
         elif task == 'multi_label':
             prepare_data_func = self.prepare_multi_label_data
+        elif task == 'regression':
+            prepare_data_func = self.prepare_regression_data
         else:
             raise ValueError('Invalid task: {}'.format(task))
         self.slide_data, self.images, self.labels, self.n_classes = prepare_data_func(df, splits)
     
+    def prepare_regression_data(self, df: pd.DataFrame, splits: list):
+        '''Prepare the data for regression'''
+        label_dict = self.task_cfg.get('label_dict', {})
+        assert label_dict, 'No label_dict found in the task configuration'
+        # Prepare mutation data
+        label_keys = label_dict.keys()
+        # sort key using values
+        label_keys = sorted(label_keys, key=lambda x: label_dict[x])
+        n_classes = len(label_dict)
+
+        # get the corresponding splits
+        assert self.split_key in df.columns, 'No {} column found in the dataframe'.format(self.split_key)
+        df = df[df[self.split_key].isin(splits)]
+        for i in splits:
+            print(i)
+        #TCGA-BH-A1EO-01Z-00-DX1
+        images = df[self.slide_key].to_list()
+        labels = df[label_keys].to_numpy()
+            
+        return df, images, labels, n_classes
+    
+        
     def prepare_multi_class_or_binary_data(self, df: pd.DataFrame, splits: list):
         '''Prepare the data for multi-class classification'''
         # set up the label_dict
@@ -95,7 +120,6 @@ class SlideDatasetForTasks(Dataset):
         df = df[df[self.split_key].isin(splits)]
         images = df[self.slide_key].to_list()
         labels = df[['label']].to_numpy().astype(int)
-        
         return df, images, labels, n_classes
         
     def prepare_multi_label_data(self, df: pd.DataFrame, splits: list):
@@ -171,14 +195,14 @@ class SlideDataset(SlideDatasetForTasks):
         sld_name = os.path.basename(sld).split('.h5')[0]
         return sld_name
     
-    def feature_select(self,assets,selct_ratio=0.2):
+    def feature_select(self,assets, selct_ratio=0.2):
         clustering_dict= self.element_indices(assets['labels'])
         feature_index=[np.random.choice(value, int(len(value)*selct_ratio), replace=False) 
                     for key, value in clustering_dict.items()]
         feature_index=np.concatenate(feature_index)
         feature=assets['features'][feature_index]
         feature_coods=assets['coords'][feature_index]
-        return feature,feature_coods
+        return feature, feature_coods
     
     def element_indices(self,lst):
         index_dict = defaultdict(list)  
@@ -193,8 +217,7 @@ class SlideDataset(SlideDatasetForTasks):
             coords = 0
         elif '.h5' in img_path:
             assets, _ = self.read_assets_from_h5(img_path)
-            #print('read assets from h5',img_path)
-            assets['features'],coords= self.feature_select(assets)
+            assets['features'], coords= self.feature_select(assets)
             images = torch.from_numpy(assets['features'])
             coords = torch.from_numpy(coords)
             if self.shuffle_tiles:

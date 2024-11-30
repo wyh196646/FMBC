@@ -1,7 +1,8 @@
 import numpy as np
 from sklearn.metrics import roc_auc_score, average_precision_score, \
                             balanced_accuracy_score, accuracy_score, \
-                            cohen_kappa_score
+                            cohen_kappa_score, mean_absolute_error,\
+                            mean_squared_error, mean_squared_error
 
 
 class MakeMetrics:
@@ -31,6 +32,13 @@ class MakeMetrics:
             return accuracy_score(labels, probs)
         elif self.metric == 'qwk':
             return cohen_kappa_score(labels, probs, weights='quadratic')
+        #'mae', 'mse', 'rmse'
+        elif self.metric == 'mae':
+            return mean_absolute_error(labels, probs)
+        elif self.metric == 'mse':
+            return mean_squared_error(labels, probs)
+        elif self.metric == 'rmse':
+            return mean_squared_error(labels, probs, squared=False)
         else:
             raise ValueError('Invalid metric: {}'.format(self.metric))
         
@@ -89,6 +97,14 @@ def calculate_multiclass_or_binary_metrics(probs: np.array, labels: np.array, la
             results.update(metric_func(labels, probs))
     return results
 
+def calculate_regression_metrics(probs: np.array, labels: np.array, label_dict, add_metrics: list=None) -> dict:
+    metrics = ['mae', 'mse', 'rmse'] + (add_metrics if add_metrics is not None else [])
+    results = {}
+    for average in [None]: 
+        for metric in metrics: 
+            metric_func = MakeMetrics(metric=metric, average=average, label_dict=label_dict)
+            results.update(metric_func(labels, probs))
+    return results
 
 def calculate_metrics_with_task_cfg(probs: np.array, labels: np.array, task_cfg: dict) -> dict:
     task_setting = task_cfg.get('setting', 'multi_class')
@@ -96,6 +112,8 @@ def calculate_metrics_with_task_cfg(probs: np.array, labels: np.array, task_cfg:
 
     if task_setting == 'multi_label':
         return calculate_multilabel_metrics(probs, labels, task_cfg['label_dict'], add_metrics)
+    elif task_setting == 'regression':
+        return calculate_regression_metrics(probs, labels, task_cfg['label_dict'], add_metrics)
     else:
         return calculate_multiclass_or_binary_metrics(probs, labels, task_cfg['label_dict'], add_metrics)
 

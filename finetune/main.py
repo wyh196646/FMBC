@@ -8,7 +8,7 @@ from params import get_finetune_params
 from task_configs.utils import load_task_config
 from finetune_utils import seed_torch, get_exp_code, get_splits, get_loader, save_obj
 from datasets.slide_datatset import SlideDataset
-os.environ["CUDA_VISIBLE_DEVICES"] = "6"
+os.environ["CUDA_VISIBLE_DEVICES"] = "5"
 
 if __name__ == '__main__':
     args = get_finetune_params()
@@ -99,3 +99,8 @@ if __name__ == '__main__':
         print('{}: {:.4f} +- {:.4f}'.format(key, np.mean(results_df[key]), np.std(results_df[key])))
     print('Results saved in: {}'.format(os.path.join(args.save_dir, 'summary.csv')))
     print('Done!')
+
+
+'''
+CUDA_VISIBLE_DEVICES=5 python main.py --task_cfg_path task_configs/tcga-brca-gene_expression.yaml --dataset_csv dataset_csv/expression_prediction/COUNT_Symbol_matrix_transpose_slide_id.csv --root_path /home/yuhaowang/data/embedding/TCGA-BRCA --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.1 --epochs 100 --input_dim 384 --latent_dim 384 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 1 --save_dir outputs/BRCA-6-gene --max_wsi_size 250000 --pretrained /home/yuhaowang/project/FMBC/dino_stage2/output/checkpoint0160.pth --model_arch vit_small
+'''

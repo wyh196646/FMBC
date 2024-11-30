@@ -310,6 +310,8 @@ def get_loss_function(task_config: dict):
         loss_fn = torch.nn.BCEWithLogitsLoss()
     elif task_setting == 'multi_class' or task_setting == 'binary':
         loss_fn = torch.nn.CrossEntropyLoss()
+    elif task_setting == 'regression':
+        loss_fn = torch.nn.MSELoss()
     else:
         raise NotImplementedError
     return loss_fn

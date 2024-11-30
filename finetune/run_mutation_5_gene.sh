@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# 指定CUDA设备
+
 CUDA_VISIBLE_DEVICES=6
 
-# 主要参数
+
 TASK_CFG_PATH="task_configs/mutation_5_gene.yaml"
 DATASET_CSV="dataset_csv/mutation/LUAD-5-gene_TCGA.csv"
 ROOT_PATH="/home/yuhaowang/data/embedding/TCGA-LUAD"
