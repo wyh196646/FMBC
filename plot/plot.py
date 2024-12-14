@@ -1,6 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-
+from FMBC.plot import plot
 # Let's read the data from the provided CSV file and re-create the plots with y-axis labels and save the image.
 data_path = "/home/baizhiwang/pathology/xiaorong_test/huatu/plot.csv"
 
