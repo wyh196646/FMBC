@@ -26,6 +26,7 @@ class SlideEmbeddingDataset(Dataset):
                  student_ratio:float = 0.1,
                  num_clusters: int = 50,
                  transform: callable = None,
+                 num_transforms: int = 1,
                  stage: str = 'train'):
         
         self.num_cluster = num_clusters
@@ -33,7 +34,8 @@ class SlideEmbeddingDataset(Dataset):
         self.feature_path= [f for f in Path(embedding_root).rglob('*.h5')]
         self.teacher_ratio = teacher_ratio
         self.student_ratio = student_ratio
-        self.stage=stage
+        self.stage = stage
+        self.num_transforms_ = num_transforms
         
     def __len__(self):
         return len(self.feature_path)
@@ -49,30 +51,50 @@ class SlideEmbeddingDataset(Dataset):
                     attrs[key] = dict(f[key].attrs)
         return assets, attrs
     
-    @staticmethod
-    def element_indices(lst):
-        index_dict = defaultdict(list)  
-        for i, value in enumerate(lst):
-            index_dict[value].append(i)  
-        return dict(index_dict)
-    
     def __getitem__(self, idx):
-        assets, _ = self.read_assets_from_h5(self.feature_path[idx])
-        #print(assets)
-        if self.stage=='train':
-            teacher_feature, _ = self.feature_select(assets, self.teacher_ratio)
-            student_feature, _ = self.feature_select(assets, self.student_ratio)
-            return torch.FloatTensor(student_feature), torch.FloatTensor(teacher_feature)
-        else:
-            return torch.FloatTensor(assets['feature'])
+        assets, attrs = self.read_assets_from_h5(self.feature_path[idx])
+        
+        
+        for transform_idx in range(self.num_transforms_):
+            pt_path = random.choice(tag_list)
+            inst_ = torch.load(pt_path)
+
+            instance["embeddings"][transform_idx] = inst_["embeddings"]
+            instance["coords"][transform_idx] = torch.tensor(inst_["coords"])
+
+            del inst_
+
+        if self.transform_:
+            instance = self.transform_(instance)
+
+        return instance
+        return assets, attrs
+        
     
-    def feature_select(self,assets,ratio):
-        clustering_dict = self.element_indices(assets['labels'])
-        student_index = [np.random.choice(value, int(len(value)*ratio)) 
-                    for key, value in clustering_dict.items()]
-        student_index = np.concatenate(student_index)
-        student_feature = assets['features'][student_index]
-        student_index=[np.random.choice(value, int(len(value)*ratio)) 
-                    for key, value in clustering_dict.items()]
-        return student_feature, student_index
+    # @staticmethod
+    # def element_indices(lst):
+    #     index_dict = defaultdict(list)  
+    #     for i, value in enumerate(lst):
+    #         index_dict[value].append(i)  
+    #     return dict(index_dict)
+    
+    # def __getitem__(self, idx):
+    #     assets, _ = self.read_assets_from_h5(self.feature_path[idx])
+    #     #print(assets)
+    #     if self.stage=='train':
+    #         teacher_feature, _ = self.feature_select(assets, self.teacher_ratio)
+    #         student_feature, _ = self.feature_select(assets, self.student_ratio)
+    #         return torch.FloatTensor(student_feature), torch.FloatTensor(teacher_feature)
+    #     else:
+    #         return torch.FloatTensor(assets['feature'])
+    
+    # def feature_select(self,assets,ratio):
+    #     clustering_dict = self.element_indices(assets['labels'])
+    #     student_index = [np.random.choice(value, int(len(value)*ratio)) 
+    #                 for key, value in clustering_dict.items()]
+    #     student_index = np.concatenate(student_index)
+    #     student_feature = assets['features'][student_index]
+    #     student_index=[np.random.choice(value, int(len(value)*ratio)) 
+    #                 for key, value in clustering_dict.items()]
+    #     return student_feature, student_index
     
