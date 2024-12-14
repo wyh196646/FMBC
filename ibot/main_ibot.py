@@ -71,7 +71,7 @@ def get_args_parser():
         If a list of ratio is specified, one of them will be randomly choosed for each patch.""")
     parser.add_argument('--pred_ratio_var', default=0, type=float, nargs='+', help="""Variance of partial prediction
         ratio. Length should be indentical to the length of pred_ratio. 0 for disabling. """)
-    parser.add_argument('--pred_shape', default='block', type=str, help="""Shape of partial prediction.""")
+    parser.add_argument('--pred_shape', default='rand', type=str, help="""Shape of partial prediction.""")
     parser.add_argument('--pred_start_epoch', default=0, type=int, help="""Start epoch to perform masked
         image prediction. We typically set this to 50 for swin transformer. (Default: 0)""")
     parser.add_argument('--lambda1', default=1.0, type=float, help="""loss weight for dino
