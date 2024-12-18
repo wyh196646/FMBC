@@ -20,11 +20,23 @@ import subprocess
 import numpy as np
 import torch
 import torch.distributed as dist
-
+import random
+import logging
+import math
+import numpy as np
+import torch
+from torch.nn import ModuleList
+from functools import partial
+from typing import List, Tuple, Dict, Optional, Any
+from torchvision.transforms import Compose, RandomApply
+from torchvision.transforms import functional as F
+from torchvision.transforms.transforms import _setup_angle, _check_sequence_input
+from torch import Tensor
 from collections import defaultdict, deque
 from pathlib import Path
 from torch import nn
 from PIL import ImageFilter, ImageOps, Image, ImageDraw
+import warnings
 
 class GaussianBlur(object):
     """
@@ -664,9 +676,10 @@ class MultiCropWrapper(nn.Module):
         else:
             self.head = head
 
-    def forward(self, x, mask=None, return_backbone_feat=False, 
+    def forward(self, input, mask=None, return_backbone_feat=False, 
                 **kwargs):
         # convert to list
+        coords, x, pad_mask = input 
         if not isinstance(x, list):
             x = [x]
             mask = [mask] if mask is not None else None
@@ -677,12 +690,14 @@ class MultiCropWrapper(nn.Module):
         start_idx = 0
         for end_idx in idx_crops:
             inp_x = torch.cat(x[start_idx: end_idx])
+            coords = torch.cat(coords[start_idx: end_idx])
+            pad_mask = torch.cat(pad_mask[start_idx: end_idx])
 
             if mask is not None:
                 inp_m = torch.cat(mask[start_idx: end_idx])
                 kwargs.update(dict(mask=inp_m))
 
-            _out = self.backbone(inp_x, **kwargs)
+            _out = self.backbone(inp_x, coords, pad_mask, **kwargs)
             if start_idx == 0:
                 output = _out
             else:
@@ -889,3 +904,16 @@ def compute_map(ranks, gnd, kappas=[]):
     pr = pr / (nq - nempty)
 
     return map, aps, pr, prs
+
+
+
+
+def emb_collate_fn(batch):
+    return {
+        "embeddings": [data['embeddings'] for data in batch],
+        "label": torch.stack([data['label'] for data in batch]),
+        "path": [data['path'] for data in batch],
+        "coords": [data['coords'] for data in batch]
+    }
+
+

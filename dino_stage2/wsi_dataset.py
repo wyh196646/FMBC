@@ -15,6 +15,7 @@ from utils import element_indices
 import h5py
 import glob
 from pathlib import Path
+
 class WSIDataset(Dataset):
     def __init__(self, feature_root,teacher_ratio=0.2,student_ratio=0.1,num_clusters=50,stage='train'):
         self.num_cluster = num_clusters
@@ -57,14 +58,4 @@ class WSIDataset(Dataset):
         student_index=[np.random.choice(value, int(len(value)*ratio), replace=False) 
                     for key, value in clustering_dict.items()]
         return student_feature,student_index
-    
-    
-        
-
-
-
-    
-
-
-
     

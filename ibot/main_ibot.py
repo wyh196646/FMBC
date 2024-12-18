@@ -28,26 +28,33 @@ from tensorboardX import SummaryWriter
 from models.head import iBOTHead
 from loader import ImageFolderMask
 from evaluation.unsupervised.unsup_cls import eval_pred
+#from slide_dataset import SlideEmebddingMask, BoundingBoxTransform, box_collate_fn
+import warnings 
+from slide import SlideEmbeddingMask, ClusterTransform, custom_collate_fn
+warnings.filterwarnings("ignore")
+#CUDA_LAUNCH_BLOCKING=1
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "4"
 
 def get_args_parser():
     parser = argparse.ArgumentParser('iBOT', add_help=False)
 
     # Model parameters
-    parser.add_argument('--arch', default='vit_small', type=str,
+    parser.add_argument('--arch', default='vit_base', type=str,
         choices=['vit_tiny', 'vit_small', 'vit_base', 'vit_large', 'deit_tiny', 'deit_small',
                  'swin_tiny','swin_small', 'swin_base', 'swin_large'],
         help="""Name of architecture to train. For quick experiments with ViTs,
         we recommend using vit_tiny or vit_small.""")
-    parser.add_argument('--patch_size', default=16, type=int, help="""Size in pixels
-        of input square patches - default 16 (for 16x16 patches). Using smaller
+    parser.add_argument('--slide_embedding_size', default=384, type=int, help="""Size in pixels
+        of input square patches - default 16 (for 1x16 patches). Using smaller
         values leads to better performance but requires more memory. Applies only
         for ViTs (vit_tiny, vit_small and vit_base). If <16, we recommend disabling
         mixed precision training (--use_fp16 false) to avoid unstabilities.""")
-    parser.add_argument('--window_size', default=7, type=int, help="""Size of window - default 7.
-        This config is only valid for Swin Transofmer and is ignoired for vanilla ViT architectures.""")
-    parser.add_argument('--out_dim', default=8192, type=int, help="""Dimensionality of
+
+    parser.add_argument('--out_dim', default=384, type=int, help="""Dimensionality of
         output for [CLS] token.""")
-    parser.add_argument('--patch_out_dim', default=8192, type=int, help="""Dimensionality of
+    parser.add_argument('--patch_out_dim', default=384, type=int, help="""Dimensionality of
         output for patch tokens.""")
     parser.add_argument('--shared_head', default=False, type=utils.bool_flag, help="""Wether to share 
         the same head for [CLS] token output and patch tokens output. When set to false, patch_out_dim
@@ -106,13 +113,13 @@ def get_args_parser():
     parser.add_argument('--clip_grad', type=float, default=3.0, help="""Maximal parameter
         gradient norm if using gradient clipping. Clipping with norm .3 ~ 1.0 can
         help optimization for larger ViT architectures. 0 for disabling.""")
-    parser.add_argument('--batch_size_per_gpu', default=128, type=int,
+    parser.add_argument('--batch_size_per_gpu', default=1, type=int,
         help='Per-GPU batch-size : number of distinct images loaded on one GPU.')
     parser.add_argument('--epochs', default=100, type=int, help='Number of epochs of training.')
     parser.add_argument('--freeze_last_layer', default=1, type=int, help="""Number of epochs
         during which we keep the output layer fixed. Typically doing so during
         the first epoch helps training. Try increasing this value if the loss does not decrease.""")
-    parser.add_argument("--lr", default=0.0005, type=float, help="""Learning rate at the end of
+    parser.add_argument("--lr", default=0.0005, type=float, help="""Learing rate at the end of
         linear warmup (highest LR used during training). The learning rate is linearly scaled
         with the batch size, and specified here for a reference batch size of 256.""")
     parser.add_argument("--warmup_epochs", default=10, type=int,
@@ -125,21 +132,23 @@ def get_args_parser():
     parser.add_argument('--drop_path', type=float, default=0.1, help="""Drop path rate for student network.""")
 
     # Multi-crop parameters
-    parser.add_argument('--global_crops_number', type=int, default=2, help="""Number of global
+    parser.add_argument('--global_crops_number', type=int, default=1, help="""Number of global
         views to generate. Default is to use two global crops. """)
     parser.add_argument('--global_crops_scale', type=float, nargs='+', default=(0.14, 1.),
         help="""Scale range of the cropped image before resizing, relatively to the origin image.
         Used for large global view cropping. When disabling multi-crop (--local_crops_number 0), we
         recommand using a wider range of scale ("--global_crops_scale 0.14 1." for example)""")
-    parser.add_argument('--local_crops_number', type=int, default=0, help="""Number of small
+    parser.add_argument('--local_crops_number', type=int, default=1, help="""Number of small
         local views to generate. Set this parameter to 0 to disable multi-crop training.
         When disabling multi-crop we recommend to use "--global_crops_scale 0.14 1." """)
     parser.add_argument('--local_crops_scale', type=float, nargs='+', default=(0.05, 0.4),
         help="""Scale range of the cropped image before resizing, relatively to the origin image.
         Used for small local view cropping of multi-crop.""")
-
+    parser.add_argument('--global_coverage_ratio', default=0.2, type=float, help='patch coverage')
+    parser.add_argument('--local_coverage_ratio', default=0.1, type=float, help='patch coverage')
+    parser.add_argument('--num_cluster', default=8, type=int, help='number of cluster')
     # Misc
-    parser.add_argument('--data_path', default='/path/to/imagenet/train/', type=str,
+    parser.add_argument('--data_path', default='/home/yuhaowang/data/embedding/TCGA-BRCA', type=str,
         help='Please specify path to the ImageNet training data.')
     parser.add_argument('--output_dir', default=".", type=str, help='Path to save logs and checkpoints.')
     parser.add_argument('--saveckp_freq', default=40, type=int, help='Save checkpoint every x epochs.')
@@ -148,6 +157,9 @@ def get_args_parser():
     parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
         distributed training; see https://pytorch.org/docs/stable/distributed.html""")
     parser.add_argument("--local_rank", default=0, type=int, help="Please ignore and do not set this argument.")
+
+
+
     return parser
 
 def train_ibot(args):
@@ -156,19 +168,18 @@ def train_ibot(args):
     print("git:\n  {}\n".format(utils.get_sha()))
     print("\n".join("%s: %s" % (k, str(v)) for k, v in sorted(dict(vars(args)).items())))
     cudnn.benchmark = True
+    transform = ClusterTransform(
+        global_coverage_ratio=args.global_coverage_ratio,
+        local_coverage_ratio=args.local_coverage_ratio,
+        local_crops_number=args.local_crops_number,
+        global_crops_number=args.global_crops_number,
+        num_cluster=args.num_cluster,
+        )
 
-    # ============ preparing data ... ============
-    transform = DataAugmentationiBOT(
-        args.global_crops_scale,
-        args.local_crops_scale,
-        args.global_crops_number,
-        args.local_crops_number,
-    )
-    pred_size = args.patch_size * 8 if 'swin' in args.arch else args.patch_size
-    dataset = ImageFolderMask(
-        args.data_path, 
+    dataset =  SlideEmbeddingMask(
+        embedding_root=args.data_path,
+        patch_sizeembedding_size=args.slide_embedding_size,
         transform=transform,
-        patch_size=pred_size,
         pred_ratio=args.pred_ratio,
         pred_ratio_var=args.pred_ratio_var,
         pred_aspect_ratio=(0.3, 1/0.3),
@@ -181,9 +192,9 @@ def train_ibot(args):
         batch_size=args.batch_size_per_gpu,
         num_workers=args.num_workers,
         pin_memory=True,
-        drop_last=True
+        drop_last=True,
+        collate_fn=custom_collate_fn,
     )
-    print(f"Data loaded: there are {len(dataset)} images.")
 
     # ============ building student and teacher networks ... ============
     # we changed the name DeiT-S for ViT-S to avoid confusions
@@ -204,13 +215,13 @@ def train_ibot(args):
     # if the network is a vision transformer (i.e. vit_tiny, vit_small, vit_base, vit_large)
     elif args.arch in models.__dict__.keys():
         student = models.__dict__[args.arch](
-            patch_size=args.patch_size,
+            slide_embedding_size=args.slide_embedding_size,
             drop_path_rate=args.drop_path,
             return_all_tokens=True,
             masked_im_modeling=args.use_masked_im_modeling,
         )
         teacher = models.__dict__[args.arch](
-            patch_size=args.patch_size,
+            slide_embedding_size=args.slide_embedding_size,
             return_all_tokens=True,
         )
         embed_dim = student.embed_dim
@@ -389,8 +400,8 @@ def train_one_epoch(student, teacher, teacher_without_ddp, ibot_loss, data_loade
     params_q = [param_q for name_q, param_q in zip(names_q, params_q) if name_q in names_common]
     params_k = [param_k for name_k, param_k in zip(names_k, params_k) if name_k in names_common]
 
-    pred_labels, real_labels = [], []
-    for it, (images, labels, masks) in enumerate(metric_logger.log_every(data_loader, 10, header)):
+
+    for it, batch_data in enumerate(metric_logger.log_every(data_loader, 10, header)):
         # update weight decay and learning rate according to their schedule
         it = len(data_loader) * epoch + it  # global training iteration
         for i, param_group in enumerate(optimizer.param_groups):
@@ -398,21 +409,36 @@ def train_one_epoch(student, teacher, teacher_without_ddp, ibot_loss, data_loade
             if i == 0:  # only the first group is regularized
                 param_group["weight_decay"] = wd_schedule[it]
 
+        global_coords=batch_data['padded_global_coords']
+        global_features=batch_data['padded_global_features']
+        global_attention_masks=batch_data['global_attention_masks']
+        predict_global_masks=batch_data['padded_predict_global_masks']
+        local_coords=batch_data['padded_local_coords']
+        local_features=batch_data['padded_local_features']
+        local_attention_masks=batch_data['local_attention_masks']
         # move images to gpu
-        images = [im.cuda(non_blocking=True) for im in images]
-        masks = [msk.cuda(non_blocking=True) for msk in masks]        
+        #images = [im.cuda(non_blocking=True) for im in images]
+        #masks = [msk.cuda(non_blocking=True) for msk in masks]
+        global_coords =[global_coords.cuda(non_blocking=True) for global_coords in global_coords]
+        global_features =[global_features.cuda(non_blocking=True) for global_features in global_features]
+        global_attention_masks =[global_attention_masks.cuda(non_blocking=True) for global_attention_masks in global_attention_masks]
+        predict_global_masks =[predict_global_masks.cuda(non_blocking=True) for predict_global_masks in predict_global_masks]
+        local_coords =[local_coords.cuda(non_blocking=True) for local_coords in local_coords]
+        local_features =[local_features.cuda(non_blocking=True) for local_features in local_features]
+        local_attention_masks =[local_attention_masks.cuda(non_blocking=True) for local_attention_masks in local_attention_masks]
         
         with torch.cuda.amp.autocast(fp16_scaler is not None):
             # get global views
-            teacher_output = teacher(images[:args.global_crops_number])
-            student_output = student(images[:args.global_crops_number], mask=masks[:args.global_crops_number])
+            teacher_output = teacher((global_coords, global_features, global_attention_masks))
+            student_output = student((global_coords, global_features, global_attention_masks), mask =
+                                     predict_global_masks)
             
             # get local views
             student.module.backbone.masked_im_modeling = False
-            student_local_cls = student(images[args.global_crops_number:])[0] if len(images) > args.global_crops_number else None
+            student_local_cls = student((local_coords, local_features, local_attention_masks))[0]
             student.module.backbone.masked_im_modeling = args.use_masked_im_modeling
 
-            all_loss = ibot_loss(student_output, teacher_output, student_local_cls, masks, epoch)
+            all_loss = ibot_loss(student_output, teacher_output, student_local_cls, predict_global_masks, epoch)
             loss = all_loss.pop('loss')
 
         if not math.isfinite(loss.item()):
@@ -420,13 +446,13 @@ def train_one_epoch(student, teacher, teacher_without_ddp, ibot_loss, data_loade
             sys.exit(1)
 
         # log statistics
-        probs1 = teacher_output[0].chunk(args.global_crops_number)
-        probs2 = student_output[0].chunk(args.global_crops_number)
-        pred1 = utils.concat_all_gather(probs1[0].max(dim=1)[1]) 
-        pred2 = utils.concat_all_gather(probs2[1].max(dim=1)[1])
-        acc = (pred1 == pred2).sum() / pred1.size(0)
-        pred_labels.append(pred1)
-        real_labels.append(utils.concat_all_gather(labels.to(pred1.device)))
+        # probs1 = teacher_output[0].chunk(args.global_crops_number)
+        # probs2 = student_output[0].chunk(args.global_crops_number)
+        # pred1 = utils.concat_all_gather(probs1[0].max(dim=1)[1]) 
+        # pred2 = utils.concat_all_gather(probs2[1].max(dim=1)[1])
+        # acc = (pred1 == pred2).sum() / pred1.size(0)
+        # pred_labels.append(pred1)
+        # real_labels.append(utils.concat_all_gather(labels.to(pred1.device)))
 
         # student update
         optimizer.zero_grad()
@@ -461,17 +487,9 @@ def train_one_epoch(student, teacher, teacher_without_ddp, ibot_loss, data_loade
             metric_logger.update(**{key: value.item()})
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
         metric_logger.update(wd=optimizer.param_groups[0]["weight_decay"])
-        metric_logger.update(acc=acc)
 
-    pred_labels = torch.cat(pred_labels).cpu().detach().numpy()
-    real_labels = torch.cat(real_labels).cpu().detach().numpy()
-    nmi, ari, fscore, adjacc = eval_pred(real_labels, pred_labels, calc_acc=False)
-    # gather the stats from all processes
     metric_logger.synchronize_between_processes()
-    print("NMI: {}, ARI: {}, F: {}, ACC: {}".format(nmi, ari, fscore, adjacc))
-    print("Averaged stats:", metric_logger)
     return_dict = {k: meter.global_avg for k, meter in metric_logger.meters.items()}
-    return_dict.update({"nmi": nmi, "ari": ari, "fscore": fscore, "adjacc": adjacc})
     return return_dict
 
 
@@ -541,7 +559,7 @@ class iBOTLoss(nn.Module):
             for v in range(len(student_cls_c)):
                 if v == q:
                     loss2 = torch.sum(-teacher_patch_c[q] * F.log_softmax(student_patch_c[v], dim=-1), dim=-1)
-                    mask = student_mask[v].flatten(-2, -1)
+                    mask = student_mask[v]#.flatten(-2, -1)
                     loss2 = torch.sum(loss2 * mask.float(), dim=-1) / mask.sum(dim=-1).clamp(min=1.0)
                     total_loss2 += loss2.mean()
                     n_loss_terms2 += 1

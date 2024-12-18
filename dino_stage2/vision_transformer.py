@@ -91,7 +91,7 @@ class Block(nn.Module):
         mlp_hidden_dim = int(dim * mlp_ratio)
         self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
 
-    def forward(self, x,mask, return_attention=False):
+    def forward(self, x, mask, return_attention=False):
         y, attn = self.attn(self.norm1(x),mask)
         if return_attention:
             return attn
@@ -146,7 +146,7 @@ class VisionTransformer(nn.Module):
         return self.pos_drop(x)
 
     def forward(self, input):
-        x,mask= input
+        x, mask= input
         x = self.prepare_tokens(x)
         for blk in self.blocks:
             x = blk(x,mask)

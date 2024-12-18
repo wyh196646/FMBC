@@ -37,7 +37,6 @@ if [[ $TYPE =~ pretrain ]]; then
         --data_path data/imagenet/train \
         ${@:6}
 fi
-
 # evaluation
 if [[ $TYPE =~ imagenet_knn ]] || [[ $TYPE =~ imagenet_reg ]] || \
    [[ $TYPE =~ imagenet_linear ]] || [[ $TYPE =~ imagenet_cls ]] || \

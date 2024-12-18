@@ -17,6 +17,7 @@ import torch.nn as nn
 from functools import partial
 from utils import trunc_normal_
 from timm.models.registry import register_model
+from .pos_embed import get_2d_sincos_pos_embed
 
 def drop_path(x, drop_prob: float = 0., training: bool = False):
     if drop_prob == 0. or not training:
@@ -63,27 +64,14 @@ class Attention(nn.Module):
     def __init__(self, dim, num_heads=8, qkv_bias=False, qk_scale=None, attn_drop=0., proj_drop=0.):
         super().__init__()
         self.num_heads = num_heads
-        head_dim = dim // num_heads
-        self.scale = qk_scale or head_dim ** -0.5
-
-        self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
-        self.attn_drop = nn.Dropout(attn_drop)
-        self.proj = nn.Linear(dim, dim)
-        self.proj_drop = nn.Dropout(proj_drop)
-
-    def forward(self, x):
+        self.multihead_attn = nn.MultiheadAttention(dim, num_heads, dropout=attn_drop,batch_first=True)
+        
+    def forward(self, x,mask=None):
         B, N, C = x.shape
-        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
-        q, k, v = qkv[0], qkv[1], qkv[2]
+        value, attn = self.multihead_attn(x, x, x, key_padding_mask=mask)
+                                      
+        return value, attn
 
-        attn = (q @ k.transpose(-2, -1)) * self.scale
-        attn = attn.softmax(dim=-1)
-        attn = self.attn_drop(attn)
-
-        x = (attn @ v).transpose(1, 2).reshape(B, N, C)
-        x = self.proj(x)
-        x = self.proj_drop(x)
-        return x, attn
 
 class Block(nn.Module):
     def __init__(self, dim, num_heads, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop=0., 
@@ -103,8 +91,8 @@ class Block(nn.Module):
         else:
             self.gamma_1, self.gamma_2 = None, None
 
-    def forward(self, x, return_attention=False):
-        y, attn = self.attn(self.norm1(x))
+    def forward(self, x, padding_mask, return_attention=False):
+        y, attn = self.attn(self.norm1(x), padding_mask)
         if return_attention:
             return attn
         if self.gamma_1 is None:
@@ -118,35 +106,32 @@ class Block(nn.Module):
 class PatchEmbed(nn.Module):
     """ Image to Patch Embedding
     """
-    def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768):
+    def __init__(self, embedding_size=384, embed_dim=768):
         super().__init__()
-        num_patches = (img_size // patch_size) * (img_size // patch_size)
-        self.img_size = img_size
-        self.patch_size = patch_size
-        self.num_patches = num_patches
+     
+        self.embedding_size = embedding_size
+        self.proj = nn.Linear(embedding_size, embed_dim)
 
-        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=patch_size)
-            
     def forward(self, x):
-        B, C, H, W = x.shape
         return self.proj(x)
+
 
 class VisionTransformer(nn.Module):
     """ Vision Transformer """
-    def __init__(self, img_size=[224], patch_size=16, in_chans=3, num_classes=0, embed_dim=768, depth=12,
+    def __init__(self, slide_embedding_size=384, num_classes=0, embed_dim=768, depth=12,
                  num_heads=12, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop_rate=0., attn_drop_rate=0.,
                  drop_path_rate=0., norm_layer=partial(nn.LayerNorm, eps=1e-6), return_all_tokens=False, 
-                 init_values=0, use_mean_pooling=False, masked_im_modeling=False):
+                 init_values=0, slide_ngrids=1000, use_mean_pooling=False, masked_im_modeling=False):
         super().__init__()
-        self.num_features = self.embed_dim = embed_dim
+        self.embed_dim= embed_dim
         self.return_all_tokens = return_all_tokens
-
+        self.slide_embedding_size = slide_embedding_size
+        num_patches = slide_ngrids**2
         self.patch_embed = PatchEmbed(
-            img_size=img_size[0], patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim)
-        num_patches = self.patch_embed.num_patches
-
+             embedding_size=slide_embedding_size,  embed_dim=embed_dim)
+        self.slide_ngrids = slide_ngrids
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
-        self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + 1, embed_dim))
+        self.register_buffer('pos_embed', torch.zeros(1, num_patches + 1, embed_dim), persistent=False)
         self.pos_drop = nn.Dropout(p=drop_rate)
 
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
@@ -162,8 +147,10 @@ class VisionTransformer(nn.Module):
         # Classifier head
         self.head = nn.Linear(embed_dim, num_classes) if num_classes > 0 else nn.Identity()
 
-        trunc_normal_(self.pos_embed, std=.02)
+        #trunc_normal_(self.pos_embed, std=.02)
         trunc_normal_(self.cls_token, std=.02)
+        pos_embed = get_2d_sincos_pos_embed(self.pos_embed.shape[-1], self.slide_ngrids, cls_token=True)
+        self.pos_embed.data.copy_(torch.from_numpy(pos_embed).float().unsqueeze(0))
         self.apply(self._init_weights)
 
         # masked image modeling
@@ -180,57 +167,56 @@ class VisionTransformer(nn.Module):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
 
-    def interpolate_pos_encoding(self, x, w, h):
-        npatch = x.shape[1] - 1
-        N = self.pos_embed.shape[1] - 1
-        if npatch == N and w == h:
-            return self.pos_embed
-        class_pos_embed = self.pos_embed[:, 0]
-        patch_pos_embed = self.pos_embed[:, 1:]
-        dim = x.shape[-1]
-        w0 = w // self.patch_embed.patch_size
-        h0 = h // self.patch_embed.patch_size
-        # we add a small number to avoid floating point error in the interpolation
-        # see discussion at https://github.com/facebookresearch/dino/issues/8
-        w0, h0 = w0 + 0.1, h0 + 0.1
-        patch_pos_embed = nn.functional.interpolate(
-            patch_pos_embed.reshape(1, int(math.sqrt(N)), int(math.sqrt(N)), dim).permute(0, 3, 1, 2),
-            scale_factor=(w0 / math.sqrt(N), h0 / math.sqrt(N)),
-            mode='bicubic',
-        )
-        assert int(w0) == patch_pos_embed.shape[-2] and int(h0) == patch_pos_embed.shape[-1]
-        patch_pos_embed = patch_pos_embed.permute(0, 2, 3, 1).view(1, -1, dim)
-        return torch.cat((class_pos_embed.unsqueeze(0), patch_pos_embed), dim=1)
+    
+    def coords_to_pos(self, coords, tile_size: int = 256):
+        """
+        This function is used to convert the coordinates to the positional indices
 
-    def prepare_tokens(self, x, mask=None):
-        B, nc, w, h = x.shape
+        Arguments:
+        ----------
+        coords: torch.Tensor
+            The coordinates of the patches, of shape [N, L, 2]
+        output: torch.Tensor
+            The positional indices of the patches, of shape [N, L]
+        """
+        coords_ = torch.floor(coords / tile_size)
+        pos = coords_[..., 0] * self.slide_ngrids + coords_[..., 1]
+        return pos.long() + 1  # add 1 for the cls token
+    
+    def prepare_tokens(self, x, coords, mask=None):
+        B, _, _ = x.shape#inp_x, coords, pad_mask
         # patch linear embedding
         x = self.patch_embed(x)
-
+        pos = self.coords_to_pos(coords)
         # mask image modeling
+        x = x + self.pos_embed[:, pos, :].squeeze(0)
+        
         if mask is not None:
             x = self.mask_model(x, mask)
-        x = x.flatten(2).transpose(1, 2)
+        x = x.flatten(2)
 
         # add the [CLS] token to the embed patch tokens
         cls_tokens = self.cls_token.expand(B, -1, -1)
+        cls_tokens = cls_tokens + self.pos_embed[:, :1, :]
         x = torch.cat((cls_tokens, x), dim=1)
 
         # add positional encoding to each token
-        x = x + self.interpolate_pos_encoding(x, w, h)
 
         return self.pos_drop(x)
 
-    def forward(self, x, return_all_tokens=None, mask=None):
+    def forward(self, x, coords, pad_mask, return_all_tokens=None, mask=None, padding_mask=None):
         # mim
+        # inp_x, coords, pad_mask
         if self.masked_im_modeling:
             assert mask is not None
-            x = self.prepare_tokens(x, mask=mask)
+            x = self.prepare_tokens(x, coords, mask=mask)
         else:
-            x = self.prepare_tokens(x)
-
+            x = self.prepare_tokens(x, coords)
+        #add cls token mask
+        pad_mask = torch.concat([torch.zeros((x.shape[0], 1)).to(pad_mask.device), pad_mask], dim=1)
+        
         for blk in self.blocks:
-            x = blk(x)
+            x = blk(x, pad_mask)
 
         x = self.norm(x)
         if self.fc_norm is not None:
@@ -265,29 +251,29 @@ class VisionTransformer(nn.Module):
         return len(self.blocks)
 
     def mask_model(self, x, mask):
-        x.permute(0, 2, 3, 1)[mask, :] = self.masked_embed.to(x.dtype)
-        return x
+        x[mask.long(), :] = self.masked_embed.to(x.dtype)
+        return x 
 
-def vit_tiny(patch_size=16, **kwargs):
+def vit_tiny(embedding_size=16, **kwargs):
     model = VisionTransformer(
-        patch_size=patch_size, embed_dim=192, depth=12, num_heads=3, mlp_ratio=4,
+        embedding_size=embedding_size, embed_dim=192, depth=12, num_heads=3, mlp_ratio=4,
         qkv_bias=True, **kwargs)
     return model
 
-def vit_small(patch_size=16, **kwargs):
+def vit_small(embedding_size=16, **kwargs):
     model = VisionTransformer(
-        patch_size=patch_size, embed_dim=384, depth=12, num_heads=6, mlp_ratio=4,
+        embedding_size=embedding_size, embed_dim=384, depth=12, num_heads=6, mlp_ratio=4,
         qkv_bias=True, **kwargs)
     return model
 
-def vit_base(patch_size=16, **kwargs):
+def vit_base(slide_embedding_size=16, **kwargs):
     model = VisionTransformer(
-        patch_size=patch_size, embed_dim=768, depth=12, num_heads=12, mlp_ratio=4,
+        slide_embedding_size=slide_embedding_size, embed_dim=768, depth=12, num_heads=12, mlp_ratio=4,
         qkv_bias=True, **kwargs)
     return model
 
-def vit_large(patch_size=16, **kwargs):
+def vit_large(embedding_size=16, **kwargs):
     model = VisionTransformer(
-        patch_size=patch_size, embed_dim=1024, depth=24, num_heads=16, mlp_ratio=4,
+        embedding_size=embedding_size, embed_dim=1024, depth=24, num_heads=16, mlp_ratio=4,
         qkv_bias=True, **kwargs)
     return model
