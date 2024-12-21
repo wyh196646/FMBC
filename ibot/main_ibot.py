@@ -35,7 +35,7 @@ warnings.filterwarnings("ignore")
 #CUDA_LAUNCH_BLOCKING=1
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "4"
+#os.environ["CUDA_VISIBLE_DEVICES"] = "4"
 
 def get_args_parser():
     parser = argparse.ArgumentParser('iBOT', add_help=False)
@@ -46,15 +46,15 @@ def get_args_parser():
                  'swin_tiny','swin_small', 'swin_base', 'swin_large'],
         help="""Name of architecture to train. For quick experiments with ViTs,
         we recommend using vit_tiny or vit_small.""")
-    parser.add_argument('--slide_embedding_size', default=384, type=int, help="""Size in pixels
+    parser.add_argument('--slide_embedding_size', default=768, type=int, help="""Size in pixels
         of input square patches - default 16 (for 1x16 patches). Using smaller
         values leads to better performance but requires more memory. Applies only
         for ViTs (vit_tiny, vit_small and vit_base). If <16, we recommend disabling
         mixed precision training (--use_fp16 false) to avoid unstabilities.""")
 
-    parser.add_argument('--out_dim', default=384, type=int, help="""Dimensionality of
+    parser.add_argument('--out_dim', default=768, type=int, help="""Dimensionality of
         output for [CLS] token.""")
-    parser.add_argument('--patch_out_dim', default=384, type=int, help="""Dimensionality of
+    parser.add_argument('--patch_out_dim', default=768, type=int, help="""Dimensionality of
         output for patch tokens.""")
     parser.add_argument('--shared_head', default=False, type=utils.bool_flag, help="""Wether to share 
         the same head for [CLS] token output and patch tokens output. When set to false, patch_out_dim
@@ -97,7 +97,7 @@ def get_args_parser():
         `--warmup_teacher_temp`""")
     parser.add_argument('--teacher_patch_temp', default=0.07, type=float, help=""""See 
         `--teacher_temp`""")
-    parser.add_argument('--warmup_teacher_temp_epochs', default=30, type=int,
+    parser.add_argument('--warmup_teacher_temp_epochs', default=1, type=int,
         help='Number of warmup epochs for the teacher temperature (Default: 30).')
 
     # Training/Optimization parameters
@@ -113,16 +113,16 @@ def get_args_parser():
     parser.add_argument('--clip_grad', type=float, default=3.0, help="""Maximal parameter
         gradient norm if using gradient clipping. Clipping with norm .3 ~ 1.0 can
         help optimization for larger ViT architectures. 0 for disabling.""")
-    parser.add_argument('--batch_size_per_gpu', default=1, type=int,
+    parser.add_argument('--batch_size_per_gpu', default=4, type=int,
         help='Per-GPU batch-size : number of distinct images loaded on one GPU.')
     parser.add_argument('--epochs', default=100, type=int, help='Number of epochs of training.')
     parser.add_argument('--freeze_last_layer', default=1, type=int, help="""Number of epochs
         during which we keep the output layer fixed. Typically doing so during
         the first epoch helps training. Try increasing this value if the loss does not decrease.""")
-    parser.add_argument("--lr", default=0.0005, type=float, help="""Learing rate at the end of
+    parser.add_argument("--lr", default=0.05, type=float, help="""Learing rate at the end of
         linear warmup (highest LR used during training). The learning rate is linearly scaled
         with the batch size, and specified here for a reference batch size of 256.""")
-    parser.add_argument("--warmup_epochs", default=10, type=int,
+    parser.add_argument("--warmup_epochs", default=1, type=int,
         help="Number of epochs for the linear learning-rate warm up.")
     parser.add_argument('--min_lr', type=float, default=1e-6, help="""Target LR at the
         end of optimization. We use a cosine LR schedule with linear warmup.""")
@@ -132,7 +132,7 @@ def get_args_parser():
     parser.add_argument('--drop_path', type=float, default=0.1, help="""Drop path rate for student network.""")
 
     # Multi-crop parameters
-    parser.add_argument('--global_crops_number', type=int, default=1, help="""Number of global
+    parser.add_argument('--global_crops_number', type=int, default=2, help="""Number of global
         views to generate. Default is to use two global crops. """)
     parser.add_argument('--global_crops_scale', type=float, nargs='+', default=(0.14, 1.),
         help="""Scale range of the cropped image before resizing, relatively to the origin image.
@@ -144,11 +144,14 @@ def get_args_parser():
     parser.add_argument('--local_crops_scale', type=float, nargs='+', default=(0.05, 0.4),
         help="""Scale range of the cropped image before resizing, relatively to the origin image.
         Used for small local view cropping of multi-crop.""")
-    parser.add_argument('--global_coverage_ratio', default=0.2, type=float, help='patch coverage')
+    parser.add_argument('--global_coverage_ratio', default=0.25, type=float, help='patch coverage')
     parser.add_argument('--local_coverage_ratio', default=0.1, type=float, help='patch coverage')
     parser.add_argument('--num_cluster', default=8, type=int, help='number of cluster')
+    #parser
+    parser.add_argument('--max_tiles', default=8000, type=int, help='number of cluster')
+    parser.add_argument('--shuffle_tiles', type=utils.bool_flag, default=True, help="""shuffle the image tiles """)
     # Misc
-    parser.add_argument('--data_path', default='/home/yuhaowang/data/embedding/TCGA-BRCA', type=str,
+    parser.add_argument('--data_path', default='/ruiyan/yuhao/embedding', type=str,
         help='Please specify path to the ImageNet training data.')
     parser.add_argument('--output_dir', default=".", type=str, help='Path to save logs and checkpoints.')
     parser.add_argument('--saveckp_freq', default=40, type=int, help='Save checkpoint every x epochs.')
@@ -179,6 +182,8 @@ def train_ibot(args):
     dataset =  SlideEmbeddingMask(
         embedding_root=args.data_path,
         patch_sizeembedding_size=args.slide_embedding_size,
+        max_tiles=args.max_tiles,
+        shuffle_tiles=args.shuffle_tiles,
         transform=transform,
         pred_ratio=args.pred_ratio,
         pred_ratio_var=args.pred_ratio_var,
@@ -403,6 +408,7 @@ def train_one_epoch(student, teacher, teacher_without_ddp, ibot_loss, data_loade
 
     for it, batch_data in enumerate(metric_logger.log_every(data_loader, 10, header)):
         # update weight decay and learning rate according to their schedule
+        torch.cuda.empty_cache()
         it = len(data_loader) * epoch + it  # global training iteration
         for i, param_group in enumerate(optimizer.param_groups):
             param_group["lr"] = lr_schedule[it]
@@ -644,3 +650,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     train_ibot(args)
+
+
+
+#CUDA_VISIBLE_DEVICES=1,4,6 torchrun --nproc_per_node=3 main_ibot.py
