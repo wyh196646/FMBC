@@ -67,7 +67,7 @@ class SlideDatasetForTasks(Dataset):
                 print('Missing: ', sld_path)
             else:
                 valid_slides.append(slides[i])
-                print('valid: {} success'.format(sld_path))
+                #print('valid: {} success'.format(sld_path))
         return valid_slides
     
     def setup_data(self, df: pd.DataFrame, splits: list, task: str='multi_class'):
@@ -195,14 +195,7 @@ class SlideDataset(SlideDatasetForTasks):
         sld_name = os.path.basename(sld).split('.h5')[0]
         return sld_name
     
-    def feature_select(self,assets, selct_ratio=0.2):
-        clustering_dict= self.element_indices(assets['labels'])
-        feature_index=[np.random.choice(value, int(len(value)*selct_ratio), replace=False) 
-                    for key, value in clustering_dict.items()]
-        feature_index=np.concatenate(feature_index)
-        feature=assets['features'][feature_index]
-        feature_coods=assets['coords'][feature_index]
-        return feature, feature_coods
+
     
     def element_indices(self,lst):
         index_dict = defaultdict(list)  
@@ -217,9 +210,8 @@ class SlideDataset(SlideDatasetForTasks):
             coords = 0
         elif '.h5' in img_path:
             assets, _ = self.read_assets_from_h5(img_path)
-            assets['features'], coords= self.feature_select(assets)
             images = torch.from_numpy(assets['features'])
-            coords = torch.from_numpy(coords)
+            coords = torch.from_numpy(assets['coords'])
             if self.shuffle_tiles:
                 images, coords = self.shuffle_data(images, coords)
             if images.size(0) > self.max_tiles:

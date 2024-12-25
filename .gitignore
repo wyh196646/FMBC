@@ -9,7 +9,26 @@ tests/data/
 .DS_Store
 *mgb*
 DEBUG*
-
+*.svs
+*.tif
+*.tiff
+*.png
+*.jpg
+*.jpeg
+*.bmp
+*.gif
+*.npy
+*.nii
+*.nii.gz
+*.h5
+*.hdf5
+*.hdf
+*.hdf4
+*.hdf5
+*.hdf5
+*.hdf5
+*.hdf5
+*.hdf5
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -153,3 +172,4 @@ src/misc
 src/debug
 core.*
 *.csv
+*.h5

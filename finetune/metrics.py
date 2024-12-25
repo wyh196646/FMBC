@@ -2,7 +2,9 @@ import numpy as np
 from sklearn.metrics import roc_auc_score, average_precision_score, \
                             balanced_accuracy_score, accuracy_score, \
                             cohen_kappa_score, mean_absolute_error,\
-                            mean_squared_error, mean_squared_error
+                            mean_squared_error, mean_squared_error,\
+                            f1_score
+                            
 
 
 class MakeMetrics:
@@ -32,6 +34,8 @@ class MakeMetrics:
             return accuracy_score(labels, probs)
         elif self.metric == 'qwk':
             return cohen_kappa_score(labels, probs, weights='quadratic')
+        elif self.metric == 'f1':
+            return f1_score(labels, probs, average='weighted')
         #'mae', 'mse', 'rmse'
         elif self.metric == 'mae':
             return mean_absolute_error(labels, probs)

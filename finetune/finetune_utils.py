@@ -100,8 +100,7 @@ def pad_tensors(imgs, coords):
 
 
 def slide_collate_fn(samples):
-    '''Separate the inputs and targets into separate lists
-    Return value {imgs: [N, L, 256, 384], pad_mask: [N, L]}'''
+
     image_list = [s['imgs'] for s in samples]
     img_len_list = [s['imgs'].size(0) for s in samples]
     coord_list = [s['coords'] for s in samples]

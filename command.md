@@ -1,29 +1,34 @@
-# validation the TCGA-LUAD 5 gene mutation
-```
-CUDA_VISIBLE_DEVICES=6 python main.py --task_cfg_path task_configs/mutation_5_gene.yaml --dataset_csv dataset_csv/mutation/LUAD-5-gene_TCGA.csv --root_path /home/yuhaowang/data/embedding/TCGA-LUAD --blr 0.004 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 \
---drop_path_rate 0.0 --val_r 0.1 --epochs 20 --input_dim 384 --latent_dim 384 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 1 \
---save_dir outputs/LUAD-5-gene --max_wsi_size 250000 --pretrained /home/yuhaowang/project/FMBC/dino_stage2/output/checkpoint0140.pth --model_arch vit_mtask 
-```
+# Training:train patch encoder
+'''
+source activate dinov2 && cd /ruiyan/yuhao/project/FMBC/dinov2 && CUDA_VISIBLE_DEVICES=0,1,2,3,4,5 python -m torch.distributed.launch --master_port 11129  --nproc_per_node=6 dinov2/train/train.py --config-file=dinov2/configs/train/patch.yaml --output-dir=./output/ train.dataset_path=TileDataset:split=TRAIN:root=/ruiyan/yuhao/data
+'''
 
-# Valid on TCGA-BRCA 6 gene mutation
-```
+# run patch feature extract
 
-CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/mutation_6_gene_brca.yaml --dataset_csv dataset_csv/mutation/BRCA-6-gene_TCGA.csv --root_path /home/yuhaowang/data/embedding/TCGA-BRCA --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.1 --epochs 30 --input_dim 384 --latent_dim 384 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 1 --save_dir outputs/BRCA-6-gene-muatation --max_wsi_size 250000 --pretrained /home/yuhaowang/project/FMBC/dino_stage2/output/checkpoint0160.pth --model_arch vit_small 
-```
+source activate dinov2 && cd /ruiyan/yuhao/project/dinov2 && python dinov2/run/eval/feature_extractor.py  --config-file dinov2/configs/train/patch.yaml --pretrained-weights /ruiyan/yuhao/project/output/eval/training_124999/teacher_checkpoint.pth --output-dir ./ --train-dataset TileDataset:split=TRAIN:root=/ruiyan/yuhao/data --dump_path /ruiyan/yuhao/embedding/TCGA-BRCA
 
 
+# Downstreamtask 1: Valid on TCGA-BRCA 6 gene mutation
 ```
 
-CUDA_VISIBLE_DEVICES=6 python main.py --task_cfg_path task_configs/tcga-brca-gene_expression.yaml --dataset_csv dataset_csv/expression_prediction/COUNT_Symbol_matrix_transpose_slide_id.csv --root_path /home/yuhaowang/data/embedding/TCGA-BRCA --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.1 --epochs 30 --input_dim 384 --latent_dim 384 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 1 --save_dir outputs/BRCA-6-gene --max_wsi_size 250000 --pretrained /home/yuhaowang/project/FMBC/dino_stage2/output/checkpoint0160.pth --model_arch vit_small 
-```
-```
-CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bracs_coarse.yaml --dataset_csv dataset_csv/subtype/BRACS_coarse.csv --root_path /home/yuhaowang/data/embedding/BRACS --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.1 --epochs 30 --input_dim 384 --latent_dim 384 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 1 --save_dir outputs/BRACS_Subtype --max_wsi_size 250000 --pretrained /home/yuhaowang/project/FMBC/dino_stage2/output/checkpoint0160.pth --model_arch vit_small 
-
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/mutation_6_gene_brca.yaml --dataset_csv dataset_csv/mutation/BRCA-6-gene_TCGA.csv --root_path /home/yuhaowang/data/embedding/TCGA-BRCA --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.1 --epochs 30 --input_dim 384 --latent_dim 384 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 1 --save_dir outputs/BRCA-6-gene-muatation --max_wsi_size 250000 --pretrained /home/yuhaowang/project/FMBC/dino_stage2/output/checkpoint0160.pth --model_arch vit_base 
 ```
 
+# Downstreamtask 2:  Valid on TCGA-BRCA 6 gene mutation
+```
+
+CUDA_VISIBLE_DEVICES=6 python main.py --task_cfg_path task_configs/tcga-brca-gene_expression.yaml --dataset_csv dataset_csv/expression_prediction/COUNT_Symbol_matrix_transpose_slide_id.csv --root_path /home/yuhaowang/data/embedding/TCGA-BRCA --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.1 --epochs 30 --input_dim 384 --latent_dim 384 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 1 --save_dir outputs/BRCA-6-gene --max_wsi_size 250000 --pretrained /home/yuhaowang/project/FMBC/dino_stage2/output/checkpoint0160.pth --model_arch vit_base 
+```
+# Downstreamtask 3:  Valid on BRACS-Coarse 
+```
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bracs_coarse.yaml --dataset_csv dataset_csv/subtype/BRACS_coarse.csv --root_path /ruiyan/yuhao/embedding/BRACS --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.1 --epochs 30 --input_dim 768 --latent_dim 768 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 1 --save_dir outputs/BRACS_Coarse --max_wsi_size 250000 --pretrained /ruiyan/yuhao/project/FMBC/ibot/checkpoint.pth --model_arch vit_base --lr 0.0001
+
+```
 
 
-## 跨采样（模态）数量重建有两种方式
-1.重建时，将所有模态拼接起来，比如1000+2000=3000，然后进行重建
-2.使用Transformer的decoder，但是tgt_embd使用原型，设置一个可学习的参数，prototype，然后与源模态生成目标模态，注意mask
-3.使用nn.functional.interpolate的采样方法进行数值采样
+# Downstreamtask 3:  Valid on BRACS-Fine-Grained
+```
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bracs_fine.yaml --dataset_csv dataset_csv/subtype/BRACS_fine.csv --root_path /ruiyan/yuhao/embedding/BRACS --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.1 --epochs 30 --input_dim 768 --latent_dim 768 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 1 --save_dir outputs/BRACS_fine --max_wsi_size 250000 --pretrained /ruiyan/yuhao/project/FMBC/ibot/checkpoint.pth --model_arch vit_base --lr 0.0001
+
+```
+ 

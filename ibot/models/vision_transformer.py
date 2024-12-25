@@ -15,7 +15,7 @@ import torch
 import torch.nn as nn
 
 from functools import partial
-from utils import trunc_normal_
+from ..utils import trunc_normal_
 from timm.models.registry import register_model
 from .pos_embed import get_2d_sincos_pos_embed
 
@@ -121,7 +121,7 @@ class VisionTransformer(nn.Module):
     def __init__(self, slide_embedding_size=384, num_classes=0, embed_dim=768, depth=12,
                  num_heads=12, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop_rate=0., attn_drop_rate=0.,
                  drop_path_rate=0., norm_layer=partial(nn.LayerNorm, eps=1e-6), return_all_tokens=False, 
-                 init_values=0, slide_ngrids=1000, use_mean_pooling=False, masked_im_modeling=False):
+                 init_values=0, slide_ngrids=2000, use_mean_pooling=False, masked_im_modeling=False):
         super().__init__()
         self.embed_dim= embed_dim
         self.return_all_tokens = return_all_tokens
@@ -132,6 +132,7 @@ class VisionTransformer(nn.Module):
         self.slide_ngrids = slide_ngrids
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
         self.register_buffer('pos_embed', torch.zeros(1, num_patches + 1, embed_dim), persistent=False)
+
         self.pos_drop = nn.Dropout(p=drop_rate)
 
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
@@ -184,13 +185,16 @@ class VisionTransformer(nn.Module):
         return pos.long() + 1  # add 1 for the cls token
     
     def prepare_tokens(self, x, coords, mask=None):
-        B, _, _ = x.shape#inp_x, coords, pad_mask
+        B, _, _ = x.shape #inp_x, coords, pad_mask
         # patch linear embedding
         x = self.patch_embed(x)
         pos = self.coords_to_pos(coords)
         # mask image modeling
+        # print(x.shape)
+        # print(self.pos_embed.shape)
+        # print(pos.shape)
         x = x + self.pos_embed[:, pos, :].squeeze(0)
-        
+        #print('compute success')
         if mask is not None:
             x = self.mask_model(x, mask)
         x = x.flatten(2)
@@ -251,7 +255,7 @@ class VisionTransformer(nn.Module):
         return len(self.blocks)
 
     def mask_model(self, x, mask):
-        x[mask.long(), :] = self.masked_embed.to(x.dtype)
+        x[:,mask.long(), :] = self.masked_embed.to(x.dtype)
         return x 
 
 def vit_tiny(embedding_size=16, **kwargs):

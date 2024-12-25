@@ -79,7 +79,7 @@ def train(dataloader, fold, args):
             # update the monitor scores
             task_setting = args.task_config.get('setting', 'multi_class')
             if task_setting == 'regression':
-                scores=val_records['mae']
+                scores = val_records['mae']
             else:
                 scores = val_records['macro_auroc']
                 

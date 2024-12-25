@@ -44,10 +44,8 @@ class ClusterTransform:
         nearest_indices = self.find_nearest_neighbors(points, seed_idx, target_points)
         return points[nearest_indices], features[nearest_indices]
 
-    def __call__(self, data):
-        points = torch.tensor(data['coords'])
-        features = torch.tensor(data['features'])
-        labels = torch.tensor(self.kmeans_clustering(features.numpy(), self.num_cluster))
+    def __call__(self, images, coords):
+        labels = torch.tensor(self.kmeans_clustering(images.numpy(), self.num_cluster))
 
         global_coords_list = [[] for _ in range(self.global_crops_number)]
         global_features_list = [[] for _ in range(self.global_crops_number)]
@@ -57,8 +55,8 @@ class ClusterTransform:
         for crop_idx in range(self.global_crops_number):
             for cluster_id in torch.unique(labels):
                 cluster_mask = labels == cluster_id
-                cluster_points = points[cluster_mask]
-                cluster_features = features[cluster_mask]
+                cluster_points = coords[cluster_mask]
+                cluster_features = images[cluster_mask]
 
                 if cluster_points.size(0) > 0:
                     global_coords, global_features = self.generate_coords(
@@ -70,8 +68,8 @@ class ClusterTransform:
         for crop_idx in range(self.local_crops_number):
             for cluster_id in torch.unique(labels):
                 cluster_mask = labels == cluster_id
-                cluster_points = points[cluster_mask]
-                cluster_features = features[cluster_mask]
+                cluster_points = coords[cluster_mask]
+                cluster_features = images[cluster_mask]
 
                 if cluster_points.size(0) > 0:
                     local_coords, local_features = self.generate_coords(
@@ -122,8 +120,8 @@ class SlideEmbeddingDataset(Dataset):
         return assets, attrs
     
 class SlideEmbeddingMask(SlideEmbeddingDataset):
-    def __init__(self, *args, patch_sizeembedding_size, pred_ratio, pred_ratio_var, pred_aspect_ratio, 
-                 pred_shape='block', pred_start_epoch=0, **kwargs):
+    def __init__(self, *args, patch_sizeembedding_size, pred_ratio, pred_ratio_var, pred_aspect_ratio, max_tiles=100000,
+                 shuffle_tiles=True,pred_shape='block', pred_start_epoch=0, **kwargs):
         super(SlideEmbeddingMask, self).__init__(*args, **kwargs)
         self.psz = patch_sizeembedding_size
         self.pred_ratio = pred_ratio  
@@ -136,7 +134,9 @@ class SlideEmbeddingMask(SlideEmbeddingDataset):
         self.log_aspect_ratio = tuple(map(lambda x: math.log(x), pred_aspect_ratio))
         self.pred_shape = pred_shape
         self.pred_start_epoch = pred_start_epoch
-
+        self.max_tiles=max_tiles
+        self.shuffle_tiles=shuffle_tiles
+        
     def generate_mask(self, num_points):
         high = int(self.get_pred_ratio() * num_points)
         mask = torch.cat([
@@ -167,10 +167,25 @@ class SlideEmbeddingMask(SlideEmbeddingDataset):
         
         return pred_ratio
     
+    def shuffle_data(self, images: torch.Tensor, coords: torch.Tensor) -> tuple:
+        '''Shuffle the serialized images and coordinates'''
+        indices = torch.randperm(len(images))
+        images_ = images[indices]
+        coords_ = coords[indices]
+        return images_, coords_
+    
     def __getitem__(self, idx):
-        data,_ = self.read_assets_from_h5(self.feature_path[idx])
+        data, _ = self.read_assets_from_h5(self.feature_path[idx])
+        images = torch.from_numpy(data['features'])
+        coords = torch.from_numpy(data['coords'])
+        if self.shuffle_tiles:
+            images, coords = self.shuffle_data(images, coords)
+        if images.size(0) > self.max_tiles:
+            images = images[:self.max_tiles, :]
+        if coords.size(0) > self.max_tiles:
+            coords = coords[:self.max_tiles, :]
         if self.transform:
-            data = self.transform(data)
+            data = self.transform(images,coords)
         predict_global_mask = []
         for global_coord in data['global_coords']:
             predict_global_mask.append(self.generate_mask(global_coord.size(0)))

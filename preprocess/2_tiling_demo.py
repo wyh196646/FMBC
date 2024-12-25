@@ -45,16 +45,17 @@ def process_slide(slide, save_dir):
     print(f'slide {slide} has been tiled')
 
 if __name__ == '__main__':
-    raw_dir = '/home/yuhaowang/data/raw_data'
-    output_dir = '/home/yuhaowang/data/processed_data'
+    raw_dir = '/ruiyan/yuhao/project/FMBC'
+    output_dir = './'
     #TCGA-BLCA  TCGA-BRCA  TCGA-COAD  TCGA-LUAD  TCGA-LUSC  TCGA-THCA
-    datasets=['CAMELYON16']
+    #datasets=['BACH','Post-NAT-BRCA','Multi-omic','IMPRESS','HE-vs-MPM']
+    datasets=['plot']
     for dataset in datasets:
         print(f'We are now Processing {dataset}...')
         save_dir = os.path.join(output_dir, dataset)
         slide_dir = os.path.join(raw_dir, dataset)
-        slide_list = glob.glob(os.path.join(slide_dir, '*/*.tif'))
-
+        slide_list = glob.glob(os.path.join(slide_dir, '**/*.svs'),recursive=True)
+        #print(slide_list)
         # Use a larger pool size to maximize CPU usage
         num_processes = 10
 

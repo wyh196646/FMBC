@@ -35,7 +35,7 @@ warnings.filterwarnings("ignore")
 #CUDA_LAUNCH_BLOCKING=1
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "4"
+#os.environ["CUDA_VISIBLE_DEVICES"] = "4"
 
 def get_args_parser():
     parser = argparse.ArgumentParser('iBOT', add_help=False)
@@ -46,15 +46,15 @@ def get_args_parser():
                  'swin_tiny','swin_small', 'swin_base', 'swin_large'],
         help="""Name of architecture to train. For quick experiments with ViTs,
         we recommend using vit_tiny or vit_small.""")
-    parser.add_argument('--slide_embedding_size', default=384, type=int, help="""Size in pixels
+    parser.add_argument('--slide_embedding_size', default=768, type=int, help="""Size in pixels
         of input square patches - default 16 (for 1x16 patches). Using smaller
         values leads to better performance but requires more memory. Applies only
         for ViTs (vit_tiny, vit_small and vit_base). If <16, we recommend disabling
         mixed precision training (--use_fp16 false) to avoid unstabilities.""")
 
-    parser.add_argument('--out_dim', default=384, type=int, help="""Dimensionality of
+    parser.add_argument('--out_dim', default=768, type=int, help="""Dimensionality of
         output for [CLS] token.""")
-    parser.add_argument('--patch_out_dim', default=384, type=int, help="""Dimensionality of
+    parser.add_argument('--patch_out_dim', default=768, type=int, help="""Dimensionality of
         output for patch tokens.""")
     parser.add_argument('--shared_head', default=False, type=utils.bool_flag, help="""Wether to share 
         the same head for [CLS] token output and patch tokens output. When set to false, patch_out_dim
@@ -97,7 +97,7 @@ def get_args_parser():
         `--warmup_teacher_temp`""")
     parser.add_argument('--teacher_patch_temp', default=0.07, type=float, help=""""See 
         `--teacher_temp`""")
-    parser.add_argument('--warmup_teacher_temp_epochs', default=30, type=int,
+    parser.add_argument('--warmup_teacher_temp_epochs', default=1, type=int,
         help='Number of warmup epochs for the teacher temperature (Default: 30).')
 
     # Training/Optimization parameters
@@ -113,7 +113,7 @@ def get_args_parser():
     parser.add_argument('--clip_grad', type=float, default=3.0, help="""Maximal parameter
         gradient norm if using gradient clipping. Clipping with norm .3 ~ 1.0 can
         help optimization for larger ViT architectures. 0 for disabling.""")
-    parser.add_argument('--batch_size_per_gpu', default=1, type=int,
+    parser.add_argument('--batch_size_per_gpu', default=4, type=int,
         help='Per-GPU batch-size : number of distinct images loaded on one GPU.')
     parser.add_argument('--epochs', default=100, type=int, help='Number of epochs of training.')
     parser.add_argument('--freeze_last_layer', default=1, type=int, help="""Number of epochs
@@ -122,7 +122,7 @@ def get_args_parser():
     parser.add_argument("--lr", default=0.0005, type=float, help="""Learing rate at the end of
         linear warmup (highest LR used during training). The learning rate is linearly scaled
         with the batch size, and specified here for a reference batch size of 256.""")
-    parser.add_argument("--warmup_epochs", default=10, type=int,
+    parser.add_argument("--warmup_epochs", default=0, type=int,
         help="Number of epochs for the linear learning-rate warm up.")
     parser.add_argument('--min_lr', type=float, default=1e-6, help="""Target LR at the
         end of optimization. We use a cosine LR schedule with linear warmup.""")
@@ -132,7 +132,7 @@ def get_args_parser():
     parser.add_argument('--drop_path', type=float, default=0.1, help="""Drop path rate for student network.""")
 
     # Multi-crop parameters
-    parser.add_argument('--global_crops_number', type=int, default=1, help="""Number of global
+    parser.add_argument('--global_crops_number', type=int, default=2, help="""Number of global
         views to generate. Default is to use two global crops. """)
     parser.add_argument('--global_crops_scale', type=float, nargs='+', default=(0.14, 1.),
         help="""Scale range of the cropped image before resizing, relatively to the origin image.
@@ -144,16 +144,19 @@ def get_args_parser():
     parser.add_argument('--local_crops_scale', type=float, nargs='+', default=(0.05, 0.4),
         help="""Scale range of the cropped image before resizing, relatively to the origin image.
         Used for small local view cropping of multi-crop.""")
-    parser.add_argument('--global_coverage_ratio', default=0.2, type=float, help='patch coverage')
+    parser.add_argument('--global_coverage_ratio', default=0.25, type=float, help='patch coverage')
     parser.add_argument('--local_coverage_ratio', default=0.1, type=float, help='patch coverage')
     parser.add_argument('--num_cluster', default=8, type=int, help='number of cluster')
+    #parser
+    parser.add_argument('--max_tiles', default=8000, type=int, help='number of cluster')
+    parser.add_argument('--shuffle_tiles', type=utils.bool_flag, default=True, help="""shuffle the image tiles """)
     # Misc
-    parser.add_argument('--data_path', default='/home/yuhaowang/data/embedding/TCGA-BRCA', type=str,
+    parser.add_argument('--data_path', default='/ruiyan/yuhao/embedding', type=str,
         help='Please specify path to the ImageNet training data.')
     parser.add_argument('--output_dir', default=".", type=str, help='Path to save logs and checkpoints.')
-    parser.add_argument('--saveckp_freq', default=40, type=int, help='Save checkpoint every x epochs.')
+    parser.add_argument('--saveckp_freq', default=10, type=int, help='Save checkpoint every x epochs.')
     parser.add_argument('--seed', default=0, type=int, help='Random seed.')
-    parser.add_argument('--num_workers', default=10, type=int, help='Number of data loading workers per GPU.')
+    parser.add_argument('--num_workers', default=16, type=int, help='Number of data loading workers per GPU.')
     parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
         distributed training; see https://pytorch.org/docs/stable/distributed.html""")
     parser.add_argument("--local_rank", default=0, type=int, help="Please ignore and do not set this argument.")
@@ -179,6 +182,8 @@ def train_ibot(args):
     dataset =  SlideEmbeddingMask(
         embedding_root=args.data_path,
         patch_sizeembedding_size=args.slide_embedding_size,
+        max_tiles=args.max_tiles,
+        shuffle_tiles=args.shuffle_tiles,
         transform=transform,
         pred_ratio=args.pred_ratio,
         pred_ratio_var=args.pred_ratio_var,
@@ -403,6 +408,7 @@ def train_one_epoch(student, teacher, teacher_without_ddp, ibot_loss, data_loade
 
     for it, batch_data in enumerate(metric_logger.log_every(data_loader, 10, header)):
         # update weight decay and learning rate according to their schedule
+        torch.cuda.empty_cache()
         it = len(data_loader) * epoch + it  # global training iteration
         for i, param_group in enumerate(optimizer.param_groups):
             param_group["lr"] = lr_schedule[it]
@@ -445,16 +451,7 @@ def train_one_epoch(student, teacher, teacher_without_ddp, ibot_loss, data_loade
             print("Loss is {}, stopping training".format(loss.item()), force=True)
             sys.exit(1)
 
-        # log statistics
-        # probs1 = teacher_output[0].chunk(args.global_crops_number)
-        # probs2 = student_output[0].chunk(args.global_crops_number)
-        # pred1 = utils.concat_all_gather(probs1[0].max(dim=1)[1]) 
-        # pred2 = utils.concat_all_gather(probs2[1].max(dim=1)[1])
-        # acc = (pred1 == pred2).sum() / pred1.size(0)
-        # pred_labels.append(pred1)
-        # real_labels.append(utils.concat_all_gather(labels.to(pred1.device)))
 
-        # student update
         optimizer.zero_grad()
         param_norms = None
         if fp16_scaler is None:
@@ -529,13 +526,46 @@ class iBOTLoss(nn.Module):
             np.ones(nepochs - warmup_teacher_temp_epochs - mim_start_epoch) * teacher_temp2
         ))
 
+    
+    @staticmethod
+    def reverse_batch(feature, n=2):
+    # 检查 n 是否可以被第一个维度整除
+        first_dim = feature.shape[0]
+        assert first_dim % n == 0
+        grouped_parts = [[] for _ in range(n)]
+    
+        if len(feature.shape) == 2:
+            for i in range(0, first_dim, n):
+                for j in range(n):
+                    grouped_parts[j].append(feature[i + j])  # 每组的第 j 个元素
+            new_feature = torch.vstack([part for group in grouped_parts for part in group])
+        elif len(feature.shape) == 3:
+            for i in range(0, first_dim, n):
+                for j in range(n):
+                    grouped_parts[j].append(feature[i + j])  # 每组的第 j 个元素
+            new_feature = torch.concatenate([torch.stack(group, axis=0) for group in grouped_parts], axis=0)
+
+        else:
+            raise ValueError("Unsupported feature shape: {}")
+
+        return new_feature
+
+
     def forward(self, student_output, teacher_output, student_local_cls, student_mask, epoch):
         """
         Cross-entropy between softmax outputs of the teacher and student networks.
         """
         student_cls, student_patch = student_output
         teacher_cls, teacher_patch = teacher_output
+
+        teacher_cls = self.reverse_batch(teacher_cls, n = self.ngcrops)
+        teacher_patch = self.reverse_batch(teacher_patch, n=self.ngcrops)
+        student_cls = self.reverse_batch(student_cls, n=self.ngcrops)
+        student_patch = self.reverse_batch(student_patch, n=self.ngcrops)
+        student_local_cls = self.reverse_batch(student_local_cls, n=self.nlcrops)
         
+        student_mask=self.reverse_batch(torch.stack(student_mask), n=self.ngcrops)
+ 
         if student_local_cls is not None:
             student_cls = torch.cat([student_cls, student_local_cls])
 
@@ -552,6 +582,8 @@ class iBOTLoss(nn.Module):
         teacher_cls_c = teacher_cls_c.detach().chunk(self.ngcrops)
         teacher_patch_c = F.softmax((teacher_patch - self.center2) / temp2, dim=-1)
         teacher_patch_c = teacher_patch_c.detach().chunk(self.ngcrops)
+        
+        mask_c = student_mask.chunk(self.ngcrops)
 
         total_loss1, n_loss_terms1 = 0, 0
         total_loss2, n_loss_terms2 = 0, 0
@@ -559,7 +591,7 @@ class iBOTLoss(nn.Module):
             for v in range(len(student_cls_c)):
                 if v == q:
                     loss2 = torch.sum(-teacher_patch_c[q] * F.log_softmax(student_patch_c[v], dim=-1), dim=-1)
-                    mask = student_mask[v]#.flatten(-2, -1)
+                    mask = mask_c[q]#.flatten(-2, -1)
                     loss2 = torch.sum(loss2 * mask.float(), dim=-1) / mask.sum(dim=-1).clamp(min=1.0)
                     total_loss2 += loss2.mean()
                     n_loss_terms2 += 1
@@ -589,54 +621,6 @@ class iBOTLoss(nn.Module):
         patch_center = patch_center / (len(teacher_patch) * dist.get_world_size())
         self.center2 = self.center2 * self.center_momentum2 + patch_center * (1 - self.center_momentum2)
 
-class DataAugmentationiBOT(object):
-    def __init__(self, global_crops_scale, local_crops_scale, global_crops_number, local_crops_number):
-        flip_and_color_jitter = transforms.Compose([
-            transforms.RandomHorizontalFlip(p=0.5),
-            transforms.RandomApply(
-                [transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1)],
-                p=0.8
-            ),
-            transforms.RandomGrayscale(p=0.2),
-        ])
-        normalize = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
-        ])
-
-        self.global_crops_number = global_crops_number
-        # transformation for the first global crop
-        self.global_transfo1 = transforms.Compose([
-            transforms.RandomResizedCrop(224, scale=global_crops_scale, interpolation=Image.BICUBIC),
-            flip_and_color_jitter,
-            utils.GaussianBlur(1.0),
-            normalize,
-        ])
-        # transformation for the rest of global crops
-        self.global_transfo2 = transforms.Compose([
-            transforms.RandomResizedCrop(224, scale=global_crops_scale, interpolation=Image.BICUBIC),
-            flip_and_color_jitter,
-            utils.GaussianBlur(0.1),
-            utils.Solarization(0.2),
-            normalize,
-        ])
-        # transformation for the local crops
-        self.local_crops_number = local_crops_number
-        self.local_transfo = transforms.Compose([
-            transforms.RandomResizedCrop(96, scale=local_crops_scale, interpolation=Image.BICUBIC),
-            flip_and_color_jitter,
-            utils.GaussianBlur(p=0.5),
-            normalize,
-        ])
-
-    def __call__(self, image):
-        crops = []
-        crops.append(self.global_transfo1(image))
-        for _ in range(self.global_crops_number - 1):
-            crops.append(self.global_transfo2(image))
-        for _ in range(self.local_crops_number):
-            crops.append(self.local_transfo(image))
-        return crops
 
 
 if __name__ == '__main__':
@@ -644,3 +628,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     train_ibot(args)
+
+
+
+#CUDA_VISIBLE_DEVICES=1,4,6 torchrun --nproc_per_node=3 main_ibot.py
+
+
+#
