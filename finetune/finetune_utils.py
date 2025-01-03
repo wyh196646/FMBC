@@ -119,7 +119,7 @@ def slide_collate_fn(samples):
 
 
 def get_splits(df: pd.DataFrame, 
-               val_r: float=0.1, test_r: float=0.2, 
+               val_r: float=0.0, test_r: float=0.2, 
                fold: int=0, 
                split_dir: str='', 
                fetch_splits: bool=True, 
@@ -139,7 +139,7 @@ def get_splits(df: pd.DataFrame,
         if val_r > 0:
             val_samples, test_samples = train_test_split(temp_samples, test_size=(test_r / (val_r + test_r)), random_state=fold)
         else:
-            val_samples, test_samples = [], temp_samples
+            val_samples, test_samples = temp_samples, temp_samples
         train_data = df[df[split_key].isin(train_samples)]
         val_data = df[df[split_key].isin(val_samples)]
         test_data = df[df[split_key].isin(test_samples)]

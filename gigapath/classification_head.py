@@ -85,8 +85,9 @@ class ClassificationHead(nn.Module):
             print("Done")
         # setup the classifier
         #num layers of slide_encoder
+
         self.encoder_num_layers= len(list(self.slide_encoder.named_parameters()))
-        
+        self.classifier = nn.Sequential(*[nn.Linear(latent_dim, n_classes)])
         #
     def forward(self, images: torch.Tensor, coords: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
         """

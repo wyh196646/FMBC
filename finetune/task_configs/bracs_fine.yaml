@@ -1,4 +1,4 @@
-name: BRACS_COARSE
+name: BRACS_Fine
 setting: multi_class
 label_dict:
   0: 0

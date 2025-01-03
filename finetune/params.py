@@ -44,10 +44,10 @@ def get_finetune_params():
     parser.add_argument('--dropout',        type=float, default=0.1, help='Dropout rate')
     parser.add_argument('--drop_path_rate', type=float, default=0.1, help='Drop path rate')
     parser.add_argument('--val_r',          type=float, default=0.1, help='Ratio of data used for validation')
-    parser.add_argument('--model_select',   type=str, default='last_epoch', help='Criteria for choosing the model checkpoint', choices=['val', 'last_epoch'])
+    parser.add_argument('--model_select',   type=str, default='val', help='Criteria for choosing the model checkpoint', choices=['val', 'last_epoch'])
     parser.add_argument('--save_dir',       type=str, default='', help='Save directory')
     parser.add_argument('--num_workers',    type=int, default=10, help='Number of workers')
-    parser.add_argument('--report_to',      type=str, default='tensorboard', help='Logger used for recording', choices=['wandb', 'tensorboard'])
+    parser.add_argument('--report_to',      type=str, default='wandb', help='Logger used for recording', choices=['wandb', 'tensorboard'])
     parser.add_argument('--fp16',           action='store_true', default=True, help='Fp16 training')
     parser.add_argument('--weighted_sample',action='store_true', default=False, help='Weighted sampling')
 

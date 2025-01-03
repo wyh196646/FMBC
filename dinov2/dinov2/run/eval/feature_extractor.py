@@ -181,6 +181,12 @@ def get_log_regression_args_parser(
         type=str,
         help="Path to save the features",
     )
+    parser.add_argument('--dataset_list',
+                        nargs='+', 
+                        type=str, 
+                        help='Dataset for feature extraction')
+    
+    
     parser.set_defaults(
         train_dataset_str="ImageNet:split=TRAIN",
         val_dataset_str="ImageNet:split=VAL",
@@ -193,7 +199,7 @@ def get_log_regression_args_parser(
         dump_path="/ruiyan/yuhao/embedding",
         ngpus=4
     )
-
+    
     
     
     return parser
@@ -224,20 +230,20 @@ def get_autocast_dtype(config):
 def eval_feature_extraction_with_model(
     model,
     train_dataset_str="ImageNet:split=TRAIN",
-    finetune_dataset_str=None,
     autocast_dtype=torch.float,
-    finetune_on_val=False,
-    metric_type=MetricType.MEAN_ACCURACY,
-    train_dtype=torch.float64,
     train_features_device=_CPU_DEVICE,
-    max_train_iters=DEFAULT_MAX_ITER,
+    dataset_list: list = [],
+    dump_path: str = None,
 ):
     cudnn.benchmark = True
 
     transform = make_classification_eval_transform(resize_size=224)
     target_transform = None
 
-    train_dataset = make_dataset(dataset_str=train_dataset_str, transform=transform, target_transform=target_transform)
+    train_dataset = make_dataset(dataset_str=train_dataset_str, 
+                                 transform=transform,
+                                 target_transform=target_transform,
+                                 dataset_list = dataset_list)
 
 
     with torch.cuda.amp.autocast(dtype=autocast_dtype):
@@ -245,10 +251,11 @@ def eval_feature_extraction_with_model(
             model=model,
             train_dataset=train_dataset,
             batch_size=8192,
-            num_workers=4,  
+            #batch_size=6144,
+            num_workers=2,  
             train_features_device=train_features_device,
         )
-    cluster_features(train_dataset.image_paths, train_feature, dump_path=args.dump_path)
+    cluster_features(train_dataset.image_paths, train_feature, dump_path=dump_path)
     torch.distributed.barrier()
 
 @torch.no_grad()
@@ -299,13 +306,9 @@ if __name__=="__main__":
     eval_feature_extraction_with_model(
         model=model,
         train_dataset_str=args.train_dataset_str,
-        finetune_dataset_str=args.finetune_dataset_str,
         autocast_dtype=autocast_dtype,
-        finetune_on_val=args.finetune_on_val,
-        metric_type=args.metric_type,
-        train_dtype=as_torch_dtype(args.train_dtype),
         train_features_device=torch.device(args.train_features_device),
-        max_train_iters=args.max_train_iters,
+        dataset_list=args.dataset_lst,
+        dump_path=args.dump_path
     )
-    
     

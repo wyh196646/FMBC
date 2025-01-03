@@ -173,3 +173,4 @@ src/debug
 core.*
 *.csv
 *.h5
+*.pkl

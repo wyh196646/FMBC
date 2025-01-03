@@ -80,6 +80,8 @@ def train(dataloader, fold, args):
             task_setting = args.task_config.get('setting', 'multi_class')
             if task_setting == 'regression':
                 scores = val_records['mae']
+            elif task_setting == 'binary_classification':
+                scores = val_records['bacc']
             else:
                 scores = val_records['macro_auroc']
                 
