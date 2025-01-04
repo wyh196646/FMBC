@@ -251,7 +251,6 @@ def eval_feature_extraction_with_model(
             model=model,
             train_dataset=train_dataset,
             batch_size=8192,
-            #batch_size=6144,
             num_workers=2,  
             train_features_device=train_features_device,
         )
