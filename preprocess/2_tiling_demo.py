@@ -1,10 +1,11 @@
+
 # from gigapath.pipeline import tile_one_slide
 # import huggingface_hub
 # import glob
 # import os
 # from functools import partial
 # from multiprocessing import Pool
-
+# import shutil
 # # Set your Hugging Face API token
 # os.environ["HF_TOKEN"] = "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"
 # assert "HF_TOKEN" in os.environ, "Please set the HF_TOKEN environment variable to your Hugging Face API token"
@@ -13,20 +14,52 @@
 #     """Process a single slide."""
 #     tile_one_slide(slide, save_dir=save_dir, level=1)
 #     print(f'slide {slide} has been tiled')
+    
+# def valid_dir(dir_path):
+#     if len(os.listdir(dir_path)) <=3:
+#         shutil.rmtree(dir_path)
+#         print(f'{dir_path} is removed')
+        
+# if __name__ == '__main__': 
+#     raw_dir = '/mnt/data/ruiyan/clearning'
+#     output_dir = '/mnt/data/ruiyan/processed_data'
+#     #TCGA-BLCA  TCGA-BRCA  TCGA-COAD  TCGA-LUAD  TCGA-LUSC  TCGA-THCA
+#     #datasets=['BACH','Post-NAT-BRCA','Multi-omic','IMPRESS','HE-vs-MPM']
+#     datasets=['CAMELYON17']
+#     for dataset in datasets:
+#         print(f'We are now Processing {dataset}...')
+#         save_dir = os.path.join(output_dir, dataset) 
+#         slide_dir = os.path.join(raw_dir, dataset)
+#         slide_list = glob.glob(os.path.join(slide_dir, '**/*.tif'),recursive=True)
+#         #print(slide_list)
+#         # Use a larger pool size to maximize CPU usage
+#         #slid_list=['/data1/BCOData/BRACS/BRACS_WSI/train/Group_AT/Type_FEA/BRACS_1858.svs']
+#         num_processes = 10
 
-# if __name__ == '__main__':
-#     dataset = 'TCGA-LUAD'
-#     raw_dir = '/home/yuhaowang/data/raw_data'
-#     output_dir = '/home/yuhaowang/data/processed_data'
-#     save_dir = os.path.join(output_dir, dataset)
-#     slide_dir = os.path.join(raw_dir, dataset)
-#     slide_list = glob.glob(os.path.join(slide_dir, '*/*.svs'))
+#         with Pool(processes=num_processes) as pool:
+#             # Adjust chunksize based on the slide list length and number of processes
+#             chunksize = max(1, len(slide_list) // (num_processes * 4))
+#             pool.imap_unordered(partial(process_slide, save_dir=save_dir), slide_list, chunksize=chunksize)
+#             pool.close()
+#             pool.join()
 
-#     # Use multiprocessing Pool to parallelize processing of slides
-#     with Pool(processes=45) as pool:
-#         pool.map(partial(process_slide, save_dir=save_dir), slide_list)
+#         print('All slides have been tiled')
+        
+#         for dir in os.listdir(os.path.join(save_dir,'output')):
+#             print(os.path.join(save_dir,'output', dir))
+#             valid_dir(os.path.join(save_dir,'output', dir))
+            
+#         for slide_path in slide_list:
+#             try:
+#                 print("NOTE: Prov-GigaPath is trained with 0.5 mpp preprocessed slides. Please make sure to use the appropriate level for the 0.5 MPP")
+#                 tile_one_slide(slide_path, save_dir=save_dir, level=1)
+#                 print("NOTE: tiling dependency libraries can be tricky to set up. Please double check the generated tile images.")
+#             except Exception as e:
+#                 print(f"Error processing slide {slide_path}: {e}")
+                
 
-#     print('All slides have been tiled')
+
+
 
 from gigapath.pipeline import tile_one_slide
 import huggingface_hub
@@ -47,16 +80,12 @@ def process_slide(slide, save_dir):
 if __name__ == '__main__':
     raw_dir = '/ruiyan/yuhao/project/FMBC'
     output_dir = './'
-    #TCGA-BLCA  TCGA-BRCA  TCGA-COAD  TCGA-LUAD  TCGA-LUSC  TCGA-THCA
-    #datasets=['BACH','Post-NAT-BRCA','Multi-omic','IMPRESS','HE-vs-MPM']
     datasets=['plot']
     for dataset in datasets:
         print(f'We are now Processing {dataset}...')
         save_dir = os.path.join(output_dir, dataset)
         slide_dir = os.path.join(raw_dir, dataset)
         slide_list = glob.glob(os.path.join(slide_dir, '**/*.svs'),recursive=True)
-        #print(slide_list)
-        # Use a larger pool size to maximize CPU usage
         num_processes = 10
 
         # Use multiprocessing Pool to parallelize processing of slides

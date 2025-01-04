@@ -344,8 +344,12 @@ def process_slide(sample: Dict["SlideKey", Any], level: int, margin: int, tile_s
 
         # tile location overlay
         visualize_tile_locations(sample, thumbnail_dir / (slide_image_path.name + "_roi_tiles.png"), tile_info_list, tile_size, origin_offset=sample["origin"])
-        tile_size=256
-        origin_offset=sample["origin"]#(576,0)
+        #save sample, tile_info_list with pkl
+        import pickle
+        with open(output_dir / "sample.pkl", "wb") as f:
+            pickle.dump(sample, f)
+        with open(output_dir / "tile_info_list.pkl", "wb") as f:
+            pickle.dump(tile_info_list, f)
         if n_failed_tiles > 0:
             # TODO what we want to do with slides that have some failed tiles?
             logging.warning(f"{slide_id} is incomplete. {n_failed_tiles} tiles failed.")
