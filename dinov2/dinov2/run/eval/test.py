@@ -119,14 +119,14 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 test_dir = '/ruiyan/yuhao/data'
 save_dir= '/ruiyan/yuhao/embedding'
-#dataset_list = ['private_chunk_1','private_chunk_2','private_chunk_3']
-dataset_list = ['TCGA-BRCA','private_chunk_4','private_chunk_5']
+#dataset_list = ['private_chunk_3','private_chunk_6','ACROBAT' ,'BCNB'  ,'CAMELYON16' ,' TIGER' ]
+dataset_list = os.listdir(test_dir)
 
 transform = make_classification_eval_transform(resize_size=224)
 target_transform = None
 
 
-batch_size = 640
+batch_size = 800
 for dataset in dataset_list:
     if not os.path.exists(os.path.join(save_dir,dataset)):
         os.makedirs(os.path.join(save_dir,dataset))
