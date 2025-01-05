@@ -1,0 +1,6 @@
+[INFO] Preprocessing started at: 2025-01-05 23:01:08
+[INFO] Norm: False | Target_microns: 256 | Patch_size: 224 | MPP: 1.1428571428571428
+[INFO] Model: xiyuewang-ctranspath-7c998680
+
+[INFO] ===== Processing slide TCGA-A7-A3IY-01Z-00-DX1.B4E75265-3B2A-456C-996A-F95B5A645BF8 =====
+[INFO] ===== Processing slide TCGA-A8-A06N-01Z-00-DX1.E25E65F8-DFE0-47CF-9FAB-B82EE8E321F7 =====
