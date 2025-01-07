@@ -3,7 +3,7 @@ import argparse
 
 def get_finetune_params():
 
-    parser = argparse.ArgumentParser(description='Finetune on downstream tasks')
+    parser = argparse.ArgumentParser(description='Finetune model on downstream tasks')
 
     # task settings
     parser.add_argument('--task_cfg_path',  type=str, default='', help='Path to the task configuration file')
@@ -12,21 +12,22 @@ def get_finetune_params():
 
     # input data settings
     parser.add_argument('--dataset_csv',    type=str, default='', help='Dataset csv file')
-    parser.add_argument('--split_dir',      type=str, default='', help='Split directory')
+    parser.add_argument('--split_dir',      type=str, default='data_split', help='Split directory')
     parser.add_argument('--pre_split_dir',  type=str, default='', help='Specify the pre-split directory, if it is specified, we will skip automatic split')
     parser.add_argument('--root_path',      type=str, default='', help='The tile encodings path')
     parser.add_argument('--tile_size',      type=int, default=256, help='Tile size in pixels')
     parser.add_argument('--max_wsi_size',   type=int, default=262144, help='Maximum WSI size in pixels for the longer side (width or height).')
 
     # model settings
-    parser.add_argument('--model_arch',     type=str, default='longnet_enc12l768d')
+    parser.add_argument('--model_arch',     type=str, default='vit_base')
     parser.add_argument('--input_dim',      type=int, default=1536, help='Dimension of input tile embeddings')
     parser.add_argument('--latent_dim',     type=int, default=768, help='Hidden dimension of the slide encoder')
     parser.add_argument('--feat_layer',     type=str, default='11', help='The layers from which embeddings are fed to the classifier, e.g., 5-11 for taking out the 5th and 11th layers')
     parser.add_argument('--pretrained',     type=str, default='', help='Pretrained GigaPath slide encoder')
     parser.add_argument('--freeze',         action='store_true', default=False, help='Freeze pretrained model')
     parser.add_argument('--global_pool',    action='store_true', default=False, help='Use global pooling, will use [CLS] token if False')
-
+    parser.add_argument('--pretrain_model', default='ctans',help='type of pretrain model, ctans, UNI, CONCH, CHIEF,etc ... ')
+    parser.add_argument('--pretrain_model_type', default='patch_level',help='type of pretrain model, patch level or slide level ')
     # training settings
     parser.add_argument('--seed',           type=int, default=0, help='Random seed')
     parser.add_argument('--epochs',         type=int, default=5, help='Number of training epochs')
@@ -51,6 +52,8 @@ def get_finetune_params():
     parser.add_argument('--fp16',           action='store_true', default=True, help='Fp16 training')
     parser.add_argument('--weighted_sample',action='store_true', default=False, help='Weighted sampling')
 
+    # Testing mode with MIL model, MIL Settings
+    parser.add_argument('--bag_size',    type=int, default=512, help='Number of workers')
     
     parser.add_argument('--experiment', type=str, default='finetune', help='Experiment name')
     return parser.parse_args()

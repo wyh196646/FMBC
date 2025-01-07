@@ -6,23 +6,22 @@
 # Only use absolute paths!
 
 preprocessing:
-  output_dir: /home/yuhaowang/project/FMBC/benchmark/output # Path to save features to
-  wsi_dir: /home/yuhaowang/data/processed_data # Path of where the whole-slide images are.
-  dataset: TCGA-BRCA
-  cache_dir: /home/yuhaowang/project/FMBC/benchmark/cache # Directory to store intermediate slide JPGs
+  output_dir: /ruiyan/yuhao/tile_embed # Path to save features to
+  wsi_dir: /ruiyan/yuhao/data/ # Path of where the whole-slide images are.
+  dataset: BRACS
   microns: 256 # Edge length in microns for each patch (default is 256, with pixel size 224, 256/224 = ~1.14MPP = ~9x magnification)
   norm: false # Perform Macenko normalisation
   feat_extractor: ctp # Use ctp for CTransPath (default) or uni for UNI (requires prior authentication)
   del_slide: false # Remove the original slide after processing
   cache: true # Save intermediate images (slide, background rejected, normalized)
   only_feature_extraction: false # Only perform feature extraction (intermediate images (background rejected, [normalized]) have to exist)
-  cores: 8 # CPU cores to use
+  cores: 1 # CPU cores to use
   device: cuda:0 # device to run feature extraction on (cpu, cuda, cuda:0, etc.)
 
 modeling:
   clini_table: # Path to clini_table file (.xlsx or .csv)
   slide_table: # Path to slide_table file (.xlsx or .csv)
-  feature_dir: ${preprocessing.output_dir}/STAMP_macenko_xiyuewang-ctranspath-7c998680 # Path to feature directory
+  feature_dir: ${preprocessing.output_dir}/STAMP_macenko_xiyuewang-ctranspath # Path to feature directory
   output_dir: # Path to output directory
   target_label: # Target label. No spaces allowed! Format clinical table accordingly
   categories: [] # Categories (list), leave empty to automatically infer based on unique values in the target_label column

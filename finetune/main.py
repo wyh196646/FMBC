@@ -22,15 +22,14 @@ if __name__ == '__main__':
     seed_torch(device, args.seed)
 
     # load the task configuration
-    print('Loading task configuration from: {}'.format(args.task_cfg_path))
+    print('Loading task configur+ation from: {}'.format(args.task_cfg_path))
     args.task_config = load_task_config(args.task_cfg_path)
     print(args.task_config)
     args.task = args.task_config.get('name', 'task')
     
     # set the experiment save directory
-    args.save_dir = os.path.join(args.save_dir, args.task, args.exp_name)
+    args.save_dir = os.path.join(args.save_dir, args.task, args.pretrain_model)
     args.model_code, args.task_code, args.exp_code = get_exp_code(args) # get the experiment code
-    args.save_dir = os.path.join(args.save_dir, args.exp_code)
     os.makedirs(args.save_dir, exist_ok=True)
     print('Experiment code: {}'.format(args.exp_code))
     print('Setting save directory: {}'.format(args.save_dir))
@@ -57,8 +56,10 @@ if __name__ == '__main__':
     print('Setting split directory: {}'.format(args.split_dir))
     dataset = pd.read_csv(args.dataset_csv) # read the dataset csv file
 
-    # use the slide dataset
+    # use the slide dataset, set up the dataset class
+    pretrain_model_type = args.pretrain_model_type
     DatasetClass = SlideDataset
+    
 
     # set up the results dictionary
     results = {}
@@ -70,9 +71,19 @@ if __name__ == '__main__':
         # get the splits
         train_splits, val_splits, test_splits = get_splits(dataset, fold=fold, **vars(args))
         # instantiate the dataset
-        train_data, val_data, test_data = DatasetClass(dataset, args.root_path, train_splits, args.task_config, split_key=args.split_key) \
-                                        , DatasetClass(dataset, args.root_path, val_splits, args.task_config, split_key=args.split_key) if len(val_splits) > 0 else None \
-                                        , DatasetClass(dataset, args.root_path, test_splits, args.task_config, split_key=args.split_key) if len(test_splits) > 0 else None
+        train_data, val_data, test_data = DatasetClass(dataset, 
+                                                       args.root_path, 
+                                                       train_splits,
+                                                       args.task_config, 
+                                                       split_key=args.split_key) \
+                                        , DatasetClass(dataset,
+                                                       args.root_path, 
+                                                       val_splits,
+                                                       args.task_config, 
+                                                       split_key=args.split_key) if len(val_splits) > 0 else None \
+                                        , DatasetClass(dataset,
+                                                       args.root_path,
+                                                       test_splits, args.task_config, split_key=args.split_key) if len(test_splits) > 0 else None
         args.n_classes = train_data.n_classes # get the number of classes
         # get the dataloader
         train_loader, val_loader, test_loader = get_loader(train_data, val_data, test_data, **vars(args))

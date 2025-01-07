@@ -617,7 +617,7 @@ def extract_features_(
 
     from math import ceil
 
-    batch_size = 64
+    batch_size = 720
 
     batched_dl = batched(dl, batch_size=batch_size)
 
@@ -740,7 +740,7 @@ def extract_features_(
         f.attrs['extractor'] = extractor_string
 
 def feature_extract(output_dir: Path, wsi_dir: Path, model_path: Path, dataset: str, norm: bool,
-               target_microns: int = 256, patch_size: int = 224, keep_dir_structure: bool = False,
+               target_microns: int = 256, patch_size: int = 224, 
                device: str = "cuda", normalization_template: Path = None, feat_extractor: str = "ctp"):
     # Clean up potentially old leftover .lock files
 
@@ -787,7 +787,7 @@ def feature_extract(output_dir: Path, wsi_dir: Path, model_path: Path, dataset: 
     output_dir.mkdir(parents=True, exist_ok=True)
     norm_method = "STAMP_macenko_" if norm else "STAMP_raw_"
     model_name_norm = Path(norm_method + model_name)
-    output_file_dir = output_dir/model_name_norm/dataset
+    output_file_dir = output_dir/dataset/model_name_norm
     output_file_dir.mkdir(parents=True, exist_ok=True)
     # Create logfile and set up logging
     logfile_name = "logfile_" + time.strftime("%Y-%m-%d_%H-%M-%S") + "_" + str(os.getpid())
@@ -819,7 +819,6 @@ def feature_extract(output_dir: Path, wsi_dir: Path, model_path: Path, dataset: 
     img_dir = [item for item in slide_dir.iterdir() if item.is_dir()]
     for slide_url in tqdm(img_dir, "\nPreprocessing progress", leave=False, miniters=1, mininterval=0):
         slide_name = slide_url.stem
-        start_time = time.time()
         feat_out_dir = output_file_dir/slide_name
 
         print("\n")
@@ -831,8 +830,5 @@ def feature_extract(output_dir: Path, wsi_dir: Path, model_path: Path, dataset: 
                                 outdir=feat_out_dir,  is_norm=norm, device=device if has_gpu else "cpu",
                                 target_microns=target_microns, patch_size=patch_size,
                                 processor = extractor.processor if (feat_extractor == "hibou-l" or feat_extractor == "hibou-b" or feat_extractor == "conch" or feat_extractor == "phikon" or feat_extractor == "plip" or feat_extractor == "biomedclip") else None)
-    else:
-        if os.path.exists((f"{feat_out_dir}.h5")):
-            logging.info(".h5 file for this slide already exists. Skipping...")
         else:
-            logging.info("Slide is already being processed. Skipping...")
+           logging.info(".h5 file for this slide already exists. Skipping...")
