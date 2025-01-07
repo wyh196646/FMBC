@@ -88,6 +88,7 @@ def build_model_for_eval(config, pretrained_weights):
     model.cuda()
     return model
 from easydict import EasyDict
+
 config = {
     'student':EasyDict({
     'arch': 'vit_base',
@@ -119,13 +120,11 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 test_dir = '/ruiyan/yuhao/data'
 save_dir= '/ruiyan/yuhao/embedding'
-#dataset_list = ['private_chunk_3','private_chunk_6','ACROBAT' ,'BCNB'  ,'CAMELYON16' ,' TIGER' ]
+#dataset_list = ['BRACS']
 dataset_list = os.listdir(test_dir)
 
 transform = make_classification_eval_transform(resize_size=224)
 target_transform = None
-
-
 batch_size = 800
 for dataset in dataset_list:
     if not os.path.exists(os.path.join(save_dir,dataset)):

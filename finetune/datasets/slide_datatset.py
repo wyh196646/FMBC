@@ -6,6 +6,16 @@ import numpy as np
 import sys
 from torch.utils.data import Dataset
 from collections import defaultdict, deque
+from dataclasses import dataclass
+
+import numpy as np
+from typing import Any, Iterable, Optional, Sequence, Tuple, Union, Protocol, Callable
+from pathlib import Path
+import h5py
+import torch
+from torch.utils.data import Dataset
+import pandas as pd
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..','dino_stage2'))
 
 class SlideDatasetForTasks(Dataset):
@@ -195,14 +205,6 @@ class SlideDataset(SlideDatasetForTasks):
         sld_name = os.path.basename(sld).split('.h5')[0]
         return sld_name
     
-
-    
-    def element_indices(self,lst):
-        index_dict = defaultdict(list)  
-        for i, value in enumerate(lst):
-            index_dict[value].append(i)  
-        return dict(index_dict)
-
     def get_images_from_path(self, img_path: str) -> dict:
         '''Get the images from the path'''
         if '.pt' in img_path:
@@ -225,6 +227,20 @@ class SlideDataset(SlideDatasetForTasks):
                 'coords': coords}
         
         return data_dict
+    
+    def get_balance_weight(self):
+        # for data balance
+        label = self.labels
+        label_np = np.array(label)
+        classes = list(set(label))
+        N = len(self.df)
+        num_of_classes = [(label_np==c).sum() for c in classes]
+        c_weight = [N/num_of_classes[i] for i in range(len(classes))]
+        weight = [0 for _ in range(N)]
+        for i in range(N):
+            c_index = classes.index(label[i])
+            weight[i] = c_weight[c_index]
+        return weight
     
     def get_one_sample(self, idx: int) -> dict:
         '''Get one sample from the dataset'''
@@ -251,7 +267,6 @@ class SlideDataset(SlideDatasetForTasks):
     def get_sample_with_try(self, idx, n_try=3):
         '''Get the sample with n_try'''
         for _ in range(n_try):
-            sample = self.get_one_sample(idx)
             try:
                 sample = self.get_one_sample(idx)
                 return sample

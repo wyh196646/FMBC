@@ -39,7 +39,8 @@ from pathlib import Path
 from random import shuffle
 import torch
 from typing import Optional
-
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 
 NORMALIZATION_TEMPLATE_URL = "https://github.com/Avic3nna/STAMP/blob/main/resources/normalization_template.jpg?raw=true"
@@ -421,7 +422,7 @@ def run_cli(args: argparse.Namespace):
     #preprocess the dataset 
     require_configs(
         cfg,
-        ["output_dir", "wsi_dir", "cache_dir", "microns", "cores", "norm", "del_slide", "only_feature_extraction", "device", "feat_extractor"],
+        ["output_dir", "wsi_dir",  "microns", "cores", "norm", "del_slide", "only_feature_extraction", "device", "feat_extractor"],
         prefix="preprocessing"
     )
     c = cfg.preprocessing
@@ -473,39 +474,38 @@ def run_cli(args: argparse.Namespace):
         target_microns=c.microns,
         norm=c.norm,
     )
+    print("Feature extraction complete!")
 
+    # require_configs(
+    #     cfg,
+    #     ["output_dir", "feature_dir", "target_label", "cat_labels", "cont_labels", "n_splits"], # this one requires the n_splits key!
+    #     prefix="modeling"
+    # )
+    # c = cfg.modeling
+    # from .modeling.marugoto.transformer.helpers import categorical_crossval_
+    # categorical_crossval_(clini_table=Path(c.clini_table), 
+    #                         slide_table=Path(c.slide_table),
+    #                         feature_dir=Path(c.feature_dir),
+    #                         output_path=Path(c.output_dir),
+    #                         target_label=c.target_label,
+    #                         cat_labels=c.cat_labels,
+    #                         cont_labels=c.cont_labels,
+    #                         categories=c.categories,
+    #                         n_splits=c.n_splits)
     
     
-    require_configs(
-        cfg,
-        ["output_dir", "feature_dir", "target_label", "cat_labels", "cont_labels", "n_splits"], # this one requires the n_splits key!
-        prefix="modeling"
-    )
-    c = cfg.modeling
-    from .modeling.marugoto.transformer.helpers import categorical_crossval_
-    categorical_crossval_(clini_table=Path(c.clini_table), 
-                            slide_table=Path(c.slide_table),
-                            feature_dir=Path(c.feature_dir),
-                            output_path=Path(c.output_dir),
-                            target_label=c.target_label,
-                            cat_labels=c.cat_labels,
-                            cont_labels=c.cont_labels,
-                            categories=c.categories,
-                            n_splits=c.n_splits)
-    
-    
-    require_configs(
-        cfg,
-        ["pred_csvs", "target_label", "true_class", "output_dir"],
-        prefix="modeling.statistics")
-    from .modeling.statistics import compute_stats
-    c = cfg.modeling.statistics
-    if isinstance(c.pred_csvs,str):
-        c.pred_csvs = [c.pred_csvs]
-    compute_stats(pred_csvs=[Path(x) for x in c.pred_csvs],
-                    target_label=c.target_label,
-                    true_class=c.true_class,
-                    output_dir=Path(c.output_dir))
+    # require_configs(
+    #     cfg,
+    #     ["pred_csvs", "target_label", "true_class", "output_dir"],
+    #     prefix="modeling.statistics")
+    # from .modeling.statistics import compute_stats
+    # c = cfg.modeling.statistics
+    # if isinstance(c.pred_csvs,str):
+    #     c.pred_csvs = [c.pred_csvs]
+    # compute_stats(pred_csvs=[Path(x) for x in c.pred_csvs],
+    #                 target_label=c.target_label,
+    #                 true_class=c.true_class,
+    #                 output_dir=Path(c.output_dir))
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="STAMP: Solid Tumor Associative Modeling in Pathology")

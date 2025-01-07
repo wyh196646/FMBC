@@ -42,8 +42,9 @@ class TileDataset(ExtendedVisionDataset):
                     print("Verifying images. This ran at ~100 images/sec/cpu for me. Probably depends heavily on disk perf.")
                     invalid_images = set(verify_images(image_paths))
                     print("Skipping invalid images:", invalid_images)
-                self.image_paths.extend([p for p in image_paths if p not in invalid_images])
-
+                    self.image_paths.extend([p for p in image_paths if p not in invalid_images])
+                else:
+                    self.image_paths.extend(image_paths)
         else:
             self.image_paths = get_image_files(self.root)
             
