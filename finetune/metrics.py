@@ -34,9 +34,10 @@ class MakeMetrics:
             return accuracy_score(labels, probs)
         elif self.metric == 'qwk':
             return cohen_kappa_score(labels, probs, weights='quadratic')
-        elif self.metric == 'f1':
+        elif self.metric == 'weighted_f1':
+            probs = probs>0.5
             return f1_score(labels, probs, average='weighted')
-        #'mae', 'mse', 'rmse'
+    
         elif self.metric == 'mae':
             return mean_absolute_error(labels, probs)
         elif self.metric == 'mse':
@@ -93,7 +94,7 @@ def calculate_multilabel_metrics(probs: np.array, labels: np.array, label_dict, 
 
 
 def calculate_multiclass_or_binary_metrics(probs: np.array, labels: np.array, label_dict, add_metrics: list=None) -> dict:
-    metrics = ['bacc', 'acc', 'auroc', 'auprc'] + (add_metrics if add_metrics is not None else [])
+    metrics = ['bacc', 'acc', 'auroc', 'auprc','weighted_f1'] + (add_metrics if add_metrics is not None else [])
     results = {}
     for average in ['macro', None]: 
         for metric in metrics: 

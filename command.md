@@ -11,30 +11,43 @@ source activate dinov2 && cd /ruiyan/yuhao/project/FMBC/dinov2 && python dinov2/
 # Downstreamtask 1: Valid on TCGA-BRCA 6 gene mutation
 ```
 
-CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/mutation_6_gene_brca.yaml --dataset_csv dataset_csv/mutation/BRCA-6-gene_TCGA.csv --root_path /home/yuhaowang/data/embedding/TCGA-BRCA --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.1 --epochs 30 --input_dim 384 --latent_dim 384 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 5 --save_dir outputs/BRCA-6-gene-muatation --max_wsi_size 250000 --pretrained /home/yuhaowang/project/FMBC/dino_stage2/output/checkpoint0160.pth --model_arch vit_base 
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/mutation_6_gene_brca.yaml --dataset_csv dataset_csv/mutation/BRCA-6-gene_TCGA.csv --root_path /home/yuhaowang/data/embedding/TCGA-BRCA --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.1 --epochs 30 --input_dim 384 --latent_dim 384 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 5 --save_dir outputs --max_wsi_size 250000 --pretrained /home/yuhaowang/project/FMBC/dino_stage2/output/checkpoint0160.pth --model_arch vit_base 
 ```
 
 # Downstreamtask 2:  Valid on TCGA-BRCA 6 gene mutation
 ```
 
-CUDA_VISIBLE_DEVICES=6 python main.py --task_cfg_path task_configs/tcga-brca-gene_expression.yaml --dataset_csv dataset_csv/expression_prediction/COUNT_Symbol_matrix_transpose_slide_id.csv --root_path /home/yuhaowang/data/embedding/TCGA-BRCA --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.1 --epochs 30 --input_dim 384 --latent_dim 384 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 5 --save_dir outputs/BRCA-6-gene --max_wsi_size 250000 --pretrained /home/yuhaowang/project/FMBC/dino_stage2/output/checkpoint0160.pth --model_arch vit_base 
+CUDA_VISIBLE_DEVICES=6 python main.py --task_cfg_path task_configs/tcga-brca-gene_expression.yaml --dataset_csv dataset_csv/expression_prediction/COUNT_Symbol_matrix_transpose_slide_id.csv --root_path /home/yuhaowang/data/embedding/TCGA-BRCA --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.1 --epochs 30 --input_dim 384 --latent_dim 384 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 5 --save_dir outputs --max_wsi_size 250000 --pretrained /home/yuhaowang/project/FMBC/dino_stage2/output/checkpoint0160.pth --model_arch vit_base 
 ```
 # Downstreamtask 3:  Valid on BRACS-Coarse 
 ```
-CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bracs_coarse.yaml --dataset_csv dataset_csv/subtype/BRACS_coarse.csv --root_path /ruiyan/yuhao/embedding/BRACS --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.0 --epochs 30 --input_dim 768 --latent_dim 768 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 5 --save_dir outputs/BRACS_Coarse --max_wsi_size 250000 --pretrained /ruiyan/yuhao/project/FMBC/ibot/checkpoint.pth --model_arch vit_base --lr 0.0001
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bracs_coarse.yaml --dataset_csv dataset_csv/subtype/BRACS_coarse.csv --root_path /ruiyan/yuhao/embedding/BRACS --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.0 --epochs 30 --input_dim 768 --latent_dim 768 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 5 --save_dir outputs --max_wsi_size 250000 --pretrained /ruiyan/yuhao/project/FMBC/ibot/checkpoint.pth --model_arch vit_base --lr 0.0001
 
 ```
 
 
 # Downstreamtask 3:  Valid on BRACS-Fine-Grained
 ```
-CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bracs_fine.yaml --dataset_csv dataset_csv/subtype/BRACS_fine.csv --root_path /ruiyan/yuhao/embedding/BRACS --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.0 --epochs 30 --input_dim 768 --latent_dim 768 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 5 --save_dir outputs/BRACS_fine --max_wsi_size 250000 --pretrained /ruiyan/yuhao/project/FMBC/ibot/checkpoint.pth --model_arch vit_base --lr 0.0001
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bracs_fine.yaml --dataset_csv dataset_csv/subtype/BRACS_fine.csv --root_path /ruiyan/yuhao/embedding/BRACS --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.0 --epochs 30 --input_dim 768 --latent_dim 768 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 5 --save_dir outputs --max_wsi_size 250000 --pretrained /ruiyan/yuhao/project/FMBC/ibot/checkpoint.pth --model_arch vit_base --lr 0.0001
 
 ```
 
 
 # Downstreamtask 3:  Valid on TCGA-Subtype
 ```
-CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/TCGA-BRCA-Subtype.yaml --dataset_csv dataset_csv/subtype/TCGA-BRCA-Subtype.csv --root_path /ruiyan/yuhao/embedding/TCGA-BRCA --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.0 --epochs 30 --input_dim 768 --latent_dim 768 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 5 --save_dir outputs/TCGA-BRCA-Subtype --max_wsi_size 250000 --pretrained /ruiyan/yuhao/project/FMBC/ibot/checkpoint.pth --model_arch vit_base --lr 0.0001
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/TCGA-BRCA-Subtype.yaml --dataset_csv dataset_csv/subtype/TCGA-BRCA-Subtype.csv --root_path /ruiyan/yuhao/embedding/TCGA-BRCA --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.0 --epochs 30 --input_dim 768 --latent_dim 768 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 5 --save_dir outputs --max_wsi_size 250000 --pretrained /ruiyan/yuhao/project/FMBC/ibot/checkpoint.pth --model_arch vit_base --lr 0.0001
+
+```
+
+
+# Downstreamtask 3:  Valid on bcnb_er
+```
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bcnb_er.yaml --dataset_csv dataset_csv/biomarker/BCNB_ER.csv --root_path /ruiyan/yuhao/embedding/BCNB --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.0 --epochs 30 --input_dim 768 --latent_dim 768 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 5 --save_dir outputs --max_wsi_size 250000 --pretrained /ruiyan/yuhao/project/FMBC/ibot/checkpoint.pth --model_arch vit_base --lr 0.0001
+
+```
+
+# Downstreamtask 3:  Valid on bcnb_her2
+```
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bcnb_her2.yaml --dataset_csv dataset_csv/biomarker/BCNB_HER2.csv --root_path /ruiyan/yuhao/embedding/BCNB --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.0 --epochs 30 --input_dim 768 --latent_dim 768 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 5 --save_dir outputs --max_wsi_size 250000 --pretrained /ruiyan/yuhao/project/FMBC/ibot/checkpoint.pth --model_arch vit_base --lr 0.0001
 
 ```

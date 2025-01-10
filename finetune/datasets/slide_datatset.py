@@ -56,7 +56,8 @@ class SlideDatasetForTasks(Dataset):
         # get slides that have tile encodings
         valid_slides = self.get_valid_slides(root_path, data_df[slide_key].values)
         # filter out slides that do not have tile encodings
-        data_df = data_df[data_df[slide_key].isin(valid_slides)] 
+        data_df = data_df[data_df[slide_key].isin(valid_slides)]
+        #print(data) 
         # set up the task
         self.setup_data(data_df, splits, task_config.get('setting', 'multi_class'))
         
@@ -76,7 +77,7 @@ class SlideDatasetForTasks(Dataset):
             if not os.path.exists(sld_path):
                 print('Missing: ', sld_path)
             else:
-                valid_slides.append(slides[i])
+                valid_slides.append(str(slides[i]))
                 #print('valid: {} success'.format(sld_path))
         return valid_slides
     
@@ -106,12 +107,11 @@ class SlideDatasetForTasks(Dataset):
         # get the corresponding splits
         assert self.split_key in df.columns, 'No {} column found in the dataframe'.format(self.split_key)
         df = df[df[self.split_key].isin(splits)]
-        for i in splits:
-            print(i)
+
         #TCGA-BH-A1EO-01Z-00-DX1
         images = df[self.slide_key].to_list()
         labels = df[label_keys].to_numpy()
-            
+        
         return df, images, labels, n_classes
     
         
@@ -119,10 +119,13 @@ class SlideDatasetForTasks(Dataset):
         '''Prepare the data for multi-class classification'''
         # set up the label_dict
         label_dict = self.task_cfg.get('label_dict', {})
+        #print(label_dict)
+        #print(df)
         assert  label_dict, 'No label_dict found in the task configuration'
         # set up the mappings
         assert 'label' in df.columns, 'No label column found in the dataframe'
         df['label'] = df['label'].map(label_dict)
+        #print(df['label'])
         n_classes = len(label_dict)
         
         # get the corresponding splits
@@ -130,6 +133,7 @@ class SlideDatasetForTasks(Dataset):
         df = df[df[self.split_key].isin(splits)]
         images = df[self.slide_key].to_list()
         labels = df[['label']].to_numpy().astype(int)
+        #print(labels)
         return df, images, labels, n_classes
         
     def prepare_multi_label_data(self, df: pd.DataFrame, splits: list):

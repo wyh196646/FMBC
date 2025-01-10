@@ -56,6 +56,7 @@ if __name__ == '__main__':
     print('Setting split directory: {}'.format(args.split_dir))
     dataset = pd.read_csv(args.dataset_csv) # read the dataset csv file
 
+
     # use the slide dataset, set up the dataset class
     pretrain_model_type = args.pretrain_model_type
     DatasetClass = SlideDataset
@@ -103,6 +104,12 @@ if __name__ == '__main__':
 
     # save the results into a csv file
     results_df = pd.DataFrame(results)
+    # mean_values = results_df.mean()
+    # std_values = results_df.std()
+
+    # mean_row = pd.DataFrame([mean_values], columns=results_df.columns)
+    # std_row = pd.DataFrame([std_values], columns=results_df.columns)
+    # df = pd.concat([results_df, mean_row, std_row], ignore_index=True)
     results_df.to_csv(os.path.join(args.save_dir, 'summary.csv'), index=False)
 
     # print the results, mean and std

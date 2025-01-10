@@ -26,7 +26,7 @@ def get_finetune_params():
     parser.add_argument('--pretrained',     type=str, default='', help='Pretrained GigaPath slide encoder')
     parser.add_argument('--freeze',         action='store_true', default=False, help='Freeze pretrained model')
     parser.add_argument('--global_pool',    action='store_true', default=False, help='Use global pooling, will use [CLS] token if False')
-    parser.add_argument('--pretrain_model', default='ctans',help='type of pretrain model, ctans, UNI, CONCH, CHIEF,etc ... ')
+    parser.add_argument('--pretrain_model', default='FMBC',help='type of pretrain model, ctans, UNI, CONCH, CHIEF,etc ... ')
     parser.add_argument('--pretrain_model_type', default='patch_level',help='type of pretrain model, patch level or slide level ')
     # training settings
     parser.add_argument('--seed',           type=int, default=0, help='Random seed')
