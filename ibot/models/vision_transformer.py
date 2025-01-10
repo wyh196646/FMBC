@@ -132,7 +132,6 @@ class VisionTransformer(nn.Module):
         self.slide_ngrids = slide_ngrids
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
         self.register_buffer('pos_embed', torch.zeros(1, num_patches + 1, embed_dim), persistent=False)
-
         self.pos_drop = nn.Dropout(p=drop_rate)
 
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule

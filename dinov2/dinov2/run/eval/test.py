@@ -87,6 +87,7 @@ def build_model_for_eval(config, pretrained_weights):
     model.eval()
     model.cuda()
     return model
+
 from easydict import EasyDict
 
 config = {
@@ -115,17 +116,17 @@ config = {
 
 pretrained_weights='/ruiyan/yuhao/project/output/eval/training_499999/teacher_checkpoint.pth'
 config=EasyDict(config)
-model=build_model_for_eval(config, pretrained_weights)
+model = build_model_for_eval(config, pretrained_weights)
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 test_dir = '/ruiyan/yuhao/data'
 save_dir= '/ruiyan/yuhao/embedding'
-#dataset_list = ['BRACS']
+
 dataset_list = os.listdir(test_dir)
 
 transform = make_classification_eval_transform(resize_size=224)
 target_transform = None
-batch_size = 800
+batch_size = 512
 for dataset in dataset_list:
     if not os.path.exists(os.path.join(save_dir,dataset)):
         os.makedirs(os.path.join(save_dir,dataset))

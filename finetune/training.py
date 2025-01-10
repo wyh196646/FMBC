@@ -5,7 +5,7 @@ from pathlib import Path
 # For convinience
 this_file_dir = Path(__file__).resolve().parent
 sys.path.append(str(this_file_dir.parent))
-sys.path.append(os.path.join(this_file_dir.parent, 'preprocess'))
+sys.path.append('/ruiyan/yuhao/project/FMBC/preprocess')
 import time
 import wandb
 import torch
@@ -31,8 +31,8 @@ def train(dataloader, fold, args):
     # set up writer
     if "wandb" in args.report_to:
         wandb.init(
-            project=args.exp_code,
-            name=args.exp_code + '_fold_' + str(fold),
+            project= args.task,
+            name=args.pretrain_model + '_fold_' + str(fold),
             id='fold_' + str(fold),
             tags=[],
             config=vars(args),
@@ -41,7 +41,6 @@ def train(dataloader, fold, args):
     elif "tensorboard" in args.report_to:
         writer = tensorboard.SummaryWriter(writer_dir, flush_secs=15)
 
-    # set up the model
     model = get_model(**vars(args))
     model = model.to(args.device)
     # set up the optimizer
