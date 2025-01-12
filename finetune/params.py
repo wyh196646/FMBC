@@ -26,9 +26,7 @@ def get_finetune_params():
     parser.add_argument('--pretrained',     type=str, default='/ruiyan/yuhao/project/FMBC/ibot/checkpoint.pth', help='Pretrained GigaPath slide encoder')
     parser.add_argument('--freeze',         action='store_true', default=False, help='Freeze pretrained model')
     parser.add_argument('--global_pool',    action='store_true', default=False, help='Use global pooling, will use [CLS] token if False')
-    parser.add_argument('--pretrain_model', default='FMBC',help='type of pretrain model, ctans, UNI, CONCH, CHIEF,etc ... ')
-    parser.add_argument('--pretrain_model_type', default='patch_level',help='type of pretrain model, patch level or slide level ')
-    # training settings
+
     parser.add_argument('--seed',           type=int, default=0, help='Random seed')
     parser.add_argument('--epochs',         type=int, default=20, help='Number of training epochs')
     parser.add_argument('--warmup_epochs',  type=int, default=0, help='Number of warmup epochs')
@@ -51,9 +49,12 @@ def get_finetune_params():
     parser.add_argument('--report_to',      type=str, default='wandb', help='Logger used for recording', choices=['wandb', 'tensorboard'])
     parser.add_argument('--fp16',           action='store_true', default=True, help='Fp16 training')
     parser.add_argument('--weighted_sample',action='store_true', default=False, help='Weighted sampling')
-
-    # Testing mode with MIL model, MIL Settings
-    parser.add_argument('--bag_size',    type=int, default=512, help='Number of workers')
     
+    ## MIL Model Settings
+    parser.add_argument('--mil_model_size',   type=str, default='small', help='Class weight')
+    parser.add_argument('--mil_type',    type=str, default='clam_sb', help='Number of workers')
+    parser.add_argument('--pretrain_model', default='FMBC',help='type of pretrain model, ctans, UNI, CONCH, CHIEF,etc ... ')
+    parser.add_argument('--pretrain_model_type', default='slide_level',help='type of pretrain model, patch level or slide level ')
+    # training settings
     parser.add_argument('--experiment', type=str, default='finetune', help='Experiment name')
     return parser.parse_args()
