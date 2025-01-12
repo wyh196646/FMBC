@@ -20,6 +20,7 @@ class MakeMetrics:
         self.metric = metric
         self.average = average
         self.label_dict = label_dict
+        self.reversed_dict = {v: k for k, v in label_dict.items()}
 
     def get_metric(self, labels: np.array, probs: np.array):
         '''Return the metric score based on the metric name.'''
@@ -44,11 +45,18 @@ class MakeMetrics:
             return mean_squared_error(labels, probs, squared=False)
         elif self.metric == 'pearson':
             # Compute Pearson Correlation Coefficient
-            return pearsonr(labels.flatten(), probs.flatten())[0]
+            evaluation_results={f"pearson_{self.reversed_dict.get(i)}": 
+                pearsonr(labels[:, i], probs[:, i])[0] for i in range(labels.shape[1])}
+            evaluation_results['average_pearson'] = np.mean(list(evaluation_results.values()))
+            return evaluation_results
         elif self.metric == 'spearman':
             # Compute Median Spearman Correlation
-            spearman_values = [spearmanr(labels[:, i], probs[:, i])[0] for i in range(labels.shape[1])]
-            return np.median(spearman_values)
+            #return {f"spearman_{i}": spearmanr(labels[:, i], probs[:, i])[0] for i in range(labels.shape[1])}
+            evaluation_results={f"spearman_{self.reversed_dict.get(i)}": 
+                spearmanr(labels[:, i], probs[:, i])[0] for i in range(labels.shape[1])}
+            evaluation_results['average_spearman'] = np.mean(list(evaluation_results.values()))
+            return evaluation_results
+            #return np.median(spearman_values)
         else:
             raise ValueError('Invalid metric: {}'.format(self.metric))
         
