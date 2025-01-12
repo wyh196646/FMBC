@@ -6,7 +6,7 @@ import random
 import numpy as np
 import pandas as pd
 import torch.optim as optim
-
+import torch.nn as nn
 from typing import List, Tuple
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, average_precision_score
@@ -361,4 +361,64 @@ def log_writer(log_dict: dict, step: int, report_to: str='tensorboard', writer=N
         writer.log(log_dict, step=step)
     else:
         raise NotImplementedError
+    
+class FinetuneModel(nn.Module):
+    
+    def __init__(
+        self,
+        input_dim,
+        feat_layer,
+        latent_dim=768,
+        n_classes=2,
+        model_arch="vit_base",
+        pretrained="",
+        freeze=False,
+        **kwargs,
+    ):
+        super(ClassificationHead, self).__init__()
+
+        # setup the slide encoder
+        self.feat_layer = [eval(x) for x in feat_layer.split("-")]
+        self.feat_dim = len(self.feat_layer) * latent_dim
+        
+        #self.slide_encoder = slide_encoder.create_model(pretrained, model_arch, in_chans=input_dim, **kwargs)
+        self.slide_encoder=vits.__dict__[model_arch](slide_embedding_size=input_dim)
+        load_pretrained_weights(self.slide_encoder, pretrained, 'teacher')
+        # whether to freeze the pretrained model
+        if freeze:
+            print("Freezing Pretrained GigaPath model")
+            for name, param in self.slide_encoder.named_parameters():
+                param.requires_grad = False
+            print("Done")
+        # setup the classifier
+        #num layers of slide_encoder
+
+        self.encoder_num_layers = len(list(self.slide_encoder.named_parameters()))
+        self.classifier = nn.Sequential(*[nn.Linear(latent_dim, n_classes)])
+    #
+def forward(self, images: torch.Tensor, coords: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+    """
+    Arguments:
+    ----------
+    images: torch.Tensor
+        The input images with shape [N, L, D]
+    coords: torch.Tensor
+        The input coordinates with shape [N, L, 2]
+    """
+    # inputs: [N, L, D]
+    if len(images.shape) == 2:
+        images = images.unsqueeze(0)
+    assert len(images.shape) == 3
+    masks = torch.zeros(images.shape[0], 
+                        images.shape[1], 
+                        dtype=torch.bool).to(device=images.device)
+    
+    img_enc = self.slide_encoder(images, coords, masks)
+    #x, coords, pad_mask,
+    logits = self.classifier(img_enc)
+    return logits
+  
+# def get_finetune_model(pretrain_model_type='patch_level',**kwargs):
+#     if pretrain_model_type == 'patch_level':
+        
     

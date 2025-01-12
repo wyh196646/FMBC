@@ -2,7 +2,7 @@ name: TCGA-BRCA-Subtype
 setting: multi_class
 label_dict:
   'Breast Invasive Ductal Carcinoma' : 0
-  'Breast Invasive Lobular Carcinoma1' : 1
+  'Breast Invasive Lobular Carcinoma' : 1
 max_tiles: 4000
 shuffle_tiles: true
 add_metrics: ['qwk']

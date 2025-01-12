@@ -320,3 +320,14 @@ def main(args):
 if __name__ == "__main__":
     args = get_args_parser(add_help=True).parse_args()
     main(args)
+'''
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6 nohup python -m torch.distributed.launch --nproc_per_node=6 dinov2/train/train.py --config-file=dinov2/configs/train/vitl16_short.yaml --output-dir=./output/ train.dataset_path=TileDataset:split=TRAIN:root=/home/yuhaowang/data/processed_data/TCGA-LUAD/output &
+'''
+
+
+
+
+'''source activate dinov2 && cd /yuhaowang/project/dinov2 && CUDA_VISIBLE_DEVICES=0,1,2, python -m torch.distributed.launch --master_port 11120 
+--nproc_per_node=3 dinov2/train/train.py --config-file=dinov2/configs/train/vitl16_short.yaml --output-dir=./output/ train.dataset_path=TileDataset:split=TRAIN:root=/yuhaowang/data/processed_data/private_chunk_7/output
+
+'''

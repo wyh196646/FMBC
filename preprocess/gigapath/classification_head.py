@@ -74,6 +74,7 @@ class ClassificationHead(nn.Module):
         # setup the slide encoder
         self.feat_layer = [eval(x) for x in feat_layer.split("-")]
         self.feat_dim = len(self.feat_layer) * latent_dim
+        
         #self.slide_encoder = slide_encoder.create_model(pretrained, model_arch, in_chans=input_dim, **kwargs)
         self.slide_encoder=vits.__dict__[model_arch](slide_embedding_size=input_dim)
         load_pretrained_weights(self.slide_encoder, pretrained, 'teacher')
@@ -86,7 +87,7 @@ class ClassificationHead(nn.Module):
         # setup the classifier
         #num layers of slide_encoder
 
-        self.encoder_num_layers= len(list(self.slide_encoder.named_parameters()))
+        self.encoder_num_layers = len(list(self.slide_encoder.named_parameters()))
         self.classifier = nn.Sequential(*[nn.Linear(latent_dim, n_classes)])
         #
     def forward(self, images: torch.Tensor, coords: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
