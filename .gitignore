@@ -174,3 +174,4 @@ core.*
 *.csv
 *.h5
 *.pkl
+./finetune/wandb
