@@ -11,7 +11,8 @@ from typing import List, Tuple
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, average_precision_score
 from torch.utils.data import DataLoader, Sampler, WeightedRandomSampler, RandomSampler, SequentialSampler, sampler
-
+from models.ABMIL  import CLAM_MB,CLAM_SB
+from models.model_mil import MIL_fc_mc, MIL_fc
 
 def save_obj(obj, name):
     with open(name, 'wb') as f:
@@ -322,6 +323,7 @@ def get_records_array(record_len: int, n_classes) -> dict:
         'prob': np.zeros((record_len, n_classes), dtype=np.float32),
         'label': np.zeros((record_len, n_classes), dtype=np.float32),
         'loss': 0.0,
+        'slide_id': []
     }
     return record
 
@@ -362,6 +364,15 @@ def log_writer(log_dict: dict, step: int, report_to: str='tensorboard', writer=N
     else:
         raise NotImplementedError
     
+def release_nested_dict(d):
+    result = {}
+    for key, value in d.items():
+        if isinstance(value, dict):
+            result.update(value)
+        else:  
+            result[key] = value
+    return result
+   
 class FinetuneModel(nn.Module):
     
     def __init__(
@@ -418,7 +429,37 @@ def forward(self, images: torch.Tensor, coords: torch.Tensor, mask: torch.Tensor
     logits = self.classifier(img_enc)
     return logits
   
-# def get_finetune_model(pretrain_model_type='patch_level',**kwargs):
-#     if pretrain_model_type == 'patch_level':
-        
+
+def process_predicted_data(data, column_names, section='val'):    
+    def process_section(section_prefix):
+        prob_list = data[f'{section_prefix}_prob']  
+        label_list = data[f'{section_prefix}_label']  
+        slide_id_list = data[f'{section_prefix}_slide_id'] 
+        prob = np.vstack(prob_list) 
+        label = np.vstack(label_list)
+        slide_id = sum(slide_id_list, [])  
+        prob_df = pd.DataFrame(prob, columns=[f"{section_prefix}_prob_{name}" for name in column_names])
+        label_df = pd.DataFrame(label, columns=[f"{section_prefix}_label_{name}" for name in column_names])
+        result_df = pd.concat([pd.DataFrame(slide_id, columns=["slide_id"]), prob_df, label_df], axis=1)
+        result_df.set_index("slide_id", inplace=True)   
+        return result_df
+    val_df = process_section(section)
+    return val_df
+
+def initiate_mil_model(args):
+    print('Init Model')    
+    model_dict = {"dropout": args.drop_out,  "embed_dim": args.input_dim}
     
+    if args.mil_model_size is not None and args.model_type in ['clam_sb', 'clam_mb']:
+        model_dict.update({"size_arg": args.mil_model_size})
+    
+    if args.mil_type =='clam_sb':
+        model = CLAM_SB(**model_dict)
+    elif args.model_type =='clam_mb':
+        model = CLAM_MB(**model_dict)
+    else: # args.model_type == 'mil'
+        if args.n_classes > 2:
+            model = MIL_fc_mc(**model_dict)
+        else:
+            model = MIL_fc(**model_dict)
+    return model

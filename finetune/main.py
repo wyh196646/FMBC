@@ -6,7 +6,7 @@ import sys
 from training import train
 from params import get_finetune_params
 from task_configs.utils import load_task_config
-from finetune_utils import seed_torch, get_exp_code, get_splits, get_loader, save_obj
+from finetune_utils import seed_torch, get_exp_code, get_splits, get_loader, save_obj,process_predicted_data
 from datasets.slide_datatset import SlideDataset
 from plot import RegressionPlotter
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -26,6 +26,7 @@ if __name__ == '__main__':
     # load the task configuration
     print('Loading task configur+ation from: {}'.format(args.task_cfg_path))
     args.task_config = load_task_config(args.task_cfg_path)
+    label_dict = args.task_config.get('label_dict', None)
     print(args.task_config)
     args.task = args.task_config.get('name', 'task')
     
@@ -57,7 +58,9 @@ if __name__ == '__main__':
     os.makedirs(args.split_dir, exist_ok=True)
     print('Setting split directory: {}'.format(args.split_dir))
     dataset = pd.read_csv(args.dataset_csv) # read the dataset csv file
-
+        
+    prediction_save_dir = os.path.join(args.save_dir,'prediction_results')
+    os.makedirs(prediction_save_dir,exist_ok=True)
 
     # use the slide dataset, set up the dataset class
     pretrain_model_type = args.pretrain_model_type
@@ -66,7 +69,7 @@ if __name__ == '__main__':
 
     # set up the results dictionary
     results = {}
-
+    predict_results ={}
     # start cross validation
     for fold in range(args.folds):
         # set up the fold directory
@@ -94,25 +97,29 @@ if __name__ == '__main__':
         val_records, test_records = train((train_loader, val_loader, test_loader), fold, args)
 
         # update the results
+        
         records = {'val': val_records, 'test': test_records}
-        predict_results={}
         for record_ in records:
             for key in records[record_]:
-                if 'prob' in key or 'label' in key:
-                    continue
                 key_ = record_ + '_' + key
-                if key_ not in results:
-                    results[key_] = []
-                results[key_].append(records[record_][key])
-    result_save_dir = os.path.join(args.save_dir,'prediction_results')
-    # save the results into a csv file
-    results_df = pd.DataFrame(results)
-    # mean_values = results_df.mean()
-    # std_values = results_df.std()
+                if 'prob' in key or 'label' in key or 'slide_id' in key:
+                    if key_ not in predict_results:
+                        predict_results[key_] = []
+                    predict_results[key_].append(records[record_][key])
+                else:   
+                    if key_ not in results:
+                        results[key_] = []
+                    results[key_].append(records[record_][key])
+    
 
-    # mean_row = pd.DataFrame([mean_values], columns=results_df.columns)
-    # std_row = pd.DataFrame([std_values], columns=results_df.columns)
-    # df = pd.concat([results_df, mean_row, std_row], ignore_index=True)
+    
+    val_predict_df = process_predicted_data(predict_results,label_dict.keys(),'val')
+    val_predict_df.to_csv(os.path.join(prediction_save_dir,'val_predict.csv'),index=True)
+    
+    test_predict_df = process_predicted_data(predict_results,label_dict.keys(),'test')
+    test_predict_df.to_csv(os.path.join(prediction_save_dir,'test_predict.csv'),index=True)
+    
+    results_df = pd.DataFrame(results)
     results_df.to_csv(os.path.join(args.save_dir, 'summary.csv'), index=False)
 
     # print the results, mean and std

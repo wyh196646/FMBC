@@ -66,3 +66,8 @@ CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bcnb_aln.yaml
 ```
 CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/TCGA-BRCA-Gene-Exp.yaml --dataset_csv dataset_csv/expression_prediction/TCGA-Genexp.csv --root_path /ruiyan/yuhao/embedding/TCGA-BRCA --input_dim 768 --latent_dim 768 
 ```
+
+# Downstreamtask 3:  TCGA-Gene-expression
+```
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/SLNbreast_2subtype.yaml --dataset_csv dataset_csv/subtype/SLNbreast_2subtype.csv --root_path /ruiyan/yuhao/embedding/SLN-Breast --input_dim 768 --latent_dim 768 
+```

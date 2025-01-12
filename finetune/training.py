@@ -16,7 +16,7 @@ from gigapath.classification_head import get_model
 from metrics import calculate_metrics_with_task_cfg
 from finetune_utils import (get_optimizer, get_loss_function, \
                   Monitor_Score, get_records_array,
-                  log_writer, adjust_learning_rate)
+                  log_writer, adjust_learning_rate, release_nested_dict,initiate_mil_model)
 
 
 def train(dataloader, fold, args):
@@ -40,8 +40,10 @@ def train(dataloader, fold, args):
         writer = wandb
     elif "tensorboard" in args.report_to:
         writer = tensorboard.SummaryWriter(writer_dir, flush_secs=15)
-
-    model = get_model(**vars(args))
+    if args.pretrain_model_type =='patch_level':
+        model = initiate_mil_model(args)
+    else:
+        model = get_model(**vars(args))
     model = model.to(args.device)
     # set up the optimizer
     optimizer = get_optimizer(args, model)
@@ -118,7 +120,7 @@ def train_one_epoch(train_loader, model, fp16_scaler, optimizer, loss_fn, epoch,
             adjust_learning_rate(optimizer, batch_idx / len(train_loader) + epoch, args)
 
         # load the batch and transform this batch
-        images, img_coords, pad_mask, label = batch['imgs'], batch['coords'],batch['pad_mask'], batch['labels']
+        images, img_coords, pad_mask, label,  = batch['imgs'], batch['coords'],batch['pad_mask'], batch['labels']
         images = images.to(args.device, non_blocking=True)
         img_coords = img_coords.to(args.device, non_blocking=True)
         pad_mask = pad_mask.to(args.device, non_blocking=True)
@@ -178,7 +180,7 @@ def evaluate(loader, model, fp16_scaler, loss_fn, epoch, args):
     with torch.no_grad():
         for batch_idx, batch in enumerate(loader):
             # load the batch and transform this batch
-            images, img_coords, pad_mask, label = batch['imgs'], batch['coords'],batch['pad_mask'], batch['labels']
+            images, img_coords, pad_mask, label,slide_id = batch['imgs'], batch['coords'],batch['pad_mask'], batch['labels'],batch['slide_id']
             images = images.to(args.device, non_blocking=True)
             img_coords = img_coords.to(args.device, non_blocking=True)
             pad_mask = pad_mask.to(args.device, non_blocking=True)
@@ -200,22 +202,26 @@ def evaluate(loader, model, fp16_scaler, loss_fn, epoch, args):
                 Y_prob = torch.sigmoid(logits)
                 records['prob'][batch_idx] = Y_prob.cpu().numpy()
                 records['label'][batch_idx] = label.cpu().numpy()
+                records['slide_id'].extend(slide_id)
             elif task_setting == 'multi_class' or task_setting == 'binary':
                 Y_prob = torch.softmax(logits, dim=1).cpu()
                 records['prob'][batch_idx] = Y_prob.numpy()
                 # convert label to one-hot
                 label_ = torch.zeros_like(Y_prob).scatter_(1, label.cpu().unsqueeze(1), 1)
                 records['label'][batch_idx] = label_.numpy()
+                records['slide_id'].extend(slide_id)
             elif task_setting == 'regression':
                 records['prob'][batch_idx] = logits.cpu().numpy()
                 records['label'][batch_idx] = label.cpu().numpy()
-    records.update(calculate_metrics_with_task_cfg(records['prob'], records['label'], args.task_config))
+                records['slide_id'].extend(slide_id)
+    records.update(release_nested_dict(calculate_metrics_with_task_cfg(records['prob'], records['label'], args.task_config)))
+    
     records['loss'] = records['loss'] / len(loader)
 
     if task_setting == 'multi_label':
         info = 'Epoch: {}, Loss: {:.4f}, Micro AUROC: {:.4f}, Macro AUROC: {:.4f}, Micro AUPRC: {:.4f}, Macro AUPRC: {:.4f}'.format(epoch, records['loss'], records['micro_auroc'], records['macro_auroc'], records['micro_auprc'], records['macro_auprc'])
     elif task_setting =='regression':
-        info = 'Epoch: {}, Loss: {:.4f}, MAE: {:.4f}, RMSE: {:.4f}, Pearson: {:.4f}, spearman: {:.4f}'.format(epoch, records['loss'], records['mae'], records['mse'], records['rmse'], records['pearson']['average_pearson'], records['spearman']['average_spearman'])
+        info = 'Epoch: {}, Loss: {:.4f}, MAE: {:.4f}, RMSE: {:.4f}, Pearson: {:.4f}, spearman: {:.4f}'.format(epoch, records['loss'], records['mae'], records['mse'], records['rmse'], records['average_pearson'], records['average_spearman'])
     else:
         info = 'Epoch: {}, Loss: {:.4f}, AUROC: {:.4f}, ACC: {:.4f}, BACC: {:.4f}'.format(epoch, records['loss'], records['macro_auroc'], records['acc'], records['bacc'])
         for metric in args.task_config.get('add_metrics', []):
