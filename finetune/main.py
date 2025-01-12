@@ -8,6 +8,7 @@ from params import get_finetune_params
 from task_configs.utils import load_task_config
 from finetune_utils import seed_torch, get_exp_code, get_splits, get_loader, save_obj
 from datasets.slide_datatset import SlideDataset
+from plot import RegressionPlotter
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 #CUDA_LAUNCH_BLOCKING=1
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
@@ -94,6 +95,7 @@ if __name__ == '__main__':
 
         # update the results
         records = {'val': val_records, 'test': test_records}
+        predict_results={}
         for record_ in records:
             for key in records[record_]:
                 if 'prob' in key or 'label' in key:
@@ -102,7 +104,7 @@ if __name__ == '__main__':
                 if key_ not in results:
                     results[key_] = []
                 results[key_].append(records[record_][key])
-
+    result_save_dir = os.path.join(args.save_dir,'prediction_results')
     # save the results into a csv file
     results_df = pd.DataFrame(results)
     # mean_values = results_df.mean()
