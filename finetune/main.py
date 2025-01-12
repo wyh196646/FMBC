@@ -9,7 +9,8 @@ from task_configs.utils import load_task_config
 from finetune_utils import seed_torch, get_exp_code, get_splits, get_loader, save_obj
 from datasets.slide_datatset import SlideDataset
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-
+#CUDA_LAUNCH_BLOCKING=1
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 if __name__ == '__main__':
     args = get_finetune_params()
     print(args)

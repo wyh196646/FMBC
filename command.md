@@ -21,33 +21,48 @@ CUDA_VISIBLE_DEVICES=6 python main.py --task_cfg_path task_configs/tcga-brca-gen
 ```
 # Downstreamtask 3:  Valid on BRACS-Coarse 
 ```
-CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bracs_coarse.yaml --dataset_csv dataset_csv/subtype/BRACS_coarse.csv --root_path /ruiyan/yuhao/embedding/BRACS --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.0 --epochs 30 --input_dim 768 --latent_dim 768 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 5 --save_dir outputs --max_wsi_size 250000 --pretrained /ruiyan/yuhao/project/FMBC/ibot/checkpoint.pth --model_arch vit_base --lr 0.0001
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bracs_coarse.yaml --dataset_csv dataset_csv/subtype/BRACS_coarse.csv --root_path /ruiyan/yuhao/embedding/BRACS 
 
 ```
 
 
 # Downstreamtask 3:  Valid on BRACS-Fine-Grained
 ```
-CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bracs_fine.yaml --dataset_csv dataset_csv/subtype/BRACS_fine.csv --root_path /ruiyan/yuhao/embedding/BRACS --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.0 --epochs 30 --input_dim 768 --latent_dim 768 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 5 --save_dir outputs --max_wsi_size 250000 --pretrained /ruiyan/yuhao/project/FMBC/ibot/checkpoint.pth --model_arch vit_base --lr 0.0001
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bracs_fine.yaml --dataset_csv dataset_csv/subtype/BRACS_fine.csv --root_path /ruiyan/yuhao/embedding/BRACS 
 
 ```
 
 
-# Downstreamtask 3:  Valid on TCGA-Subtype
+### Downstreamtask 3:  Valid on TCGA-Subtype
 ```
-CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/TCGA-BRCA-Subtype.yaml --dataset_csv dataset_csv/subtype/TCGA-BRCA-Subtype.csv --root_path /ruiyan/yuhao/embedding/TCGA-BRCA --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.0 --epochs 30 --input_dim 768 --latent_dim 768 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 5 --save_dir outputs --max_wsi_size 250000 --pretrained /ruiyan/yuhao/project/FMBC/ibot/checkpoint.pth --model_arch vit_base --lr 0.0001
-
-```
-
-
-# Downstreamtask 3:  Valid on bcnb_er
-```
-CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bcnb_er.yaml --dataset_csv dataset_csv/biomarker/BCNB_ER.csv --root_path /ruiyan/yuhao/embedding/BCNB --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.0 --epochs 30 --input_dim 768 --latent_dim 768 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 5 --save_dir outputs --max_wsi_size 250000 --pretrained /ruiyan/yuhao/project/FMBC/ibot/checkpoint.pth --model_arch vit_base --lr 0.0001
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/TCGA-BRCA-Subtype.yaml --dataset_csv dataset_csv/subtype/TCGA-BRCA-Subtype.csv --root_path /ruiyan/yuhao/embedding/TCGA-BRCA 
 
 ```
 
-# Downstreamtask 3:  Valid on bcnb_her2
-```
-CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bcnb_her2.yaml --dataset_csv dataset_csv/biomarker/BCNB_HER2.csv --root_path /ruiyan/yuhao/embedding/BCNB --blr 0.002 --layer_decay 0.95 --optim_wd 0.05 --dropout 0.1 --drop_path_rate 0.0 --val_r 0.0 --epochs 30 --input_dim 768 --latent_dim 768 --feat_layer 11 --warmup_epochs 0 --gc 32 --model_select last_epoch --lr_scheduler cosine --folds 5 --save_dir outputs --max_wsi_size 250000 --pretrained /ruiyan/yuhao/project/FMBC/ibot/checkpoint.pth --model_arch vit_base --lr 0.0001
 
+### Downstreamtask 3:  Valid on bcnb_er
+```
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bcnb_er.yaml --dataset_csv dataset_csv/biomarker/BCNB_ER.csv --root_path /ruiyan/yuhao/embedding/BCNB 
+
+```
+
+###  Downstreamtask 3:  Valid on bcnb_her2
+```
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bcnb_her2.yaml --dataset_csv dataset_csv/biomarker/BCNB_HER2.csv --root_path /ruiyan/yuhao/embedding/BCNB 
+
+```
+# Downstreamtask 3:  Valid on bcnb_pr
+```
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bcnb_pr.yaml --dataset_csv dataset_csv/biomarker/BCNB_PR.csv --root_path /ruiyan/yuhao/embedding/BCNB 
+
+```
+# Downstreamtask 3:  Valid on bcnb_aln
+```
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bcnb_aln.yaml --dataset_csv dataset_csv/subtype/BCNB_ALN3subtype.csv --root_path /ruiyan/yuhao/embedding/BCNB --input_dim 768 --latent_dim 768 
+```
+
+
+# Downstreamtask 3:  TCGA-Gene-expression
+```
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/TCGA-BRCA-Gene-Exp.yaml --dataset_csv dataset_csv/expression_prediction/TCGA-Genexp.csv --root_path /ruiyan/yuhao/embedding/TCGA-BRCA --input_dim 768 --latent_dim 768 
 ```

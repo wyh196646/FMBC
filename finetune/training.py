@@ -122,10 +122,7 @@ def train_one_epoch(train_loader, model, fp16_scaler, optimizer, loss_fn, epoch,
         images = images.to(args.device, non_blocking=True)
         img_coords = img_coords.to(args.device, non_blocking=True)
         pad_mask = pad_mask.to(args.device, non_blocking=True)
-        label = label.to(args.device, non_blocking=True).long()
-
-
-        # add the sequence length
+        label = label.to(args.device, non_blocking=True)
         seq_len += images.shape[1]
 
         with torch.cuda.amp.autocast(dtype=torch.float16 if args.fp16 else torch.float32):
@@ -185,7 +182,7 @@ def evaluate(loader, model, fp16_scaler, loss_fn, epoch, args):
             images = images.to(args.device, non_blocking=True)
             img_coords = img_coords.to(args.device, non_blocking=True)
             pad_mask = pad_mask.to(args.device, non_blocking=True)
-            label = label.to(args.device, non_blocking=True).long()
+            label = label.to(args.device, non_blocking=True)
             
 
             with torch.cuda.amp.autocast(fp16_scaler is not None, dtype=torch.float16):
@@ -194,7 +191,7 @@ def evaluate(loader, model, fp16_scaler, loss_fn, epoch, args):
                 if isinstance(loss_fn, torch.nn.BCEWithLogitsLoss):
                     label = label.squeeze(-1).float()
                 else:
-                    label = label.squeeze(-1).long()
+                    label = label.squeeze(-1)
                 loss = loss_fn(logits, label)
 
             # update the records
@@ -218,7 +215,7 @@ def evaluate(loader, model, fp16_scaler, loss_fn, epoch, args):
     if task_setting == 'multi_label':
         info = 'Epoch: {}, Loss: {:.4f}, Micro AUROC: {:.4f}, Macro AUROC: {:.4f}, Micro AUPRC: {:.4f}, Macro AUPRC: {:.4f}'.format(epoch, records['loss'], records['micro_auroc'], records['macro_auroc'], records['micro_auprc'], records['macro_auprc'])
     elif task_setting =='regression':
-        info = 'Epoch: {}, Loss: {:.4f}, MAE: {:.4f}, RMSE: {:.4f}'.format(epoch, records['loss'], records['mae'], records['mse'], records['rmse'])
+        info = 'Epoch: {}, Loss: {:.4f}, MAE: {:.4f}, RMSE: {:.4f}, Pearson: {:.4f}, spearman: {:.4f}'.format(epoch, records['loss'], records['mae'], records['mse'], records['rmse'], records['pearson'], records['spearman'])
     else:
         info = 'Epoch: {}, Loss: {:.4f}, AUROC: {:.4f}, ACC: {:.4f}, BACC: {:.4f}'.format(epoch, records['loss'], records['macro_auroc'], records['acc'], records['bacc'])
         for metric in args.task_config.get('add_metrics', []):

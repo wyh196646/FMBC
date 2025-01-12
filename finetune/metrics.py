@@ -1,19 +1,18 @@
+from scipy.stats import pearsonr, spearmanr
 import numpy as np
 from sklearn.metrics import roc_auc_score, average_precision_score, \
                             balanced_accuracy_score, accuracy_score, \
-                            cohen_kappa_score, mean_absolute_error,\
-                            mean_squared_error, mean_squared_error,\
-                            f1_score
-                            
+                            cohen_kappa_score, mean_absolute_error, \
+                            mean_squared_error, f1_score
 
 
 class MakeMetrics:
     '''
-    A class to calculate metrics for multilabel classification tasks.
+    A class to calculate metrics for multilabel classification and regression tasks.
     
     Arguments:
     ----------
-    metric (str): the metric to calculate. Default is 'auroc'. Options are 'auroc', 'auprc', 'bacc', 'acc' and 'qwk'.
+    metric (str): the metric to calculate. Default is 'auroc'. Options are 'auroc', 'auprc', 'bacc', 'acc', 'qwk', 'pearson', and 'spearman'.
     average (str): the averaging strategy. Default is 'micro'.
     label_dict (dict): the label dictionary, mapping from label to index. Default is None. 
     '''
@@ -35,15 +34,21 @@ class MakeMetrics:
         elif self.metric == 'qwk':
             return cohen_kappa_score(labels, probs, weights='quadratic')
         elif self.metric == 'weighted_f1':
-            probs = probs>0.5
+            probs = probs > 0.5
             return f1_score(labels, probs, average='weighted')
-    
         elif self.metric == 'mae':
             return mean_absolute_error(labels, probs)
         elif self.metric == 'mse':
             return mean_squared_error(labels, probs)
         elif self.metric == 'rmse':
             return mean_squared_error(labels, probs, squared=False)
+        elif self.metric == 'pearson':
+            # Compute Pearson Correlation Coefficient
+            return pearsonr(labels.flatten(), probs.flatten())[0]
+        elif self.metric == 'spearman':
+            # Compute Median Spearman Correlation
+            spearman_values = [spearmanr(labels[:, i], probs[:, i])[0] for i in range(labels.shape[1])]
+            return np.median(spearman_values)
         else:
             raise ValueError('Invalid metric: {}'.format(self.metric))
         
@@ -94,7 +99,7 @@ def calculate_multilabel_metrics(probs: np.array, labels: np.array, label_dict, 
 
 
 def calculate_multiclass_or_binary_metrics(probs: np.array, labels: np.array, label_dict, add_metrics: list=None) -> dict:
-    metrics = ['bacc', 'acc', 'auroc', 'auprc','weighted_f1'] + (add_metrics if add_metrics is not None else [])
+    metrics = ['bacc', 'acc', 'auroc', 'auprc', 'weighted_f1'] + (add_metrics if add_metrics is not None else [])
     results = {}
     for average in ['macro', None]: 
         for metric in metrics: 
@@ -103,7 +108,7 @@ def calculate_multiclass_or_binary_metrics(probs: np.array, labels: np.array, la
     return results
 
 def calculate_regression_metrics(probs: np.array, labels: np.array, label_dict, add_metrics: list=None) -> dict:
-    metrics = ['mae', 'mse', 'rmse'] + (add_metrics if add_metrics is not None else [])
+    metrics = ['mae', 'mse', 'rmse', 'pearson', 'spearman'] + (add_metrics if add_metrics is not None else [])
     results = {}
     for average in [None]: 
         for metric in metrics: 
@@ -121,31 +126,3 @@ def calculate_metrics_with_task_cfg(probs: np.array, labels: np.array, task_cfg:
         return calculate_regression_metrics(probs, labels, task_cfg['label_dict'], add_metrics)
     else:
         return calculate_multiclass_or_binary_metrics(probs, labels, task_cfg['label_dict'], add_metrics)
-
-
-if __name__ == '__main__':
-    label_dict = {'A': 0, 'B': 1, 'C': 2}
-    probs = np.array([
-        [0.7, 0.2, 0.1],
-        [0.4, 0.3, 0.3],
-        [0.1, 0.8, 0.1],
-        [0.2, 0.3, 0.5],
-        [0.4, 0.4, 0.2],
-        [0.1, 0.2, 0.7]])
-
-    # make labels into one-hot
-    labels = np.array([0, 0, 1, 1, 2, 2])
-    labels = np.eye(3)[labels]
-    print(calculate_multiclass_or_binary_metrics(probs, labels, label_dict))
-
-    import yaml
-    with open("finetune/task_configs/mutation_5_gene.yaml", 'r') as f:
-        task_config = yaml.load(f, Loader=yaml.FullLoader)
-    print(calculate_metrics_with_task_cfg(probs, labels, task_config))
-    probs = np.array([0, 5, 2, 3, 2, 2, 1, 1, 4])
-    labels = np.array([0, 2, 1, 1, 4, 5, 2, 3, 2])
-    probs = np.eye(6)[probs]
-    labels = np.eye(6)[labels]
-    with open("finetune/task_configs/panda.yaml", 'r') as f:
-        task_config = yaml.load(f, Loader=yaml.FullLoader)
-    print(calculate_metrics_with_task_cfg(probs, labels, task_config))
