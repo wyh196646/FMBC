@@ -33,7 +33,7 @@ def train(dataloader, fold, args):
         wandb.init(
             project= args.task,
             name=args.pretrain_model + '_fold_' + str(fold),
-            id='fold_' + str(fold),
+            id='fold_' + str(fold)+'_'+str(args.pretrain_model),
             tags=[],
             config=vars(args),
         )
@@ -129,6 +129,7 @@ def train_one_epoch(train_loader, model, fp16_scaler, optimizer, loss_fn, epoch,
 
         with torch.cuda.amp.autocast(dtype=torch.float16 if args.fp16 else torch.float32):
             # print(pad_mask.shape)
+        
             logits = model(images, img_coords, pad_mask)
             if isinstance(loss_fn, torch.nn.BCEWithLogitsLoss):
                 label = label.squeeze(-1).float()

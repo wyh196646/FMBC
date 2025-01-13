@@ -293,15 +293,20 @@ def adjust_learning_rate(optimizer, epoch, args):
 
 
 def get_optimizer(args, model):
-    '''Set up the optimizer for the model.'''
-    param_groups = param_groups_lrd(model, args.optim_wd,
-        layer_decay=args.layer_decay)
+    if args.pretrain_model_type =='patch_level':
+        param_groups = model.parameters()
+
+    else:
+        param_groups = param_groups_lrd(model, args.optim_wd,
+    layer_decay=args.layer_decay)
+
     # make the optimizer
     optim_func = torch.optim.AdamW if args.optim == 'adamw' else torch.optim.Adam
     optimizer = optim_func(param_groups, lr=args.lr)
 
     return optimizer
 
+# def get_pathch_model_optim(model, args):
 
 def get_loss_function(task_config: dict):
     '''Get the loss function based on the task configuration.'''
@@ -373,62 +378,8 @@ def release_nested_dict(d):
             result[key] = value
     return result
    
-class FinetuneModel(nn.Module):
-    
-    def __init__(
-        self,
-        input_dim,
-        feat_layer,
-        latent_dim=768,
-        n_classes=2,
-        model_arch="vit_base",
-        pretrained="",
-        freeze=False,
-        **kwargs,
-    ):
-        super(ClassificationHead, self).__init__()
 
-        # setup the slide encoder
-        self.feat_layer = [eval(x) for x in feat_layer.split("-")]
-        self.feat_dim = len(self.feat_layer) * latent_dim
-        
-        #self.slide_encoder = slide_encoder.create_model(pretrained, model_arch, in_chans=input_dim, **kwargs)
-        self.slide_encoder=vits.__dict__[model_arch](slide_embedding_size=input_dim)
-        load_pretrained_weights(self.slide_encoder, pretrained, 'teacher')
-        # whether to freeze the pretrained model
-        if freeze:
-            print("Freezing Pretrained GigaPath model")
-            for name, param in self.slide_encoder.named_parameters():
-                param.requires_grad = False
-            print("Done")
-        # setup the classifier
-        #num layers of slide_encoder
 
-        self.encoder_num_layers = len(list(self.slide_encoder.named_parameters()))
-        self.classifier = nn.Sequential(*[nn.Linear(latent_dim, n_classes)])
-    #
-def forward(self, images: torch.Tensor, coords: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
-    """
-    Arguments:
-    ----------
-    images: torch.Tensor
-        The input images with shape [N, L, D]
-    coords: torch.Tensor
-        The input coordinates with shape [N, L, 2]
-    """
-    # inputs: [N, L, D]
-    if len(images.shape) == 2:
-        images = images.unsqueeze(0)
-    assert len(images.shape) == 3
-    masks = torch.zeros(images.shape[0], 
-                        images.shape[1], 
-                        dtype=torch.bool).to(device=images.device)
-    
-    img_enc = self.slide_encoder(images, coords, masks)
-    #x, coords, pad_mask,
-    logits = self.classifier(img_enc)
-    return logits
-  
 
 def process_predicted_data(data, column_names, section='val'):    
     def process_section(section_prefix):
@@ -448,9 +399,9 @@ def process_predicted_data(data, column_names, section='val'):
 
 def initiate_mil_model(args):
     print('Init Model')    
-    model_dict = {"dropout": args.drop_out,  "embed_dim": args.input_dim}
+    model_dict = {"dropout": args.dropout,  "embed_dim": args.input_dim, "n_classes": args.n_classes}
     
-    if args.mil_model_size is not None and args.model_type in ['clam_sb', 'clam_mb']:
+    if args.mil_model_size is not None and args.mil_type in ['clam_sb', 'clam_mb']:
         model_dict.update({"size_arg": args.mil_model_size})
     
     if args.mil_type =='clam_sb':
