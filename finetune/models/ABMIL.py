@@ -136,6 +136,7 @@ class CLAM_SB(nn.Module):
         return instance_loss, p_preds, p_targets
 
     def forward(self, h, label=None, instance_eval=False, return_features=False, attention_only=False):
+        h = h.squeeze()
         A, h = self.attention_net(h)  # NxK        
         A = torch.transpose(A, 1, 0)  # KxN
         if attention_only:
@@ -143,42 +144,39 @@ class CLAM_SB(nn.Module):
         A_raw = A
         A = F.softmax(A, dim=1)  # softmax over N
 
-        if instance_eval:
-            total_inst_loss = 0.0
-            all_preds = []
-            all_targets = []
-            inst_labels = F.one_hot(label, num_classes=self.n_classes).squeeze() #binarize label
-            for i in range(len(self.instance_classifiers)):
-                inst_label = inst_labels[i].item()
-                classifier = self.instance_classifiers[i]
-                if inst_label == 1: #in-the-class:
-                    instance_loss, preds, targets = self.inst_eval(A, h, classifier)
-                    all_preds.extend(preds.cpu().numpy())
-                    all_targets.extend(targets.cpu().numpy())
-                else: #out-of-the-class
-                    if self.subtyping:
-                        instance_loss, preds, targets = self.inst_eval_out(A, h, classifier)
-                        all_preds.extend(preds.cpu().numpy())
-                        all_targets.extend(targets.cpu().numpy())
-                    else:
-                        continue
-                total_inst_loss += instance_loss
-
-            if self.subtyping:
-                total_inst_loss /= len(self.instance_classifiers)
-                
+        # if instance_eval:
+            
+        #     all_preds = []
+        #     all_targets = []
+        #     inst_labels = F.one_hot(label, num_classes=self.n_classes).squeeze() #binarize label
+        #     for i in range(len(self.instance_classifiers)):
+        #         inst_label = inst_labels[i].item()
+        #         classifier = self.instance_classifiers[i]
+        #         if inst_label == 1: #in-the-class:
+        #             instance_loss, preds, targets = self.inst_eval(A, h, classifier)
+        #             all_preds.extend(preds.cpu().numpy())
+        #             all_targets.extend(targets.cpu().numpy())
+        #         else: #out-of-the-class
+        #             if self.subtyping:
+        #                 instance_loss, preds, targets = self.inst_eval_out(A, h, classifier)
+        #                 all_preds.extend(preds.cpu().numpy())
+        #                 all_targets.extend(targets.cpu().numpy())
+        #             else:
+        #                 continue
+        
         M = torch.mm(A, h) 
         logits = self.classifiers(M)
-        Y_hat = torch.topk(logits, 1, dim = 1)[1]
-        Y_prob = F.softmax(logits, dim = 1)
-        if instance_eval:
-            results_dict = {'instance_loss': total_inst_loss, 'inst_labels': np.array(all_targets), 
-            'inst_preds': np.array(all_preds)}
-        else:
-            results_dict = {}
-        if return_features:
-            results_dict.update({'features': M})
-        return logits, Y_prob, Y_hat, A_raw, results_dict
+        # Y_hat = torch.topk(logits, 1, dim = 1)[1]
+        # Y_prob = F.softmax(logits, dim = 1)
+        # if instance_eval:
+        #     results_dict = {'instance_loss': total_inst_loss, 'inst_labels': np.array(all_targets), 
+        #     'inst_preds': np.array(all_preds)}
+        # else:
+        #     results_dict = {}
+        # if return_features:
+        #     results_dict.update({'features': M})
+        # return logits, Y_prob, Y_hat, A_raw, results_dict
+        return logits
 
 class CLAM_MB(CLAM_SB):
     def __init__(self, gate = True, size_arg = "small", dropout = 0., k_sample=8, n_classes=2,
@@ -202,7 +200,7 @@ class CLAM_MB(CLAM_SB):
         self.n_classes = n_classes
         self.subtyping = subtyping
 
-    def forward(self, h, label=None, instance_eval=False, return_features=False, attention_only=False):
+    def forward(self, h, img_coords, pad_mask, label=None, instance_eval=False, return_features=False, attention_only=False):
         A, h = self.attention_net(h)  # NxK        
         A = torch.transpose(A, 1, 0)  # KxN
         if attention_only:
@@ -250,3 +248,6 @@ class CLAM_MB(CLAM_SB):
         if return_features:
             results_dict.update({'features': M})
         return logits, Y_prob, Y_hat, A_raw, results_dict
+
+
+

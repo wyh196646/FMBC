@@ -71,3 +71,8 @@ CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/TCGA-BRCA-Gen
 ```
 CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/SLNbreast_2subtype.yaml --dataset_csv dataset_csv/subtype/SLNbreast_2subtype.csv --root_path /ruiyan/yuhao/embedding/SLN-Breast --input_dim 768 --latent_dim 768 
 ```
+
+
+# Downstreamtask 3:  UNI-BRACS
+```
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bracs_coarse.yaml --dataset_csv dataset_csv/subtype/BRACS_coarse.csv --root_path /ruiyan/yuhao/tile_embed/BRACS/UNI --input_dim 1024 --latent_dim 768 --pretrain_model UNI --pretrain_model_type patch_level

@@ -8,8 +8,8 @@ from params import get_finetune_params
 from task_configs.utils import load_task_config
 from finetune_utils import seed_torch, get_exp_code, get_splits, get_loader, save_obj,process_predicted_data
 from datasets.slide_datatset import SlideDataset
-from plot import RegressionPlotter
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
+
 #CUDA_LAUNCH_BLOCKING=1
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 if __name__ == '__main__':
@@ -111,7 +111,6 @@ if __name__ == '__main__':
                         results[key_] = []
                     results[key_].append(records[record_][key])
     
-
     
     val_predict_df = process_predicted_data(predict_results,label_dict.keys(),'val')
     val_predict_df.to_csv(os.path.join(prediction_save_dir,'val_predict.csv'),index=True)
