@@ -174,4 +174,5 @@ core.*
 *.csv
 *.h5
 *.pkl
-./finetune/wandb/
+./finetune/wandb/*
+./finetune/wandb
