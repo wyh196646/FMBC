@@ -64,7 +64,7 @@ train:
   output_dir: /ruiyan/yuhao/project/FMBC/dinov2/output
   saveckp_freq: 20
   seed: 0
-  num_workers: 10
+  num_workers: 12
   OFFICIAL_EPOCH_LENGTH: 1250
   cache_dataset: true
   centering: centering

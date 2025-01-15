@@ -13,7 +13,7 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 from torch.utils.data import DataLoader, Sampler, WeightedRandomSampler, RandomSampler, SequentialSampler, sampler
 from models.ABMIL  import CLAM_MB,CLAM_SB
 from models.model_mil import MIL_fc_mc, MIL_fc
-
+from models.linear import linear_probe
 def save_obj(obj, name):
     with open(name, 'wb') as f:
         pickle.dump(obj, f)
@@ -293,12 +293,11 @@ def adjust_learning_rate(optimizer, epoch, args):
 
 
 def get_optimizer(args, model):
-    if args.pretrain_model_type =='patch_level':
-        param_groups = model.parameters()
-
-    else:
+    if args.pretrain_model =='FMBC':
         param_groups = param_groups_lrd(model, args.optim_wd,
     layer_decay=args.layer_decay)
+    else:
+        param_groups = model.parameters()
 
     # make the optimizer
     optim_func = torch.optim.AdamW if args.optim == 'adamw' else torch.optim.Adam
@@ -414,3 +413,26 @@ def initiate_mil_model(args):
         else:
             model = MIL_fc(**model_dict)
     return model
+
+def initiate_mil_model(args):
+    print('Init Model')    
+    model_dict = {"dropout": args.dropout,  "embed_dim": args.input_dim, "n_classes": args.n_classes}
+    
+    if args.mil_model_size is not None and args.mil_type in ['clam_sb', 'clam_mb']:
+        model_dict.update({"size_arg": args.mil_model_size})
+    
+    if args.mil_type =='clam_sb':
+        model = CLAM_SB(**model_dict)
+    elif args.model_type =='clam_mb':
+        model = CLAM_MB(**model_dict)
+    else: # args.model_type == 'mil'
+        if args.n_classes > 2:
+            model = MIL_fc_mc(**model_dict)
+        else:
+            model = MIL_fc(**model_dict)
+    return model
+
+def initiate_linear_model(args):
+    model = linear_probe(args.input_dim, args.latent_dim, args.n_classes)
+    return model
+
