@@ -16,7 +16,8 @@ from gigapath.classification_head import get_model
 from metrics import calculate_metrics_with_task_cfg
 from finetune_utils import (get_optimizer, get_loss_function, \
                   Monitor_Score, get_records_array,
-                  log_writer, adjust_learning_rate, release_nested_dict,initiate_mil_model)
+                  log_writer, adjust_learning_rate, release_nested_dict,
+                  initiate_mil_model,initiate_linear_model)
 
 
 def train(dataloader, fold, args):
@@ -43,7 +44,10 @@ def train(dataloader, fold, args):
     if args.pretrain_model_type =='patch_level':
         model = initiate_mil_model(args)
     else:
-        model = get_model(**vars(args))
+        if args.pretrain_model == 'FMBC':
+            model = get_model(**vars(args))
+        else:
+            model = initiate_linear_model(args)
     model = model.to(args.device)
     # set up the optimizer
     optimizer = get_optimizer(args, model)

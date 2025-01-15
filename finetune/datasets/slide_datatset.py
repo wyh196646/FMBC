@@ -217,7 +217,11 @@ class SlideDataset(SlideDatasetForTasks):
         elif '.h5' in img_path:
             assets, _ = self.read_assets_from_h5(img_path)
             images = torch.from_numpy(assets['features'])
-            coords = torch.from_numpy(assets['coords'])
+            try:
+                coords = torch.from_numpy(assets['coords'])
+            except KeyError:
+                coords = torch.zeros((1, 2))
+                
             if self.shuffle_tiles:
                 images, coords = self.shuffle_data(images, coords)
             if images.size(0) > self.max_tiles:
