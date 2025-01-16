@@ -177,7 +177,7 @@ def get_loader(train_dataset, val_dataset, test_dataset,
         sample_weights = [weights[int(train_dataset.labels[i][0])] for i in range(N)]
         train_sampler = WeightedRandomSampler(sample_weights, len(sample_weights), replacement=True)
     else:
-        train_sampler = RandomSampler(train_dataset)
+       train_sampler = RandomSampler(train_dataset)
 
     # set up generator and worker_init_fn
     def seed_worker(worker_id):
@@ -417,7 +417,9 @@ def initiate_mil_model(args):
 def initiate_mil_model(args):
     print('Init Model')    
     model_dict = {"dropout": args.dropout,  "embed_dim": args.input_dim, "n_classes": args.n_classes}
-    
+    print('##########')
+    print(args.input_dim)
+    print('##########')
     if args.mil_model_size is not None and args.mil_type in ['clam_sb', 'clam_mb']:
         model_dict.update({"size_arg": args.mil_model_size})
     

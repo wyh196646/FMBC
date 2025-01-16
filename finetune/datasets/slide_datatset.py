@@ -70,9 +70,9 @@ class SlideDatasetForTasks(Dataset):
         valid_slides = []
         for i in range(len(slides)):
             if 'pt_files' in root_path.split('/')[-1]:
-                sld = slides[i].replace(".svs", "") + '.pt'
+                sld = str(slides[i]).replace(".svs", "") + '.pt'
             else:
-                sld = slides[i].replace(".svs", "") + '.h5'
+                sld = str(slides[i]).replace(".svs", "") + '.h5'
             sld_path = os.path.join(root_path, sld)
             if not os.path.exists(sld_path):
                 print('Missing: ', sld_path)

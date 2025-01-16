@@ -1,0 +1,7 @@
+name: IMPRESS_HER2_2subtype
+setting: multi_label
+label_dict:
+  'residual tumor (no-0, yes-1)': 0
+  'pCR (no-0, yes-1)' : 1
+max_tiles: 4000
+shuffle_tiles: true

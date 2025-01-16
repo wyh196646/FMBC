@@ -89,3 +89,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+# python data_sync.py --host 172.16.120.21 --password data@YHWang --remote_dir /mnt/data/ruiyan/processed_data --local /ruiyan/yuhao/data
