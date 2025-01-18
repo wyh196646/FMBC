@@ -1,4 +1,4 @@
-name: IMPRESS_HER2_2subtype
+name: IMPRESS_TNBC_2subtype
 setting: multi_label
 label_dict:
   'residual tumor (no-0, yes-1)': 0

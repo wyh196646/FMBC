@@ -1,33 +1,22 @@
 import subprocess
 import os
 import time
+import threading
 
 def run_task(config):
     gpu_id, task_cfg, dataset_csv, root_path, input_dim, pretrain_model, pretrain_model_type = config
     log_save_dir = "./log"
     os.makedirs(log_save_dir, exist_ok=True)
     task_name = os.path.basename(task_cfg).split('.')[0]
-    # Create a unique log file name
     log_file = os.path.join(log_save_dir, f"{task_name}_{pretrain_model}.log")
-    output_prediction = os.path.join('outputs',
-                                     task_name,
-                                     pretrain_model,
-                                     'prediction_results',
-                                     'val_predict.csv'
-                                     )
+    output_prediction = os.path.join('outputs', task_name, pretrain_model, 'prediction_results', 'val_predict.csv')
+
     if os.path.exists(output_prediction):
         print(f"Skipping task: {output_prediction} already exists")
         return None
 
-    # Make log file and initial content
-    with open(log_file, 'w') as f:
-        f.write(f"GPU: {gpu_id}\n")
-        f.write(f"Task Config: {task_cfg}\n")
-        f.write(f"Dataset CSV: {dataset_csv}\n")
-        f.write(f"Root Path: {root_path}\n")
-        f.write(f"Input Dim: {input_dim}\n")
 
-    # Build the command
+
     command = [
         f"CUDA_VISIBLE_DEVICES={gpu_id} python main.py",
         f"--task_cfg_path {task_cfg}",
@@ -37,118 +26,145 @@ def run_task(config):
         f"--pretrain_model {pretrain_model}",
         f"--pretrain_model_type {pretrain_model_type}"
     ]
-
+    #write the command
     command_str = " ".join(command)
+    with open(log_file, 'w') as f:
+        f.write(f"GPU: {gpu_id}\n")
+        f.write(f"Task Config: {task_cfg}\n")
+        f.write(f"Dataset CSV: {dataset_csv}\n")
+        f.write(f"Root Path: {root_path}\n")
+        f.write(f"Input Dim: {input_dim}\n")
+        f.write(f"Experiment Command: {command_str}\n")
     print(f"Launching task: {command_str}")
 
-    # Open the log file and launch the process, capturing output in real-time
     process = subprocess.Popen(command_str, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    # Print output to the terminal and log file in real-time
     with open(log_file, "a") as log:
-        # Capture stdout
         for line in process.stdout:
             decoded_line = line.decode('utf-8')
-            print(decoded_line, end='')  # Print to terminal
-            log.write(decoded_line)      # Write to log file
+            print(decoded_line, end='')  
+            log.write(decoded_line)      
 
-        # Capture stderr
         for line in process.stderr:
             decoded_line = line.decode('utf-8')
-            print(decoded_line, end='')  # Print to terminal
-            log.write(decoded_line)      # Write to log file
+            print(decoded_line, end='')  
+            log.write(decoded_line)      
 
-    return process  # Return the subprocess object to track it
+    return process, log_file
+
+
+def manage_processes(configs, max_concurrent_tasks):
+    all_processes = []
+    running_processes = 0
+
+    def start_task(config):
+        nonlocal running_processes
+        process, log_file = run_task(config)
+        if process:
+            all_processes.append((process, log_file))
+            running_processes += 1
+
+    threads = []
+
+    for config in configs:
+        while running_processes >= max_concurrent_tasks:
+            for process, log_file in all_processes:
+                if process.poll() is not None:  # Process finished
+                    running_processes -= 1
+                    all_processes.remove((process, log_file))
+                    break
+            time.sleep(1)
+
+        # Launch task in a separate thread to allow parallel execution
+        thread = threading.Thread(target=start_task, args=(config,))
+        thread.start()
+        threads.append(thread)
+
+    # Wait for all threads to complete
+    for thread in threads:
+        thread.join()
+
+    # Wait for all subprocesses to finish
+    for process, log_file in all_processes:
+        process.wait()
+        # If the process failed (non-zero return code), delete the log file
+        if process.returncode != 0 and os.path.exists(log_file):
+            print(f"Task failed. Deleting log file: {log_file}")
+            os.remove(log_file)
 
 
 if __name__ == "__main__":
-    # Define tasks with their configurations
     tasks = {
-        "BCNB_ER": {
+        "BCNB_ERPRHER2": {
             "embedding_dir": "/ruiyan/yuhao/tile_embed/BCNB",
             "csv_dir": "dataset_csv/biomarker/",
             "dataset": "BCNB",
-            "task_cfg": "task_configs/BCNB_ER.yaml"
+            "task_cfg": "task_configs/BCNB_ERPRHER2.yaml"
         }, 
-        "BCNB_HER2": {
+        "BCNB_ALN": {
             "embedding_dir": "/ruiyan/yuhao/tile_embed/BCNB",
-            "csv_dir": "dataset_csv/biomarker/",
+            "csv_dir": "dataset_csv/subtype/",
             "dataset": "BCNB",
-            "task_cfg": "task_configs/BCNB_HER2.yaml"
+            "task_cfg": "task_configs/BCNB_ALN.yaml"
         },
-        "BCNB_PR": {
-            "embedding_dir": "/ruiyan/yuhao/tile_embed/BCNB",
+        "IMPRESS_HER2_2subtype": {
+            "embedding_dir": "/ruiyan/yuhao/tile_embed/IMPRESS",
             "csv_dir": "dataset_csv/biomarker/",
-            "dataset": "BCNB",
-            "task_cfg": "task_configs/BCNB_PR.yaml"
-        }
+            "dataset": "IMPRESS",
+            "task_cfg": "task_configs/IMPRESS_HER2_2subtype.yaml"
+        },
+        "IMPRESS_TNBC_2subtype": {
+            "embedding_dir": "/ruiyan/yuhao/tile_embed/IMPRESS",
+            "csv_dir": "dataset_csv/biomarker/",
+            "dataset": "IMPRESS",
+            "task_cfg": "task_configs/IMPRESS_TNBC_2subtype.yaml"
+        },
+        # "TCGA-BRCA_molecular_subtyping": {
+        #     "embedding_dir": "/ruiyan/yuhao/tile_embed/TCGA-BRCA",
+        #     "csv_dir": "dataset_csv/biomarker/",
+        #     "dataset": "TCGA-BRCA",
+        #     "task_cfg": "task_configs/TCGA-BRCA_molecular_subtyping.yaml"
+        # },
+        
+        
+        
     }
 
-    # Define pretrain models to process in each batch
-    pretrain_models = ['Gigapath_tile', 'CONCH', 'UNI', 'CHIEF_tile']
+    pretrain_models = ['Gigapath_Tile','CONCH', 'UNI', 'TITAN','Virchow','CHIEF_Tile']
     pretrain_model_dim_dict = {
         "UNI": 1024,
         "CONCH": 768,
-        "CHIEF_tile": 1536,
+        "CHIEF_Tile": 768,
         "TITAN": 768,
         "Virchow": 1280,
-        "Gigapath_tile": 1536,
+        "Gigapath_Tile": 1536,
     }
     pretrain_model_types_dict = {
         "UNI": "patch_level",
         "CONCH": "patch_level",
-        "CHIEF_tile": "patch_level",
-        "TITAN": "patch_level",
+        "CHIEF_Tile": "patch_level",
+        "TITAN": "slide_level",
         "Virchow": "patch_level",
-        "Gigapath_tile": "patch_level"
+        "Gigapath_Tile": "patch_level"
     }
 
-    # Maximum number of concurrent tasks
-    max_concurrent_tasks = 16  # Adjust this to your hardware capacity
-
-    # Track all processes across all task types
-    all_processes = []
-    running_processes = 0  # Counter for the number of currently running tasks
+    max_concurrent_tasks = 16
 
     for task_name, config in tasks.items():
         embedding_dir = config["embedding_dir"]
         csv_dir = config["csv_dir"]
-        dataset = config["dataset"]
-        input_dim = [pretrain_model_dim_dict[pretrain_model] for pretrain_model in pretrain_models]
-        pretrain_model_types = [pretrain_model_types_dict[pretrain_model] for pretrain_model in pretrain_models]
-
         task_cfg = config["task_cfg"]
 
+        input_dim = [pretrain_model_dim_dict[pretrain_model] for pretrain_model in pretrain_models]
+        pretrain_model_types = [pretrain_model_types_dict[pretrain_model] for pretrain_model in pretrain_models]
         root_paths = [os.path.join(embedding_dir, pretrain_model) for pretrain_model in pretrain_models]
-        length = len(pretrain_models)
-        gpu_ids = [0 for i in range(length)]  # Distribute tasks across GPUs
-        dataset_csvs = [os.path.join(csv_dir, f"{task_name}.csv")] * length
+        dataset_csvs = [os.path.join(csv_dir, f"{task_name}.csv")] * len(pretrain_models)
+        gpu_ids = [0 for _ in range(len(pretrain_models))]  # Distribute tasks across GPUs
 
-        # Create a list of all configurations
-        configs = zip(gpu_ids, [task_cfg] * length, dataset_csvs, root_paths, input_dim, pretrain_models, pretrain_model_types)
-
-        # Start all tasks for the current task type
-        for config in configs:
-            # Wait for a running process to finish if the number of concurrent tasks reaches the limit
-            if running_processes >= max_concurrent_tasks:
-                # Wait for one of the processes to complete
-                for process in all_processes:
-                    if process.poll() is not None:  # Process has finished
-                        running_processes -= 1  # Decrease the counter for running tasks
-                        all_processes.remove(process)  # Remove the finished process
-                        break
-                time.sleep(1)  # Sleep for a short time before checking again
-
-            # Run the new task
-            process = run_task(config)
-            if process:
-                all_processes.append(process)  # Keep track of running processes
-                running_processes += 1  # Increase the counter for running tasks
-
-        print(f"All tasks for {task_name} started.")
-
-    # Wait for all processes of all task types to complete
-    for process in all_processes:
-        process.wait()
-
+        configs = zip(gpu_ids, [task_cfg] * len(pretrain_models), dataset_csvs, root_paths, input_dim, pretrain_models, pretrain_model_types)
+        
+        print(f"Starting tasks for {task_name}...")
+        manage_processes(configs, max_concurrent_tasks)
+        print(f"All tasks for {task_name} completed.")
+    
     print("All tasks for all task types completed.")

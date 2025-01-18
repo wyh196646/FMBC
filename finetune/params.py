@@ -23,7 +23,7 @@ def get_finetune_params():
     parser.add_argument('--input_dim',      type=int, default=1536, help='Dimension of input tile embeddings')
     parser.add_argument('--latent_dim',     type=int, default=768, help='Hidden dimension of the slide encoder')
     parser.add_argument('--feat_layer',     type=str, default='11', help='The layers from which embeddings are fed to the classifier, e.g., 5-11 for taking out the 5th and 11th layers')
-    parser.add_argument('--pretrained',     type=str, default='/ruiyan/yuhao/project/FMBC/ibot/checkpoint.pth', help='Pretrained GigaPath slide encoder')
+    parser.add_argument('--pretrained',     type=str, default='/ruiyan/yuhao/project/FMBC/ibot/checkpoint0040.pth', help='Pretrained GigaPath slide encoder')
     parser.add_argument('--freeze',         action='store_true', default=False, help='Freeze pretrained model')
     parser.add_argument('--global_pool',    action='store_true', default=False, help='Use global pooling, will use [CLS] token if False')
 
@@ -55,6 +55,8 @@ def get_finetune_params():
     parser.add_argument('--mil_type',    type=str, default='clam_sb', help='Number of workers')
     parser.add_argument('--pretrain_model', default='FMBC',help='type of pretrain model, ctans, UNI, CONCH, CHIEF,etc ... ')
     parser.add_argument('--pretrain_model_type', default='slide_level',help='type of pretrain model, patch level or slide level ')
-    # training settings
+    parser.add_argument('--tuning_method',)
     parser.add_argument('--experiment', type=str, default='finetune', help='Experiment name')
+    parser.add_argument('--return_all_tokens', action='store_true', default=True, help='Return all tokens')
+    parser.add_argument('--pool_method',type=str, default='cls_token', help='Return all tokens')
     return parser.parse_args()

@@ -217,12 +217,13 @@ class SlideDataset(SlideDatasetForTasks):
         elif '.h5' in img_path:
             assets, _ = self.read_assets_from_h5(img_path)
             images = torch.from_numpy(assets['features'])
+            #print(images.shape)
             try:
                 coords = torch.from_numpy(assets['coords'])
-            except KeyError:
+            except :
                 coords = torch.zeros((1, 2))
-                
-            if self.shuffle_tiles:
+            #print(coords.shape)  
+            if self.shuffle_tiles and coords.shape[0]>1:
                 images, coords = self.shuffle_data(images, coords)
             if images.size(0) > self.max_tiles:
                 images = images[:self.max_tiles, :]
@@ -233,7 +234,7 @@ class SlideDataset(SlideDatasetForTasks):
         data_dict = {'imgs': images,
                 'img_lens': images.size(0),
                 'coords': coords}
-        
+        #print(data_dict['imgs'].shape)
         return data_dict
     
     def get_balance_weight(self):

@@ -8,6 +8,9 @@ sys.path.append(str(this_file_dir.parent))
 sys.path.append('/ruiyan/yuhao/project/FMBC/preprocess')
 import time
 import wandb
+os.environ["WANDB_API_KEY"] = '6ebb1c769075243eb73a32c4f9f7011ddd41f20a'
+#os.environ["WANDB_MODE"] = "offline"
+
 import torch
 import numpy as np
 import torch.utils.tensorboard as tensorboard
@@ -42,7 +45,8 @@ def train(dataloader, fold, args):
     elif "tensorboard" in args.report_to:
         writer = tensorboard.SummaryWriter(writer_dir, flush_secs=15)
     if args.pretrain_model_type =='patch_level':
-        model = initiate_mil_model(args)
+        #model = initiate_mil_model(args)
+        model = initiate_linear_model(args)
     else:
         if args.pretrain_model == 'FMBC':
             model = get_model(**vars(args))

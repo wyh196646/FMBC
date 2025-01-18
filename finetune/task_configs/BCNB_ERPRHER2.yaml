@@ -4,5 +4,5 @@ label_dict:
   ER : 0 
   PR : 1
   HER2: 2
-max_tiles: 6000
+max_tiles: 5000
 shuffle_tiles: true

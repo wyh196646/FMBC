@@ -68,22 +68,26 @@ def main():
     argparser.add_argument('--username', type=str, default='yuhaowang', help='Remote username')
     argparser.add_argument('--password', type=str, default='4090@YHWang', help='Remote password')
     argparser.add_argument('--remote_dir', type=str, default='/data1/embedding', help='Remote directory')
-    argparser.add_argument('--local_dir', type=str, default='/ruiyan/yuhao/tile_embed/embedding', help='Local directory')
+    argparser.add_argument('--local_dir', type=str, default='/ruiyan/yuhao/tile_embed', help='Local directory')
     
     args = argparser.parse_args()
-
     host = args.host
     port = args.port
     username = args.username
     password = args.password
     remote_dir = args.remote_dir
     local_dir = args.local_dir
-
+    data_dir = ['BACH','CMB-BRCA','CPTAC-BREAST-all','IMPRESS','Multi-omic','Post-NAT-BRCA','SLN-Breast']
     print(f"开始同步数据: {remote_dir} -> {local_dir}")
 
     ssh = create_ssh_client(host, port, username, password)
     try:
-        compare_and_sync(ssh, local_dir, remote_dir)
+        for dir in data_dir:
+            recent_local_dir = os.path.join(local_dir, dir)
+            recent_remote_dir = os.path.join(remote_dir, dir)
+            print('开始同步数据: ',recent_local_dir, ' -> ', recent_remote_dir)
+            compare_and_sync(ssh, recent_local_dir, recent_remote_dir)
+        #compare_and_sync(ssh, local_dir, remote_dir)
     finally:
         ssh.close()
 

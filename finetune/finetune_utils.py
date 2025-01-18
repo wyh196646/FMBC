@@ -223,7 +223,7 @@ def param_groups_lrd(model, weight_decay=0.05, no_weight_decay_list=[], layer_de
         if not p.requires_grad:
             continue
         
-        if 'mask_token' in n or 'slide_encoder.decoder' in n:
+        if 'mask_token' in n: #or 'slide_encoder' in n: # if fronzen the slide encoder
             continue
 
         # no decay: all 1D parameters and model specific ones
@@ -256,7 +256,8 @@ def param_groups_lrd(model, weight_decay=0.05, no_weight_decay_list=[], layer_de
         param_groups[group_name]["params"].append(p)
 
     return list(param_groups.values())
-
+    # for i in param_groups.keys():
+    #     print(i)
 
 def get_layer_id(name, num_layers):
     # ------------------------------------------------------------------------------------------
@@ -304,7 +305,7 @@ def get_optimizer(args, model):
     optimizer = optim_func(param_groups, lr=args.lr)
 
     return optimizer
-
+# ABMIL是效果最好的
 # def get_pathch_model_optim(model, args):
 
 def get_loss_function(task_config: dict):

@@ -42,7 +42,7 @@ CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/TCGA-BRCA-Sub
 
 ### Downstreamtask 3:  Valid on bcnb_er
 ```
-CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/bcnb_er.yaml --dataset_csv dataset_csv/biomarker/BCNB_ER.csv --root_path /ruiyan/yuhao/embedding/BCNB 
+CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/BCNB_ER.yaml --dataset_csv dataset_csv/biomarker/BCNB_ER.csv --root_path /ruiyan/yuhao/embedding/BCNB --input_dim 768 --pretrain_model FMBC --pretrain_model_type slide_level
 
 ```
 

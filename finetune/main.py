@@ -71,6 +71,7 @@ if __name__ == '__main__':
     results = {}
     predict_results ={}
     # start cross validation
+
     for fold in range(args.folds):
         # set up the fold directory
         save_dir = os.path.join(args.save_dir, f'fold_{fold}')
@@ -109,7 +110,7 @@ if __name__ == '__main__':
                 else:   
                     if key_ not in results:
                         results[key_] = []
-                    results[key_].append(records[record_][key])
+                    results[key_].append(records[record_][ key])
     
     
     val_predict_df = process_predicted_data(predict_results,label_dict.keys(),'val')

@@ -42,7 +42,7 @@ compute_precision:
         buffer_dtype: fp16
 dino:
   loss_weight: 1.0
-  head_n_prototypes: 384
+  head_n_prototypes: 65536
   head_bottleneck_dim: 256
   head_nlayers: 3
   head_hidden_dim: 2048
@@ -54,22 +54,22 @@ ibot:
   - 0.1
   - 0.5
   separate_head: false
-  head_n_prototypes: 384
+  head_n_prototypes: 65536
   head_bottleneck_dim: 256
   head_nlayers: 3
   head_hidden_dim: 2048
 train:
-  batch_size_per_gpu: 360
+  batch_size_per_gpu: 160
   dataset_path: TileDataset:split=TRAIN:root=/ruiyan/yuhao/data
   output_dir: /ruiyan/yuhao/project/FMBC/dinov2/output
   saveckp_freq: 20
   seed: 0
-  num_workers: 12
+  num_workers: 16
   OFFICIAL_EPOCH_LENGTH: 1250
   cache_dataset: true
   centering: centering
 student:
-  arch: vit_base
+  arch: vit_large
   patch_size: 16
   drop_path_rate: 0.3
   layerscale: 1.0e-05
@@ -94,7 +94,7 @@ optim:
   weight_decay: 0.04
   weight_decay_end: 0.4
   base_lr: 0.004
-  lr: 0.005809475019311125
+  lr: 0.00447213595499958
   warmup_epochs: 10
   min_lr: 1.0e-06
   clip_grad: 3.0

@@ -67,6 +67,8 @@ class ClassificationHead(nn.Module):
         model_arch="vit_base",
         pretrained="",
         freeze=False,
+        return_all_tokens=False,
+        pool_method = "mean",
         **kwargs,
     ):
         super(ClassificationHead, self).__init__()
@@ -74,9 +76,11 @@ class ClassificationHead(nn.Module):
         # setup the slide encoder
         self.feat_layer = [eval(x) for x in feat_layer.split("-")]
         self.feat_dim = len(self.feat_layer) * latent_dim
+        self.return_all_tokens = return_all_tokens
+        self.pool_method = pool_method
         
         #self.slide_encoder = slide_encoder.create_model(pretrained, model_arch, in_chans=input_dim, **kwargs)
-        self.slide_encoder=vits.__dict__[model_arch](slide_embedding_size=input_dim)
+        self.slide_encoder=vits.__dict__[model_arch](slide_embedding_size=input_dim, return_all_tokens=self.return_all_tokens)
         load_pretrained_weights(self.slide_encoder, pretrained, 'teacher')
         # whether to freeze the pretrained model
         if freeze:
@@ -108,7 +112,10 @@ class ClassificationHead(nn.Module):
                             dtype=torch.bool).to(device=images.device)
         
         img_enc = self.slide_encoder(images, coords, masks)
-        #x, coords, pad_mask,
+        if self.pool_method == 'mean':
+            img_enc = torch.mean(img_enc[:, 1:], dim=1)
+        elif self.pool_method == 'cls_token':
+            img_enc = img_enc[:, 0]
         logits = self.classifier(img_enc)
         return logits
 
