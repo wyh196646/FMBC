@@ -1,11 +1,12 @@
 dino:
   head_n_prototypes: 131072
   head_bottleneck_dim: 384
+  koleo_loss_weight: 0.0
 ibot:
   separate_head: true
   head_n_prototypes: 131072
 train:
-  batch_size_per_gpu: 140
+  batch_size_per_gpu: 40
   dataset_path: ImageNet:split=TRAIN
   centering: sinkhorn_knopp
   num_workers: 16
@@ -16,14 +17,14 @@ student:
   ffn_layer: SwiGLUPacked
   block_chunks: 4
   num_register_tokens: 8
-  layerscale: 1e-5
+  layerscale: 1e-4
 teacher:
-  momentum_teacher: 0.994
+  momentum_teacher: 0.996
 optim:
   epochs: 4000
-  weight_decay_end: 0.2
-  base_lr: 2.0e-04  # learning rate for a batch size of 1024
-  warmup_epochs: 80
+  weight_decay_end:  0.1
+  base_lr: 2.0e-04 # learning rate for a batch size of 1024
+  warmup_epochs: 20
   layerwise_decay: 1.0
 crops:
   local_crops_size: 98

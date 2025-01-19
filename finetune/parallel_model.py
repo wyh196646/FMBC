@@ -194,6 +194,7 @@ if __name__ == "__main__":
             "dataset": "SLN-Breast",
             "task_cfg": "task_configs/SLNbreast_2subtype.yaml"
         },
+        #/yuhaowang/data/embedding/TCGA-BRCA
         'TCGA-BRCA-Subtype':{
             "embedding_dir": "/yuhaowang/data/embedding/TCGA-BRCA",
             "csv_dir": "dataset_csv/subtype/",
@@ -227,8 +228,6 @@ if __name__ == "__main__":
             "dataset": "TCGA-BRCA",
             "task_cfg": "task_configs/TCGA-BRCA-Gene-Exp.yaml"
         },
-        
-    
         
     }
 
