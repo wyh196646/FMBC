@@ -36,7 +36,7 @@ class TileDataset(ExtendedVisionDataset):
         #                 'private_chunk_10',
         #                 ]
         subfolder_list=os.listdir(self.root)
-        #subfolder_list=['TCGA-BRCA']
+        subfolder_list=['TCGA-BRCA']
         print('processing',subfolder_list)
         for subfolder in subfolder_list:
             self.train_folder=os.path.join(self.root, subfolder ,'output')

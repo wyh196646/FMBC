@@ -8,42 +8,42 @@ compute_precision:
       mixed_precision:
         param_dtype: fp16
         reduce_dtype: fp16
-        buffer_dtype: fp16
+        buffer_dtype: fp32
     dino_head:
       sharding_strategy: SHARD_GRAD_OP
       mixed_precision:
         param_dtype: fp16
         reduce_dtype: fp16
-        buffer_dtype: fp16
+        buffer_dtype: fp32
     ibot_head:
       sharding_strategy: SHARD_GRAD_OP
       mixed_precision:
         param_dtype: fp16
         reduce_dtype: fp16
-        buffer_dtype: fp16
+        buffer_dtype: fp32
   student:
     backbone:
       sharding_strategy: SHARD_GRAD_OP
       mixed_precision:
         param_dtype: fp16
         reduce_dtype: fp16
-        buffer_dtype: fp16
+        buffer_dtype: fp32
     dino_head:
       sharding_strategy: SHARD_GRAD_OP
       mixed_precision:
         param_dtype: fp16
-        reduce_dtype: fp16
-        buffer_dtype: fp16
+        reduce_dtype: fp32
+        buffer_dtype: fp32
     ibot_head:
       sharding_strategy: SHARD_GRAD_OP
       mixed_precision:
         param_dtype: fp16
-        reduce_dtype: fp16
-        buffer_dtype: fp16
+        reduce_dtype: fp32
+        buffer_dtype: fp32
 dino:
   loss_weight: 1.0
-  head_n_prototypes: 65536
-  head_bottleneck_dim: 256
+  head_n_prototypes: 131072
+  head_bottleneck_dim: 384
   head_nlayers: 3
   head_hidden_dim: 2048
   koleo_loss_weight: 0.1
@@ -53,13 +53,13 @@ ibot:
   mask_ratio_min_max:
   - 0.1
   - 0.5
-  separate_head: false
-  head_n_prototypes: 65536
+  separate_head: true
+  head_n_prototypes: 131072
   head_bottleneck_dim: 256
   head_nlayers: 3
   head_hidden_dim: 2048
 train:
-  batch_size_per_gpu: 160
+  batch_size_per_gpu: 140
   dataset_path: TileDataset:split=TRAIN:root=/ruiyan/yuhao/data
   output_dir: /ruiyan/yuhao/project/FMBC/dinov2/output
   saveckp_freq: 20
@@ -67,20 +67,20 @@ train:
   num_workers: 16
   OFFICIAL_EPOCH_LENGTH: 1250
   cache_dataset: true
-  centering: centering
+  centering: sinkhorn_knopp
 student:
-  arch: vit_large
-  patch_size: 16
-  drop_path_rate: 0.3
+  arch: vit_h
+  patch_size: 14
+  drop_path_rate: 0.4
   layerscale: 1.0e-05
   drop_path_uniform: true
   pretrained_weights: ''
-  ffn_layer: mlp
+  ffn_layer: SwiGLUPacked
   block_chunks: 4
   qkv_bias: true
   proj_bias: true
   ffn_bias: true
-  num_register_tokens: 0
+  num_register_tokens: 8
   interpolate_antialias: false
   interpolate_offset: 0.1
 teacher:
@@ -92,16 +92,16 @@ teacher:
 optim:
   epochs: 4000
   weight_decay: 0.04
-  weight_decay_end: 0.4
-  base_lr: 0.004
-  lr: 0.00447213595499958
-  warmup_epochs: 10
+  weight_decay_end: 0.2
+  base_lr: 0.0002
+  lr: 0.0002091650066335189
+  warmup_epochs: 80
   min_lr: 1.0e-06
   clip_grad: 3.0
   freeze_last_layer_epochs: 1
   scaling_rule: sqrt_wrt_1024
   patch_embed_lr_mult: 0.2
-  layerwise_decay: 0.9
+  layerwise_decay: 1.0
   adamw_beta1: 0.9
   adamw_beta2: 0.999
 crops:
@@ -113,6 +113,6 @@ crops:
   - 0.05
   - 0.32
   global_crops_size: 224
-  local_crops_size: 96
+  local_crops_size: 98
 evaluation:
   eval_period_iterations: 12500

@@ -1,3 +1,72 @@
+# import subprocess
+# import os
+
+# def run_task(config):
+#     gpu_id, task_cfg, dataset_csv, root_path, input_dim, pretrain_model, pretrain_model_type = config
+#     log_save_dir = "log"
+#     os.makedirs(log_save_dir, exist_ok=True)
+
+#     # Create a unique log file name
+#     log_file = os.path.join(log_save_dir, f"{os.path.basename(task_cfg)}_{os.path.basename(dataset_csv)}_{pretrain_model}.log")
+
+#     # If the log file exists, skip the task
+#     if os.path.exists(log_file):
+#         print(f"Skipping task: {log_file} already exists")
+#         return None  # Task skipped
+
+#     # Build the command
+#     command = [
+#         f"CUDA_VISIBLE_DEVICES={gpu_id} python main.py",
+#         f"--task_cfg_path {task_cfg}",
+#         f"--dataset_csv {dataset_csv}",
+#         f"--root_path {root_path}",
+#         f"--input_dim {input_dim}",
+#         f"--pretrain_model {pretrain_model}",
+#         f"--pretrain_model_type {pretrain_model_type}"
+#     ]
+
+#     command_str = " ".join(command)
+#     print(f"Launching task: {command_str}")
+#     #change dir to ../
+#     os.chdir("../")
+#     # Open the log file and launch the process
+#     with open(log_file, "w") as log:
+#         process = subprocess.Popen(command_str, shell=True, stdout=log, stderr=log)
+#         process.wait()  # Wait for the process to finish
+
+#     print(f"Task completed: {command_str}")
+
+# if __name__ == "__main__":
+#     # Dataset and embedding directory
+#     datasets = ["Post-NAT-BRCA",]  # List of datasets
+#     task_name = "Post-NAT-3Type"
+#     embedding_dir = "/ruiyan/yuhao/embedding/"
+#     config_dir = "task_configs"
+#     csv_dir = "dataset_csv/subtype"
+#     pretrain_models = ["FMBC"]
+
+#     # Define configurations for each dataset
+#     input_dim = 768
+#     gpu_id = 0  # Set GPU ID for all tasks
+#     pretrain_model_type = "slide_level"
+
+#     for dataset in datasets:
+#         for pretrain_model in pretrain_models:
+#             root_path = os.path.join(embedding_dir, dataset)
+#             task_cfg_path = os.path.join(config_dir, f"{task_name}.yaml")
+#             dataset_csv = os.path.join(csv_dir, f"{task_name}.csv")
+
+#             config = (
+#                 gpu_id, task_cfg_path, dataset_csv, root_path, input_dim, pretrain_model, pretrain_model_type
+#             )
+
+#             # Run the task and wait for its completion before starting the next
+#             run_task(config)
+
+#     print("All tasks completed.")
+
+
+
 import subprocess
 import os
 import time
@@ -96,52 +165,75 @@ def manage_processes(configs, max_concurrent_tasks):
 if __name__ == "__main__":
     tasks = {
         "BCNB_ERPRHER2": {
-            "embedding_dir": "/ruiyan/yuhao/tile_embed/BCNB",
+            "embedding_dir": "/yuhaowang/data/embedding/BCNB",
             "csv_dir": "dataset_csv/biomarker/",
             "dataset": "BCNB",
             "task_cfg": "task_configs/BCNB_ERPRHER2.yaml"
         }, 
         "BCNB_ALN": {
-            "embedding_dir": "/ruiyan/yuhao/tile_embed/BCNB",
+            "embedding_dir": "/yuhaowang/data/embedding/BCNB",
             "csv_dir": "dataset_csv/subtype/",
             "dataset": "BCNB",
             "task_cfg": "task_configs/BCNB_ALN.yaml"
         },
         "IMPRESS_HER2_2subtype": {
-            "embedding_dir": "/ruiyan/yuhao/tile_embed/IMPRESS",
+            "embedding_dir": "/yuhaowang/data/embedding/IMPRESS",
             "csv_dir": "dataset_csv/biomarker/",
             "dataset": "IMPRESS",
             "task_cfg": "task_configs/IMPRESS_HER2_2subtype.yaml"
         },
         "IMPRESS_TNBC_2subtype": {
-            "embedding_dir": "/ruiyan/yuhao/tile_embed/IMPRESS",
+            "embedding_dir": "/yuhaowang/data/embedding/IMPRESS",
             "csv_dir": "dataset_csv/biomarker/",
             "dataset": "IMPRESS",
             "task_cfg": "task_configs/IMPRESS_TNBC_2subtype.yaml"
         },
-        # "TCGA-BRCA_molecular_subtyping": {
-        #     "embedding_dir": "/ruiyan/yuhao/tile_embed/TCGA-BRCA",
-        #     "csv_dir": "dataset_csv/biomarker/",
-        #     "dataset": "TCGA-BRCA",
-        #     "task_cfg": "task_configs/TCGA-BRCA_molecular_subtyping.yaml"
-        # },
         'SLNbreast_2subtype':{
-            "embedding_dir": "/ruiyan/yuhao/tile_embed/SLN-Breast",
+            "embedding_dir": "/yuhaowang/data/embedding/SLN-Breast",
             "csv_dir": "dataset_csv/subtype/",
             "dataset": "SLN-Breast",
             "task_cfg": "task_configs/SLNbreast_2subtype.yaml"
         },
         'TCGA-BRCA-Subtype':{
-            "embedding_dir": "/ruiyan/yuhao/tile_embed/TCGA-BRCA",
+            "embedding_dir": "/yuhaowang/data/embedding/TCGA-BRCA",
             "csv_dir": "dataset_csv/subtype/",
             "dataset": "SLN-Breast",
-            "task_cfg": "task_configs/SLNbreast_2subtype.yaml"
+            "task_cfg": "task_configs/TCGA-BRCA-Subtype.yaml"
+        },
+        "TCGA-BRCA_molecular_subtyping": {
+            "embedding_dir": "yuhaowang/data/embedding/TCGA-BRCA",
+            "csv_dir": "dataset_csv/biomarker/",
+            "dataset": "TCGA-BRCA",
+            "task_cfg": "task_configs/TCGA-BRCA_molecular_subtyping.yaml"
+        },
+
+        "BRACS_COARSE":{
+            "embedding_dir": "yuhaowang/data/embedding/BRACS",
+            "csv_dir": "dataset_csv/subtype/",
+            "dataset": "BRACS",
+            "task_cfg": "task_configs/BRACS_COARSE.yaml"
+            
+        },
+        "BRACS_FINE":{
+            "embedding_dir": "yuhaowang/data/embedding/BRACS",
+            "csv_dir": "dataset_csv/subtype/",
+            "dataset": "BRACS",
+            "task_cfg": "task_configs/BRACS_FINE.yaml"
+            
+        },
+        "TCGA-Genexp": {
+            "embedding_dir": "yuhaowang/data/embedding/TCGA-BRCA",
+            "csv_dir": "dataset_csv/expression_prediction/",
+            "dataset": "TCGA-BRCA",
+            "task_cfg": "task_configs/TCGA-BRCA-Gene-Exp.yaml"
         },
         
-         
+    
+        
     }
 
-    pretrain_models = ['Gigapath_Tile','CONCH', 'UNI', 'TITAN','Virchow','CHIEF_Tile']
+    #pretrain_models = ['Gigapath_Tile','CONCH', 'UNI', 'TITAN','Virchow','CHIEF_Tile']
+    pretrain_models =['FMBC']
     pretrain_model_dim_dict = {
         "UNI": 1024,
         "CONCH": 768,
@@ -158,7 +250,7 @@ if __name__ == "__main__":
         "TITAN": "slide_level",
         "Virchow": "patch_level",
         "Gigapath_Tile": "patch_level",
-             'FMBC': "slide_level"
+        'FMBC': "slide_level"
     }
 
     max_concurrent_tasks = 16
@@ -170,7 +262,7 @@ if __name__ == "__main__":
 
         input_dim = [pretrain_model_dim_dict[pretrain_model] for pretrain_model in pretrain_models]
         pretrain_model_types = [pretrain_model_types_dict[pretrain_model] for pretrain_model in pretrain_models]
-        root_paths = [os.path.join(embedding_dir, pretrain_model) for pretrain_model in pretrain_models]
+        root_paths = [embedding_dir for pretrain_model in pretrain_models]
         dataset_csvs = [os.path.join(csv_dir, f"{task_name}.csv")] * len(pretrain_models)
         gpu_ids = [0 for _ in range(len(pretrain_models))]  # Distribute tasks across GPUs
 

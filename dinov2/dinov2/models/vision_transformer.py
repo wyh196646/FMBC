@@ -11,7 +11,7 @@ from functools import partial
 import math
 import logging
 from typing import Sequence, Tuple, Union, Callable
-
+import timm
 import torch
 import torch.nn as nn
 import torch.utils.checkpoint
@@ -65,6 +65,7 @@ class DinoVisionTransformer(nn.Module):
         num_register_tokens=0,
         interpolate_antialias=False,
         interpolate_offset=0.1,
+        
     ):
         """
         Args:
@@ -105,7 +106,7 @@ class DinoVisionTransformer(nn.Module):
 
         self.patch_embed = embed_layer(img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim)
         num_patches = self.patch_embed.num_patches
-
+        #
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
         self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + self.num_tokens, embed_dim))
         assert num_register_tokens >= 0
@@ -121,6 +122,9 @@ class DinoVisionTransformer(nn.Module):
         if ffn_layer == "mlp":
             logger.info("using MLP layer as FFN")
             ffn_layer = Mlp
+        elif ffn_layer == "SwiGLUPacked":
+            logger.info("using SwiGLU layer as FFN")
+            ffn_layer = timm.layers.SwiGLUPacked
         elif ffn_layer == "swiglufused" or ffn_layer == "swiglu":
             logger.info("using SwiGLU layer as FFN")
             ffn_layer = SwiGLUFFNFused
@@ -394,3 +398,33 @@ def vit_giant2(patch_size=16, num_register_tokens=0, **kwargs):
         **kwargs,
     )
     return model
+
+
+def vit_h(patch_size=14, num_register_tokens=0, **kwargs):
+    # model = DinoVisionTransformer(
+    #     embed_dim=1536,
+    #     num_heads=24,
+    #     depth=24,
+    #     mlp_ratio=2.66667 * 2,
+    #     block_fn=partial(Block, attn_class=MemEffAttention),
+    #     num_register_tokens=num_register_tokens,
+    #     patch_size=patch_size,
+        
+    #     act_layer=torch.nn.SiLU,
+    #     **kwargs,
+    # )
+    print(kwargs)
+    model =  DinoVisionTransformer(
+            img_size=224, 
+            patch_size= 14, 
+            depth= 24,
+            embed_dim=1536,
+            num_heads=24,
+            init_values= 1e-5, 
+            mlp_ratio= 2.66667*2,
+            ffn_layer="SwiGLUPacked",
+            act_layer = torch.nn.SiLU, 
+            block_fn=partial(Block, attn_class=MemEffAttention),
+            num_register_tokens=8)
+    return model
+

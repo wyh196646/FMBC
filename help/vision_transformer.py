@@ -11,7 +11,7 @@ from functools import partial
 import math
 import logging
 from typing import Sequence, Tuple, Union, Callable
-
+import timm
 import torch
 import torch.nn as nn
 import torch.utils.checkpoint
@@ -65,6 +65,7 @@ class DinoVisionTransformer(nn.Module):
         num_register_tokens=0,
         interpolate_antialias=False,
         interpolate_offset=0.1,
+        
     ):
         """
         Args:
@@ -124,6 +125,9 @@ class DinoVisionTransformer(nn.Module):
         elif ffn_layer == "swiglufused" or ffn_layer == "swiglu":
             logger.info("using SwiGLU layer as FFN")
             ffn_layer = SwiGLUFFNFused
+        elif ffn_layer == "SwiGLUPacked":
+            logger.info("using SwiGLU layer as FFN")
+            ffn_layer = timm.layers.SwiGLUPacked
         elif ffn_layer == "identity":
             logger.info("using Identity layer as FFN")
 
@@ -394,3 +398,4 @@ def vit_giant2(patch_size=16, num_register_tokens=0, **kwargs):
         **kwargs,
     )
     return model
+
