@@ -84,7 +84,7 @@ student:
   interpolate_antialias: false
   interpolate_offset: 0.1
 teacher:
-  momentum_teacher: 0.996
+  momentum_teacher: 0.994
   final_momentum_teacher: 1
   warmup_teacher_temp: 0.04
   teacher_temp: 0.07
@@ -92,10 +92,10 @@ teacher:
 optim:
   epochs: 4000
   weight_decay: 0.04
-  weight_decay_end: 0.1
+  weight_decay_end: 0.2
   base_lr: 0.0002
   lr: 0.0001118033988749895
-  warmup_epochs: 20
+  warmup_epochs: 80
   min_lr: 1.0e-06
   clip_grad: 3.0
   freeze_last_layer_epochs: 1
