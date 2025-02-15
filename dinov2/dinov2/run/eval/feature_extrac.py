@@ -58,7 +58,7 @@ exclude_dir = [f'private_chunk_{i}' for i in range(1, 11)]
 dataset_list = [i for i in dataset_list if i not in exclude_dir]
 
 transform = make_classification_eval_transform(resize_size=224)
-batch_size = 1
+batch_size = 640
 
 # ----------------  数据处理  ----------------
 for dataset in dataset_list:
@@ -80,7 +80,7 @@ for dataset in dataset_list:
 
         try:
             dataset_str = f"TileDataset:split=VALID:root=/ruiyan/yuhao/data/{dataset}/output/{slide}"
-            train_dataset = make_dataset(dataset_str=dataset_str, transform=transform, target_transform=None, mode='val')
+            train_dataset = make_dataset(dataset_str=dataset_str, transform=transform, target_transform=None)
             tile_dl = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, num_workers=36)
 
             collated_outputs = {'tile_embeds': [], 'coords': []}

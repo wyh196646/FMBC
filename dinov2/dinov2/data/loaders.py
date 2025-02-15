@@ -51,14 +51,7 @@ def _parse_dataset_str(dataset_str: str):
         key, value = token.split("=")
         assert key in ("root", "extra", "split")
         kwargs[key] = value
-
-    if name == "ImageNet":
-        class_ = ImageNet
-        if "split" in kwargs:
-            kwargs["split"] = ImageNet.Split[kwargs["split"]]
-    elif name == "ImageNet22k":
-        class_ = ImageNet22k
-    elif name == "TileDataset":
+    if name == "TileDataset":
         class_ = TileDataset
     else:
         raise ValueError(f'Unsupported dataset "{name}"')
@@ -71,7 +64,6 @@ def make_dataset(
     dataset_str: str,
     transform: Optional[Callable] = None,
     target_transform: Optional[Callable] = None,
-    mode =  'train',
 ):
     """
     Creates a dataset with the specified parameters.
@@ -87,7 +79,7 @@ def make_dataset(
     logger.info(f'using dataset: "{dataset_str}"')
 
     class_, kwargs = _parse_dataset_str(dataset_str)
-    dataset = class_(transform=transform, target_transform=target_transform,mode=mode, **kwargs)
+    dataset = class_(transform=transform, target_transform=target_transform, **kwargs)
 
     logger.info(f"# of dataset samples: {len(dataset):,d}")
 
