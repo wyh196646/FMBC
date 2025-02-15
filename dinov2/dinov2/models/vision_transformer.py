@@ -401,19 +401,6 @@ def vit_giant2(patch_size=16, num_register_tokens=0, **kwargs):
 
 
 def vit_h(patch_size=14, num_register_tokens=0, **kwargs):
-    # model = DinoVisionTransformer(
-    #     embed_dim=1536,
-    #     num_heads=24,
-    #     depth=24,
-    #     mlp_ratio=2.66667 * 2,
-    #     block_fn=partial(Block, attn_class=MemEffAttention),
-    #     num_register_tokens=num_register_tokens,
-    #     patch_size=patch_size,
-        
-    #     act_layer=torch.nn.SiLU,
-    #     **kwargs,
-    # )
-    print(kwargs)
     model =  DinoVisionTransformer(
             img_size=224, 
             patch_size= 14, 

@@ -1,14 +1,15 @@
 from fastai.vision.all import Path, get_image_files, verify_images
 
 from typing import Any, Optional, Callable, Tuple
-
+import os 
 from PIL import Image
 from pathlib import Path
 from dinov2.data.datasets.extended import ExtendedVisionDataset
 import torch
 from PIL import ImageFile, Image
 ImageFile.LOAD_TRUNCATED_IMAGES = True
-import os 
+
+
 def default_image(size=(256, 256)):
     return torch.zeros(3, *size)
 
@@ -18,28 +19,17 @@ class TileDataset(ExtendedVisionDataset):
                  verify_images: bool = False,
                  transforms: Optional[Callable] = None,
                     transform: Optional[Callable] = None,
-                    target_transform: Optional[Callable] = None,split: str = 'train',) -> None:
+                    target_transform: Optional[Callable] = None,
+                    mode: str = 'train') -> None:
 
         super().__init__(root, transforms, transform, target_transform)
 
         self.root = Path(root).expanduser()
         self.image_paths=[]
-        # subfolder_list=['private_chunk_1',
-        #                 'private_chunk_2',
-        #                 'private_chunk_3',
-        #                 'private_chunk_4',
-        #                 'private_chunk_5',
-        #                 'private_chunk_6',
-        #                 'private_chunk_7',
-        #                 'private_chunk_8',
-        #                 'private_chunk_9',
-        #                 'private_chunk_10',
-        #                 ]
-        subfolder_list=os.listdir(self.root)
-        #subfolder_list=['TCGA-BRCA']
-        print('processing',subfolder_list)
-        for subfolder in subfolder_list:
-            self.train_folder=os.path.join(self.root, subfolder ,'output')
+        self.mode=mode
+        
+        if self.mode=='val':
+            self.train_folder=self.root
             image_paths = get_image_files(self.train_folder)
             invalid_images = set()
             if verify_images:
@@ -47,14 +37,18 @@ class TileDataset(ExtendedVisionDataset):
                 invalid_images = set(verify_images(image_paths))
                 print("Skipping invalid images:", invalid_images)
             self.image_paths.extend([p for p in image_paths if p not in invalid_images])
-        # self.train_folder =os.path.join(self.root, 'output')
-        # image_paths = get_image_files(self.train_folder)
-        # invalid_images = set()
-        # if verify_images:
-        #     print("Verifying images. This ran at ~100 images/sec/cpu for me. Probably depends heavily on disk perf.")
-        #     invalid_images = set(verify_images(image_paths))
-        #     print("Skipping invalid images:", invalid_images)
-        # self.image_paths.extend([p for p in image_paths if p not in invalid_images])
+        else:
+            subfolder_list=os.listdir(self.root)
+            for subfolder in subfolder_list:
+                self.train_folder=os.path.join(self.root, subfolder ,'output')
+                image_paths = get_image_files(self.train_folder)
+                invalid_images = set()
+                if verify_images:
+                    print("Verifying images. This ran at ~100 images/sec/cpu for me. Probably depends heavily on disk perf.")
+                    invalid_images = set(verify_images(image_paths))
+                    print("Skipping invalid images:", invalid_images)
+                self.image_paths.extend([p for p in image_paths if p not in invalid_images])
+
         
 
     def get_image_data(self, index: int) -> bytes:  # should return an image as an array
@@ -72,8 +66,6 @@ class TileDataset(ExtendedVisionDataset):
             image = self.get_image_data(index)
         except :
             image= Image.new(mode="RGB", size=(256, 256), color= (255, 255, 255))
-            #raise IndexError(f"can not read image for sample {index}")
-            #raise RuntimeError(f"can not read image for sample {index}") from e
         target = self.get_target(index)
 
         if self.transforms is not None:

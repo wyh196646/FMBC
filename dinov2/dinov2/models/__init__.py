@@ -35,17 +35,13 @@ def build_model(args, only_teacher=False, img_size=224):
             drop_path_rate=args.drop_path_rate,
             drop_path_uniform=args.drop_path_uniform,
         )
-        #state_dict = torch.load('/ruiyan/yuhao/project/FMBC/dinov2/dinov2/models/UNI_updated.bin')
-        # student.load_state_dict(state_dict, strict=False)  # `strict=False` 允许不完全匹配的加载
-        # teacher.load_state_dict(state_dict, strict=False)
-        initial_dict = torch.load('/ruiyan/yuhao/project/FMBC/dinov2/dinov2/models/UNI-1.5-updated.pth')
-        student.load_state_dict(initial_dict)
-        teacher.load_state_dict(initial_dict)
-        with open ('/ruiyan/yuhao/project/FMBC/dinov2/dinov2/models/load.txt','w') as f:
-            f.write('load successfully')
-        print("Load pretrain weights successfully")
 
+        # initial_dict = torch.load('/ruiyan/yuhao/project/FMBC/dinov2/dinov2/models/UNI-1.5-updated.pth')
+        # student.load_state_dict(initial_dict)
+        # teacher.load_state_dict(initial_dict)
+        # print("Load pretrain weights successfully")
         embed_dim = student.embed_dim
+        
     return student, teacher, embed_dim
 
 

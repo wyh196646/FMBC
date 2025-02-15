@@ -44,6 +44,7 @@ dino:
   loss_weight: 1.0
   head_n_prototypes: 384
   head_bottleneck_dim: 256
+  koleo_loss_weight: 0.0
 ibot:
   loss_weight: 1.0
   mask_sample_probability: 0.5
