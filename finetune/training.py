@@ -40,6 +40,7 @@ def train(dataloader, fold, args):
             id='fold_' + str(fold)+'_'+str(args.pretrain_model),
             tags=[],
             config=vars(args),
+            settings=wandb.Settings(init_timeout=120)
         )
         writer = wandb
     elif "tensorboard" in args.report_to:
@@ -49,7 +50,8 @@ def train(dataloader, fold, args):
         model = initiate_linear_model(args)
     else:
         if args.pretrain_model == 'FMBC':
-            model = get_model(**vars(args))
+            #model = get_model(**vars(args))
+            model = initiate_linear_model(args)
         else:
             model = initiate_linear_model(args)
     model = model.to(args.device)

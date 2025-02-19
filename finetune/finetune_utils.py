@@ -215,18 +215,23 @@ def param_groups_lrd(model, weight_decay=0.05, no_weight_decay_list=[], layer_de
     param_group_names = {}
     param_groups = {}
 
+    # 获取模型中的层数
     num_layers = model.encoder_num_layers + 1
 
+    # 计算每层的缩放因子
     layer_scales = list(layer_decay ** (num_layers - i) for i in range(num_layers + 1))
 
+    # 遍历模型中的所有参数
     for n, p in model.named_parameters():
         if not p.requires_grad:
             continue
         
+        # 跳过mask_token和slide_encoder
         if 'mask_token' in n: #or 'slide_encoder' in n: # if fronzen the slide encoder
             continue
 
         # no decay: all 1D parameters and model specific ones
+        # 如果参数是一维的或者参数名在no_weight_decay_list中，则不进行权重衰减
         if p.ndim == 1 or n in no_weight_decay_list:
             g_decay = "no_decay"
             this_decay = 0.
@@ -234,10 +239,13 @@ def param_groups_lrd(model, weight_decay=0.05, no_weight_decay_list=[], layer_de
             g_decay = "decay"
             this_decay = weight_decay
         
+        # 获取参数所在的层数
         layer_id = get_layer_id(n, num_layers)
 
+        # 构造参数组名
         group_name = n + "_%d_%s" % (layer_id + 1, g_decay)
 
+        # 如果参数组名不在param_group_names中，则创建新的参数组
         if group_name not in param_group_names:
             this_scale = layer_scales[layer_id]
 
@@ -252,9 +260,11 @@ def param_groups_lrd(model, weight_decay=0.05, no_weight_decay_list=[], layer_de
                 "params": [],
             }
 
+        # 将参数名和参数添加到参数组中
         param_group_names[group_name]["params"].append(n)
         param_groups[group_name]["params"].append(p)
 
+    # 返回参数组列表
     return list(param_groups.values())
     # for i in param_groups.keys():
     #     print(i)
@@ -295,8 +305,8 @@ def adjust_learning_rate(optimizer, epoch, args):
 
 def get_optimizer(args, model):
     if args.pretrain_model =='FMBC':
-        param_groups = param_groups_lrd(model, args.optim_wd,
-    layer_decay=args.layer_decay)
+        #param_groups = param_groups_lrd(model, args.optim_wd,layer_decay=args.layer_decay)
+        param_groups = model.parameters()
     else:
         param_groups = model.parameters()
 

@@ -50,8 +50,6 @@ class MakeMetrics:
             evaluation_results['average_pearson'] = np.mean(list(evaluation_results.values()))
             return evaluation_results
         elif self.metric == 'spearman':
-            # Compute Median Spearman Correlation
-            #return {f"spearman_{i}": spearmanr(labels[:, i], probs[:, i])[0] for i in range(labels.shape[1])}
             evaluation_results={f"spearman_{self.reversed_dict.get(i)}": 
                 spearmanr(labels[:, i], probs[:, i])[0] for i in range(labels.shape[1])}
             evaluation_results['average_spearman'] = np.mean(list(evaluation_results.values()))

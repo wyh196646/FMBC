@@ -10,7 +10,6 @@ from finetune_utils import seed_torch, get_exp_code, get_splits, get_loader, sav
 from datasets.slide_datatset import SlideDataset
 
 
-#CUDA_LAUNCH_BLOCKING=1
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 if __name__ == '__main__':
     args = get_finetune_params()
@@ -24,7 +23,7 @@ if __name__ == '__main__':
     seed_torch(device, args.seed)
 
     # load the task configuration
-    print('Loading task configur+ation from: {}'.format(args.task_cfg_path))
+    print('Loading task configuration from: {}'.format(args.task_cfg_path))
     args.task_config = load_task_config(args.task_cfg_path)
     label_dict = args.task_config.get('label_dict', None)
     print(args.task_config)
@@ -79,18 +78,18 @@ if __name__ == '__main__':
         train_splits, val_splits, test_splits = get_splits(dataset, fold=fold, **vars(args))
         # instantiate the dataset
         train_data, val_data, test_data = DatasetClass(dataset, 
-                                                       args.root_path, 
-                                                       train_splits,
-                                                       args.task_config, 
-                                                       split_key=args.split_key) \
+                                                        args.root_path, 
+                                                        train_splits,
+                                                        args.task_config, 
+                                                        split_key=args.split_key) \
                                         , DatasetClass(dataset,
-                                                       args.root_path, 
-                                                       val_splits,
-                                                       args.task_config, 
-                                                       split_key=args.split_key) if len(val_splits) > 0 else None \
+                                                        args.root_path, 
+                                                        val_splits,
+                                                        args.task_config, 
+                                                        split_key=args.split_key) if len(val_splits) > 0 else None \
                                         , DatasetClass(dataset,
-                                                       args.root_path,
-                                                       test_splits, args.task_config, split_key=args.split_key) if len(test_splits) > 0 else None
+                                                        args.root_path,
+                                                        test_splits, args.task_config, split_key=args.split_key) if len(test_splits) > 0 else None
         args.n_classes = train_data.n_classes # get the number of classes
         # get the dataloader
         train_loader, val_loader, test_loader = get_loader(train_data, val_data, test_data, **vars(args))

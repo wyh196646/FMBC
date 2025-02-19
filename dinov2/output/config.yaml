@@ -1,7 +1,7 @@
 MODEL:
   WEIGHTS: ''
 compute_precision:
-  grad_scaler: true
+  grad_scaler: false
   teacher:
     backbone:
       sharding_strategy: SHARD_GRAD_OP
@@ -93,9 +93,9 @@ optim:
   epochs: 4000
   weight_decay: 0.04
   weight_decay_end: 0.2
-  base_lr: 0.0002
-  lr: 9.682458365518543e-05
-  warmup_epochs: 80
+  base_lr: 0.001
+  lr: 0.00048412291827592716
+  warmup_epochs: 1
   min_lr: 1.0e-06
   clip_grad: 3.0
   freeze_last_layer_epochs: 1

@@ -1,7 +1,7 @@
 MODEL:
   WEIGHTS: ''
 compute_precision:
-  grad_scaler: true
+  grad_scaler: False
   teacher:
     backbone:
       sharding_strategy: SHARD_GRAD_OP
