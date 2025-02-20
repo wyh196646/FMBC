@@ -59,4 +59,9 @@ def get_finetune_params():
     parser.add_argument('--experiment', type=str, default='finetune', help='Experiment name')
     parser.add_argument('--return_all_tokens', action='store_true', default=True, help='Return all tokens')
     parser.add_argument('--pool_method',type=str, default='cls_token', help='Return all tokens')
+    
+    ## Fintuning Settings
+    #choice linear probe or MIL,only two class
+    parser.add_argument('--tuning_method', type=str, options=['linear_probe', 'mil'], default='linear_probe', help='Tuning method')
+
     return parser.parse_args()

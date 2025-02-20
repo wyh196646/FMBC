@@ -46,15 +46,15 @@ def get_args_parser():
                  'swin_tiny','swin_small', 'swin_base', 'swin_large'],
         help="""Name of architecture to train. For quick experiments with ViTs,
         we recommend using vit_tiny or vit_small.""")
-    parser.add_argument('--slide_embedding_size', default=768, type=int, help="""Size in pixels
+    parser.add_argument('--slide_embedding_size', default=1536, type=int, help="""Size in pixels
         of input square patches - default 16 (for 1x16 patches). Using smaller
         values leads to better performance but requires more memory. Applies only
         for ViTs (vit_tiny, vit_small and vit_base). If <16, we recommend disabling
         mixed precision training (--use_fp16 false) to avoid unstabilities.""")
 
-    parser.add_argument('--out_dim', default=768, type=int, help="""Dimensionality of
+    parser.add_argument('--out_dim', default=1536, type=int, help="""Dimensionality of
         output for [CLS] token.""")
-    parser.add_argument('--patch_out_dim', default=768, type=int, help="""Dimensionality of
+    parser.add_argument('--patch_out_dim', default=1536, type=int, help="""Dimensionality of
         output for patch tokens.""")
     parser.add_argument('--shared_head', default=False, type=utils.bool_flag, help="""Wether to share 
         the same head for [CLS] token output and patch tokens output. When set to false, patch_out_dim
@@ -138,7 +138,7 @@ def get_args_parser():
         help="""Scale range of the cropped image before resizing, relatively to the origin image.
         Used for large global view cropping. When disabling multi-crop (--local_crops_number 0), we
         recommand using a wider range of scale ("--global_crops_scale 0.14 1." for example)""")
-    parser.add_argument('--local_crops_number', type=int, default=1, help="""Number of small
+    parser.add_argument('--local_crops_number', type=int, default=2, help="""Number of small
         local views to generate. Set this parameter to 0 to disable multi-crop training.
         When disabling multi-crop we recommend to use "--global_crops_scale 0.14 1." """)
     parser.add_argument('--local_crops_scale', type=float, nargs='+', default=(0.05, 0.4),
@@ -151,7 +151,7 @@ def get_args_parser():
     parser.add_argument('--max_tiles', default=8000, type=int, help='number of cluster')
     parser.add_argument('--shuffle_tiles', type=utils.bool_flag, default=True, help="""shuffle the image tiles """)
     # Misc
-    parser.add_argument('--data_path', default='/ruiyan/yuhao/embedding', type=str,
+    parser.add_argument('--data_path', default='/data4/embedding', type=str,
         help='Please specify path to the ImageNet training data.')
     parser.add_argument('--output_dir', default=".", type=str, help='Path to save logs and checkpoints.')
     parser.add_argument('--saveckp_freq', default=10, type=int, help='Save checkpoint every x epochs.')
@@ -631,7 +631,4 @@ if __name__ == '__main__':
 
 
 
-#CUDA_VISIBLE_DEVICES=1,4,6 torchrun --nproc_per_node=3 main_ibot.py
-
-
-#
+#nohup torchrun --nproc_per_node=8 main_ibot.py &

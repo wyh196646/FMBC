@@ -5,7 +5,7 @@ from pathlib import Path
 # For convinience
 this_file_dir = Path(__file__).resolve().parent
 sys.path.append(str(this_file_dir.parent))
-sys.path.append('/ruiyan/yuhao/project/FMBC/preprocess')
+sys.path.append('/home/yuhaowang/project/FMBC/preprocess')
 import time
 import wandb
 os.environ["WANDB_API_KEY"] = '6ebb1c769075243eb73a32c4f9f7011ddd41f20a'
@@ -47,11 +47,15 @@ def train(dataloader, fold, args):
         writer = tensorboard.SummaryWriter(writer_dir, flush_secs=15)
     if args.pretrain_model_type =='patch_level':
         #model = initiate_mil_model(args)
-        model = initiate_linear_model(args)
+        #linear_probe', 'mil'
+        if args.tuning_method == 'linear_probe':
+            model = initiate_linear_model(args)
+        elif args.tuning_method == 'mil':
+            model = initiate_mil_model(args)
     else:
         if args.pretrain_model == 'FMBC':
-            #model = get_model(**vars(args))
-            model = initiate_linear_model(args)
+            model = get_model(**vars(args))
+            #model = initiate_linear_model(args)
         else:
             model = initiate_linear_model(args)
     model = model.to(args.device)
@@ -91,7 +95,7 @@ def train(dataloader, fold, args):
             task_setting = args.task_config.get('setting', 'multi_class')
             if task_setting == 'regression':
                 scores = val_records['mae']
-            elif task_setting == 'binary_classification':
+            elif task_setting == 'binary_classification' or task_setting == 'multi_class':
                 scores = val_records['bacc']
             else:
                 scores = val_records['macro_auroc']
