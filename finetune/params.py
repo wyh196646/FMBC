@@ -55,13 +55,12 @@ def get_finetune_params():
     parser.add_argument('--mil_type',    type=str, default='clam_sb', help='Number of workers')
     parser.add_argument('--pretrain_model', default='FMBC',help='type of pretrain model, ctans, UNI, CONCH, CHIEF,etc ... ')
     parser.add_argument('--pretrain_model_type', default='slide_level',help='type of pretrain model, patch level or slide level ')
-    parser.add_argument('--tuning_method',)
     parser.add_argument('--experiment', type=str, default='finetune', help='Experiment name')
     parser.add_argument('--return_all_tokens', action='store_true', default=True, help='Return all tokens')
     parser.add_argument('--pool_method',type=str, default='cls_token', help='Return all tokens')
     
     ## Fintuning Settings
-    #choice linear probe or MIL,only two class
-    parser.add_argument('--tuning_method', type=str, options=['linear_probe', 'mil'], default='linear_probe', help='Tuning method')
+ 
+    parser.add_argument('--tuning_method', type=str,  default='linear_probe', help='Tuning method')
 
     return parser.parse_args()

@@ -327,7 +327,8 @@ def get_loss_function(task_config: dict):
         loss_fn = torch.nn.CrossEntropyLoss()
     elif task_setting == 'regression':
         loss_fn = torch.nn.MSELoss()
-    else:
+    elif task_setting == 'survival':
+        
         raise NotImplementedError
     return loss_fn
 
@@ -448,4 +449,3 @@ def initiate_mil_model(args):
 def initiate_linear_model(args):
     model = linear_probe(args.input_dim, args.latent_dim, args.n_classes)
     return model
-

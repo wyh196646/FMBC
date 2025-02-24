@@ -90,6 +90,8 @@ class SlideDatasetForTasks(Dataset):
             prepare_data_func = self.prepare_multi_label_data
         elif task == 'regression':
             prepare_data_func = self.prepare_regression_data
+        elif task == 'survival':
+            prepare_data_func = self.prepare_survival_data
         else:
             raise ValueError('Invalid task: {}'.format(task))
         self.slide_data, self.images, self.labels, self.n_classes = prepare_data_func(df, splits)
@@ -109,6 +111,23 @@ class SlideDatasetForTasks(Dataset):
         df = df[df[self.split_key].isin(splits)]
 
         #TCGA-BH-A1EO-01Z-00-DX1
+        images = df[self.slide_key].to_list()
+        labels = df[label_keys].to_numpy()
+        
+        return df, images, labels, n_classes
+    def prepare_survival_data(self, df: pd.DataFrame, splits: list):
+        '''Prepare the data for regression'''
+        label_dict = self.task_cfg.get('label_dict', {})
+        assert label_dict, 'No label_dict found in the task configuration'
+        # Prepare mutation data
+        label_keys = label_dict.keys()
+        # sort key using values
+        label_keys = sorted(label_keys, key=lambda x: label_dict[x])
+        n_classes = len(label_dict)
+
+        # get the corresponding splits
+        assert self.split_key in df.columns, 'No {} column found in the dataframe'.format(self.split_key)
+        df = df[df[self.split_key].isin(splits)]
         images = df[self.slide_key].to_list()
         labels = df[label_keys].to_numpy()
         

@@ -6,7 +6,7 @@ import sys
 from training import train
 from params import get_finetune_params
 from task_configs.utils import load_task_config
-from finetune_utils import seed_torch, get_exp_code, get_splits, get_loader, save_obj,process_predicted_data
+from finetune_utils import seed_torch, get_exp_code, get_splits, get_loader, save_obj, process_predicted_data
 from datasets.slide_datatset import SlideDataset
 
 
@@ -18,8 +18,6 @@ if __name__ == '__main__':
     # set the device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     args.device = device
-
-    # set the random seed
     seed_torch(device, args.seed)
 
     # load the task configuration
@@ -60,6 +58,9 @@ if __name__ == '__main__':
         
     prediction_save_dir = os.path.join(args.save_dir,'prediction_results')
     os.makedirs(prediction_save_dir,exist_ok=True)
+    
+
+    DatasetClass = SlideDataset
 
     # use the slide dataset, set up the dataset class
     pretrain_model_type = args.pretrain_model_type

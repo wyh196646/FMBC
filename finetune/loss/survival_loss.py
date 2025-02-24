@@ -1,110 +1,89 @@
 import torch
 import torch.nn as nn
-import numpy as np
-import torch
-import torch.nn.functional as F
-from itertools import combinations
-import pdb
 
-class CrossEntropySurvLoss(object):
-    def __init__(self, alpha=0.15):
+"""
+Refactored from https://github.com/mahmoodlab/PORPOISE/blob/master/utils/loss_func.py
+"""
+
+class NLLSurvLoss(nn.Module):
+    """
+    The negative log-likelihood loss function for the discrete time-to-event model (Zadeh and Schmid, 2020).
+    Code originally adapted from https://github.com/mahmoodlab/Patch-GCN/blob/master/utils/utils.py
+
+    Parameters
+    ----------
+    alpha : float, optional
+        Controls the balance between the survival and censoring terms in the loss calculation.
+        A higher value of alpha gives more weight to the survival term, while a lower value gives more weight to the censoring term.
+        Default is 0.0, which gives equal weight to both terms.
+    eps : float, optional
+        Numerical constant to avoid taking logs of tiny numbers. Default is 1e-7.
+    reduction : str, optional
+        Specifies the reduction to apply to the output: 'mean' | 'sum'.
+        'mean': the sum of the output will be divided by the number of elements in the output.
+        'sum': the output will be summed. Default is 'mean'.
+    """
+    def __init__(self, alpha=0.0, eps=1e-7, reduction='mean'):
+        super().__init__()
         self.alpha = alpha
+        self.eps = eps
+        self.reduction = reduction
 
-    def __call__(self, hazards, S, Y, c, alpha=None): 
-        if alpha is None:
-            return ce_loss(hazards, S, Y, c, alpha=self.alpha)
+    def __call__(self, x, y_bins, y_event):
+        """
+        The negative log-likelihood loss function for the discrete time-to-event model (Zadeh and Schmid, 2020).
+        Code originally adapted from https://github.com/mahmoodlab/Patch-GCN/blob/master/utils/utils.py
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Tensor of shape (n_batches, n_classes) representing the neural network output logits.
+            Hazards are computed as sigmoid(h).
+        y_bins : torch.Tensor
+            Tensor of shape (n_batches, 1) representing the true time bin index labels. Ranges from 0 to n_classes - 1.
+        y_event : torch.Tensor
+            Tensor of shape (n_batches, 1) representing the event status indicators.
+
+        Returns
+        -------
+        torch.Tensor
+            The computed negative log-likelihood loss.
+
+        References
+        ----------
+        Zadeh, S.G. and Schmid, M., 2020. Bias in cross-entropy-based training of deep survival networks. IEEE transactions on pattern analysis and machine intelligence.
+        """
+        # Convert y_event to y_censor
+        y_event = y_event.type(torch.int64)
+        y_bins = y_bins.type(torch.int64)
+
+        y_censor = 1 - y_event
+
+        # Compute hazards using sigmoid activation
+        hazards = torch.sigmoid(x)
+
+        # Compute survival probabilities
+        S = torch.cumprod(1 - hazards, dim=1)
+
+        # Pad survival probabilities with ones at the beginning
+        S_padded = torch.cat([torch.ones_like(y_censor), S], 1)
+
+        # Gather previous and current survival probabilities and hazards
+        s_prev = torch.gather(S_padded, dim=1, index=y_bins).clamp(min=self.eps)
+        h_this = torch.gather(hazards, dim=1, index=y_bins).clamp(min=self.eps)
+        s_this = torch.gather(S_padded, dim=1, index=y_bins + 1).clamp(min=self.eps)
+
+        # Compute uncensored and censored loss components
+        uncensored_loss = -(1 - y_censor) * (torch.log(s_prev) + torch.log(h_this))
+        censored_loss = -y_censor * torch.log(s_this)
+
+        # Combine losses
+        loss = uncensored_loss + self.alpha * censored_loss
+
+        # Apply reduction
+        if self.reduction == 'mean':
+            return loss.mean()
+        elif self.reduction == 'sum':
+            return loss.sum()
         else:
-            return ce_loss(hazards, S, Y, c, alpha=alpha)
-
-class NLLSurvLoss(object):
-    def __init__(self, alpha=0.15):
-        self.alpha = alpha
-
-    def __call__(self, hazards, S, Y, c, alpha=None):
-        if alpha is None:
-            return nll_loss(hazards, S, Y, c, alpha=self.alpha)
-        else:
-            return nll_loss(hazards, S, Y, c, alpha=alpha)
-
-class CoxSurvLoss(object):
-    def __call__(self, hazards, time, c, **kwargs):
-        # This calculation credit to Travers Ching https://github.com/traversc/cox-nnet
-        # Cox-nnet: An artificial neural network method for prognosis prediction of high-throughput omics data
-        current_batch_len = len(time)
-        R_mat = np.zeros([current_batch_len, current_batch_len], dtype=int)
-        for i in range(current_batch_len):
-            for j in range(current_batch_len):
-                R_mat[i,j] = time[j] >= time[i]
-
-        c = torch.FloatTensor(c).to(hazards.device)
-        R_mat = torch.FloatTensor(R_mat).to(hazards.device)
-        theta = hazards.reshape(-1)
-        exp_theta = torch.exp(theta)
-        loss_cox = -torch.mean((theta - torch.log(torch.sum(exp_theta*R_mat, dim=1))) * (1-c))
-        # print(loss_cox)
-        # print(R_mat)
-        return loss_cox
-
-def nll_loss(hazards, S, Y, c, alpha=0.4, eps=1e-7):
-    batch_size = len(Y)
-    Y = Y.view(batch_size, 1) # ground truth bin, 1,2,...,k
-    c = c.view(batch_size, 1).float() #censorship status, 0 or 1
-    if S is None:
-        S = torch.cumprod(1 - hazards, dim=1) # surival is cumulative product of 1 - hazards
-    # without padding, S(0) = S[0], h(0) = h[0]
-    S_padded = torch.cat([torch.ones_like(c), S], 1) #S(-1) = 0, all patients are alive from (-inf, 0) by definition
-    # after padding, S(0) = S[1], S(1) = S[2], etc, h(0) = h[0]
-    #h[y] = h(1)
-    #S[1] = S(1)
-    
-    #!! here uncensored_loss means event happens(death/progression)
-    # uncensored_loss = -c * (torch.log(torch.gather(S_padded, 1, Y).clamp(min=eps)) + torch.log(torch.gather(hazards, 1, Y).clamp(min=eps)))
-    # censored_loss = - (1 - c) * torch.log(torch.gather(S_padded, 1, Y+1).clamp(min=eps))
-    # neg_l = censored_loss + uncensored_loss
-    # loss = (1-alpha) * neg_l + alpha * uncensored_loss
-    uncensored_loss = -(1 - c) * (torch.log(torch.gather(S_padded, 1, Y).clamp(min=eps)) + torch.log(torch.gather(hazards, 1, Y).clamp(min=eps)))
-    censored_loss = - c * torch.log(torch.gather(S_padded, 1, Y+1).clamp(min=eps))
-    neg_l = censored_loss + uncensored_loss
-    loss = (1-alpha) * neg_l + alpha * uncensored_loss
-    loss = loss.mean()
-    return loss
-
-def ce_loss(hazards, S, Y, c, alpha=0.4, eps=1e-7):
-    batch_size = len(Y)
-    Y = Y.view(batch_size, 1) # ground truth bin, 1,2,...,k
-    c = c.view(batch_size, 1).float() #censorship status, 0 or 1
-    if S is None:
-        S = torch.cumprod(1 - hazards, dim=1) # surival is cumulative product of 1 - hazards
-    # without padding, S(0) = S[0], h(0) = h[0]
-    # after padding, S(0) = S[1], S(1) = S[2], etc, h(0) = h[0]
-    #h[y] = h(1)
-    #S[1] = S(1)
-    S_padded = torch.cat([torch.ones_like(c), S], 1)
-    reg = -c * (torch.log(torch.gather(S_padded, 1, Y)+eps) + torch.log(torch.gather(hazards, 1, Y).clamp(min=eps)))
-    ce_l = - (1 - c) * torch.log(torch.gather(S, 1, Y).clamp(min=eps)) - (c) * torch.log(1 - torch.gather(S, 1, Y).clamp(min=eps))
-    loss = (1-alpha) * ce_l + alpha * reg
-    loss = loss.mean()
-    return loss
-
-
-def weighted_multi_class_log_loss(y_hat, y, w, classes=2):
-    a = torch.log(torch.clamp(y_hat, 1e-15, 1.0 - 1e-15)).cuda()
-    if classes == 2:
-        b = torch.tensor([torch.clamp(torch.sum(y[:,0]), min=1e-15), torch.clamp(torch.sum(y[:,1]), min=1e-15)]).cuda()
-    elif classes==5:
-        b = torch.tensor([torch.clamp(torch.sum(y[:,0]), min=1e-15), torch.clamp(torch.sum(y[:,1]), min=1e-15),
-                          torch.clamp(torch.sum(y[:,2]), min=1e-15),torch.clamp(torch.sum(y[:,3]), min=1e-15),torch.clamp(torch.sum(y[:,4]), min=1e-15),
-                          ]).cuda()
-    return torch.sum(-torch.sum(w * y * a * 1/b))
-
-class WeightedMultiClassLogLoss(torch.nn.Module):
-    def __init__(self, weights=torch.tensor([1.,1.]), classes=2):
-        # 初始化函数，设置权重和类别数
-        super(WeightedMultiClassLogLoss, self).__init__()
-        # 调用父类的初始化函数
-        self.weights = weights.cuda()
-        # 将权重转换为GPU格式
-        self.classes = classes
-
-    def forward(self, inputs, targets):
-        return weighted_multi_class_log_loss(inputs, targets, self.weights, classes=self.classes)
+            raise ValueError(f"Invalid reduction type: {self.reduction}. Must be 'mean' or 'sum'.")

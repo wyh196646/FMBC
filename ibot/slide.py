@@ -201,10 +201,9 @@ def pad_variable_length(tensors, max_len):
         N_i = tensor.size(0)
         padded_tensor = torch.zeros(max_len, *tensor.size()[1:])
         mask = torch.zeros(max_len)
-
         padded_tensor[:N_i] = tensor
+        #print(tensor.shape)
         mask[:N_i] = 1
-
         padded_tensors.append(padded_tensor)
         masks.append(mask)
 
@@ -231,6 +230,8 @@ def custom_collate_fn(batch):
         local_features.extend(sample['local_features'])
 
     padded_global_coords, padded_global_features, global_attention_masks = pad_coords_and_features(global_coords, global_features)
+    # for i in global_features:
+    #     print(i.shape)
     padded_predict_global_masks, _ = pad_variable_length(predict_global_masks, max(global_attention_masks.size(1), len(predict_global_masks)))
     padded_local_coords, padded_local_features, local_attention_masks = pad_coords_and_features(local_coords, local_features)
     # the global_attention_masks

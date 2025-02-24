@@ -34,7 +34,7 @@ from slide import SlideEmbeddingMask, ClusterTransform, custom_collate_fn
 warnings.filterwarnings("ignore")
 #CUDA_LAUNCH_BLOCKING=1
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
-
+os.environ['TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD'] = '1'
 #os.environ["CUDA_VISIBLE_DEVICES"] = "4"
 
 def get_args_parser():
@@ -128,7 +128,7 @@ def get_args_parser():
         end of optimization. We use a cosine LR schedule with linear warmup.""")
     parser.add_argument('--optimizer', default='adamw', type=str,
         choices=['adamw', 'sgd', 'lars'], help="""Type of optimizer. We recommend using adamw with ViTs.""")
-    parser.add_argument('--load_from', default=None, help="""Path to load checkpoints to resume training.""")
+    parser.add_argument('--load_from', default='./checkpoint0090.pth', help="""Path to load checkpoints to resume training.""")
     parser.add_argument('--drop_path', type=float, default=0.1, help="""Drop path rate for student network.""")
 
     # Multi-crop parameters

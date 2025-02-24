@@ -155,10 +155,10 @@ if __name__ == "__main__":
     pretrain_model_dim_dict = {
         "UNI": 1024,
         "CONCH": 768,
-        "CHIEF_Tile": 768,
+        "CHIEF_tile": 768,
         "TITAN": 768,
         "Virchow": 1280,
-        "Gigapath_Tile": 1536,
+        "Gigapath_tile": 1536,
         "Gigapath": 1536,
         "CHIEF": 768
         
@@ -166,10 +166,10 @@ if __name__ == "__main__":
     pretrain_model_types_dict = {
         "UNI": "patch_level",
         "CONCH": "patch_level",
-        "CHIEF_Tile": "patch_level",
+        "CHIEF_tile": "patch_level",
         "TITAN": "slide_level",
         "Virchow": "patch_level",
-        "Gigapath_Tile": "patch_level",
+        "Gigapath_tile": "patch_level",
         "Gigapath": "slide_level",
         "CHIEF": "slide_level"
     }
