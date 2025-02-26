@@ -7,21 +7,20 @@ import subprocess
 # AIDPATH  BRACS     CAMELYON17  GEO-GSE243280     HyReCo     Post-NAT-BRCA    private_chunk_2   private_chunk_5  private_chunk_8  SLN-Breast          TUPAC
 # BACH     BreakHis  CMB-BRCA    GTEX_Breast       IMPRESS    private_chunk_1  private_chunk_3   private_chunk_6  private_chunk_9  TCGA-BRCA
 data_list = [
-    "AIDPATH", "BRACS", "CAMELYON17", "GEO-GSE243280", "IMPRESS",  "TCGA-BRCA",
-    "ACROBAT", "BCNB", "CAMELYON16", "CPTAC-BREAST-all", "HE-vs-MPM", "Multi-omic",  "private_chunk_test", "TIGER",
-    "BACH", "BreakHis", "CMB-BRCA", "GTEX_Breast", "HyReCo", "Post-NAT-BRCA",  "SLN-Breast", "TUPAC"
+    # "AIDPATH", "BRACS", "CAMELYON17", "GEO-GSE243280", "IMPRESS",  "TCGA-BRCA",
+    # "ACROBAT", "BCNB", "CAMELYON16", "CPTAC-BREAST-all", "HE-vs-MPM", "Multi-omic",  "private_chunk_test", "TIGER",
+    # "BACH", "BreakHis", "CMB-BRCA", "GTEX_Breast", "HyReCo", "Post-NAT-BRCA",  "SLN-Breast", "TUPAC",
+    "DORID"
 ]
 
-
+print(len(data_list))
 # # 配置参数
 CONFIG = {
     "remote_host": "yuhaowang@172.16.120.21",  # 远程服务器地址
     "remote_password": "data@YHWang",
-    "remote_base_path": "/mnt/data/ruiyan/processed_data/",  # 
-    "folders_to_sync": ["AIDPATH", "BRACS", "CAMELYON17", "GEO-GSE243280", "IMPRESS",  "TCGA-BRCA",
-    "ACROBAT", "BCNB", "CAMELYON16", "CPTAC-BREAST-all", "HE-vs-MPM", "Multi-omic",  "private_chunk_test", "TIGER",
-    "BACH", "BreakHis", "CMB-BRCA", "GTEX_Breast", "HyReCo", "Post-NAT-BRCA",  "SLN-Breast", "TUPAC"],  # 需要同步的子文件夹列表
-    "local_base_path": "/ruiyan/yuhao/data",  # 本地基础路径
+    "remote_base_path": "/mnt/data/ruiyan/processed_data/",  # 本地基础路径
+    "folders_to_sync": data_list,
+    "local_base_path": "/data2",  # 本地基础路径
 
 }
 

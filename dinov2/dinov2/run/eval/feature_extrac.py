@@ -13,6 +13,9 @@ from dinov2.data import make_dataset
 from dinov2.data.transforms import make_classification_eval_transform
 from dinov2.models import build_model_from_cfg
 import dinov2.utils.utils as dinov2_utils
+import random
+
+
 
 def build_model_for_eval(config, pretrained_weights):
     model, _ = build_model_from_cfg(config, only_teacher=True)
@@ -67,8 +70,9 @@ def main():
     if not os.path.exists(dataset_path):
         print(f"Warning: {dataset_path} does not exist, skipping...")
         return
-
-    for slide in tqdm(os.listdir(dataset_path), desc=f"Processing {args.dataset_name}"):
+    slide_list = os.listdir(dataset_path)
+    random.shuffle(slide_list)
+    for slide in tqdm(slide_list, desc=f"Processing {args.dataset_name}"):
         slide_name = slide.split('.')[0]
         save_path = os.path.join(dataset_save_dir, f"{slide_name}.h5")
 
@@ -108,3 +112,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+#python multi_gpu.py

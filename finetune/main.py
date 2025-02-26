@@ -28,8 +28,8 @@ if __name__ == '__main__':
     args.task = args.task_config.get('name', 'task')
     
     # set the experiment save directory
-    args.save_dir = os.path.join(args.save_dir, args.task, args.pretrain_model,args.tuning_method)
-    args.model_code, args.task_code, args.exp_code = get_exp_code(args) # get the experiment code
+    args.save_dir = os.path.join(args.save_dir, args.task, args.pretrain_model, args.tuning_method)
+    args.model_code, args.task_code, args.exp_code, = get_exp_code(args) # get the experiment code
     os.makedirs(args.save_dir, exist_ok=True)
     print('Experiment code: {}'.format(args.exp_code))
     print('Setting save directory: {}'.format(args.save_dir))

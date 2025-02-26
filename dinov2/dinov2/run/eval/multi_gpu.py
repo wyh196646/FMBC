@@ -26,8 +26,13 @@ def get_unprocessed_datasets(data_dir, processed_dir):
     """获取未处理的数据集"""
     all_datasets = os.listdir(data_dir)
     processed_datasets = os.listdir(processed_dir) if os.path.exists(processed_dir) else []
-    return [d for d in all_datasets if d not in processed_datasets]
-
+    
+    #unprocessd_dataset= all_datasets - processed_datasets
+    unprocessed_dataset = []
+    for d in all_datasets:
+        if len(os.listdir(os.path.join(data_dir, d, 'output'))) - len(os.listdir(os.path.join(processed_dir, d, 'FMBC')))>10:
+            unprocessed_dataset.append(d)
+    return unprocessed_dataset
 
 def main():
     data_dir = '/home/yuhaowang/data/'

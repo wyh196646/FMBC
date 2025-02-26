@@ -4,18 +4,16 @@ import time
 import threading
 
 def run_task(config):
-    gpu_id, task_cfg, dataset_csv, root_path, input_dim, pretrain_model, pretrain_model_type = config
+    gpu_id, task_cfg, dataset_csv, root_path, input_dim, pretrain_model, pretrain_model_type, tuning_method = config
     log_save_dir = "./log"
     os.makedirs(log_save_dir, exist_ok=True)
     task_name = os.path.basename(task_cfg).split('.')[0]
-    log_file = os.path.join(log_save_dir, f"{task_name}_{pretrain_model}.log")
-    output_prediction = os.path.join('outputs', task_name, pretrain_model, 'prediction_results', 'val_predict.csv')
+    log_file = os.path.join(log_save_dir, f"{task_name}_{pretrain_model}_{tuning_method}.log")
+    output_prediction = os.path.join('outputs', task_name, pretrain_model, tuning_method, 'prediction_results', 'val_predict.csv')
 
     if os.path.exists(output_prediction):
         print(f"Skipping task: {output_prediction} already exists")
         return None
-
-
 
     command = [
         f"CUDA_VISIBLE_DEVICES={gpu_id} python main.py",
@@ -24,9 +22,10 @@ def run_task(config):
         f"--root_path {root_path}",
         f"--input_dim {input_dim}",
         f"--pretrain_model {pretrain_model}",
-        f"--pretrain_model_type {pretrain_model_type}"
+        f"--pretrain_model_type {pretrain_model_type}",
+        f"--tuning_method {tuning_method}"
     ]
-    #write the command
+    
     command_str = " ".join(command)
     with open(log_file, 'w') as f:
         f.write(f"GPU: {gpu_id}\n")
@@ -52,7 +51,6 @@ def run_task(config):
 
     return process, log_file
 
-
 def manage_processes(configs, max_concurrent_tasks):
     all_processes = []
     running_processes = 0
@@ -65,36 +63,28 @@ def manage_processes(configs, max_concurrent_tasks):
             running_processes += 1
 
     threads = []
-
+    
     for config in configs:
         while running_processes >= max_concurrent_tasks:
             for process, log_file in all_processes:
-                if process.poll() is not None:  # Process finished
+                if process.poll() is not None:
                     running_processes -= 1
                     all_processes.remove((process, log_file))
                     break
             time.sleep(1)
-
-        # Launch task in a separate thread to allow parallel execution
+        
         thread = threading.Thread(target=start_task, args=(config,))
         thread.start()
         threads.append(thread)
-
-    # Wait for all threads to complete
+    
     for thread in threads:
         thread.join()
-
-    # Wait for all subprocesses to finish
+    
     for process, log_file in all_processes:
         process.wait()
-        # If the process failed (non-zero return code), delete the log file
         if process.returncode != 0 and os.path.exists(log_file):
             print(f"Task failed. Deleting log file: {log_file}")
-            #os.remove(log_file)
-            #exception
             raise Exception(f"Task failed. Deleting log file: {log_file}")
-
-
 if __name__ == "__main__":
     tasks = {
         "BCNB_ALN": {
@@ -173,6 +163,7 @@ if __name__ == "__main__":
         "Gigapath": "slide_level",
         "CHIEF": "slide_level"
     }
+    tuning_methods = ["ABMIL", "Linear_probe"]
 
     max_concurrent_tasks = 16
 
@@ -181,14 +172,17 @@ if __name__ == "__main__":
         csv_dir = config["csv_dir"]
         task_cfg = config["task_cfg"]
 
-        input_dim = [pretrain_model_dim_dict[pretrain_model] for pretrain_model in pretrain_models]
-        pretrain_model_types = [pretrain_model_types_dict[pretrain_model] for pretrain_model in pretrain_models]
-        root_paths = [os.path.join(embedding_dir, pretrain_model) for pretrain_model in pretrain_models]
-        dataset_csvs = [os.path.join(csv_dir, f"{task_name}.csv")] * len(pretrain_models)
-        gpu_ids = [0 for _ in range(len(pretrain_models))]  # Distribute tasks across GPUs
+        configs = []
+        for pretrain_model in pretrain_models:
+            for tuning_method in tuning_methods:
+                input_dim = pretrain_model_dim_dict[pretrain_model]
+                pretrain_model_type = pretrain_model_types_dict[pretrain_model]
+                root_path = os.path.join(embedding_dir, pretrain_model)
+                dataset_csv = os.path.join(csv_dir, f"{task_name}.csv")
+                gpu_id = 0  # Assign GPUs dynamically if needed
 
-        configs = zip(gpu_ids, [task_cfg] * len(pretrain_models), dataset_csvs, root_paths, input_dim, pretrain_models, pretrain_model_types)
-        
+                configs.append((gpu_id, task_cfg, dataset_csv, root_path, input_dim, pretrain_model, pretrain_model_type, tuning_method))
+
         print(f"Starting tasks for {task_name}...")
         manage_processes(configs, max_concurrent_tasks)
         print(f"All tasks for {task_name} completed.")

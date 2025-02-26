@@ -219,20 +219,26 @@ def pad_coords_and_features(coords, features):
     return padded_coords, padded_features, coord_masks
 
 def custom_collate_fn(batch):
+    # 初始化全局坐标、全局特征和预测全局掩码列表
     global_coords, global_features, predict_global_masks = [], [], []
+    # 初始化局部坐标和局部特征列表
     local_coords, local_features = [], []
 
+    # 遍历batch中的每个样本
     for sample in batch:
+        # 将每个样本的全局坐标、全局特征和预测全局掩码添加到对应的列表中
         global_coords.extend(sample['global_coords'])
         global_features.extend(sample['global_features'])
         predict_global_masks.extend(sample['predict_global_mask'])
+        # 将每个样本的局部坐标和局部特征添加到对应的列表中
         local_coords.extend(sample['local_coords'])
         local_features.extend(sample['local_features'])
 
+    # 对全局坐标和全局特征进行填充
     padded_global_coords, padded_global_features, global_attention_masks = pad_coords_and_features(global_coords, global_features)
-    # for i in global_features:
-    #     print(i.shape)
+    # 对预测全局掩码进行填充
     padded_predict_global_masks, _ = pad_variable_length(predict_global_masks, max(global_attention_masks.size(1), len(predict_global_masks)))
+    # 对局部坐标和局部特征进行填充
     padded_local_coords, padded_local_features, local_attention_masks = pad_coords_and_features(local_coords, local_features)
     # the global_attention_masks
     global_attention_masks = ~global_attention_masks
