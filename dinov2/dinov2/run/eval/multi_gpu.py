@@ -27,7 +27,7 @@ def get_unprocessed_datasets(data_dir, processed_dir):
     all_datasets = os.listdir(data_dir)
     processed_datasets = os.listdir(processed_dir) if os.path.exists(processed_dir) else []
     
-    #unprocessd_dataset= all_datasets - processed_datasets
+
     unprocessed_dataset = []
     for d in all_datasets:
         if len(os.listdir(os.path.join(data_dir, d, 'output'))) - len(os.listdir(os.path.join(processed_dir, d, 'FMBC')))>10:

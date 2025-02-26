@@ -30,7 +30,7 @@ def parse_args():
     parser.add_argument('--save_dir', type=str, default='/ruiyan/yuhao/embedding', help='Directory to save extracted features')
     parser.add_argument('--pretrained_weights', type=str, default='/home/yuhaowang/project/FMBC/dinov2/finetuning_399999.pth', help='Path to pretrained model weights')
     parser.add_argument('--batch_size', type=int, default=120, help='Batch size for data loading')
-    parser.add_argument('--num_workers', type=int, default=36, help='Number of workers for data loading')
+    parser.add_argument('--num_workers', type=int, default=16, help='Number of workers for data loading')
     parser.add_argument('--dataset_name', type=str, required=True, help='Single dataset name to process')
     parser.add_argument('--gpu', type=str, default='0', help='CUDA GPU id to use')
     return parser.parse_args()
