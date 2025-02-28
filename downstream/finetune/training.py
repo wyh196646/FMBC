@@ -5,7 +5,7 @@ from pathlib import Path
 # For convinience
 this_file_dir = Path(__file__).resolve().parent
 sys.path.append(str(this_file_dir.parent))
-sys.path.append('/home/yuhaowang/project/FMBC/preprocess')
+sys.path.append('/home/yuhaowang/project/FMBC')
 import time
 import wandb
 os.environ["WANDB_API_KEY"] = '6ebb1c769075243eb73a32c4f9f7011ddd41f20a'
@@ -247,3 +247,8 @@ def evaluate(loader, model, fp16_scaler, loss_fn, epoch, args):
             info += ', {}: {:.4f}'.format(metric, records[metric])
     print(info)
     return records
+
+
+# CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/BCNB_ALN.yaml 
+# --dataset_csv dataset_csv/subtype/BCNB_ALN.csv --root_path /data4/fm_embedding/embedding/BCNB/CHIEF
+# --input_dim 768 --pretrain_model CHIEF --pretrain_model_type slide_level --tuning_method LR

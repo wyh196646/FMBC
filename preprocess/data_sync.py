@@ -10,7 +10,7 @@ data_list = [
     # "AIDPATH", "BRACS", "CAMELYON17", "GEO-GSE243280", "IMPRESS",  "TCGA-BRCA",
     # "ACROBAT", "BCNB", "CAMELYON16", "CPTAC-BREAST-all", "HE-vs-MPM", "Multi-omic",  "private_chunk_test", "TIGER",
     # "BACH", "BreakHis", "CMB-BRCA", "GTEX_Breast", "HyReCo", "Post-NAT-BRCA",  "SLN-Breast", "TUPAC",
-    "DORID"
+    "HIST2ST", "DORID", "TNBC"
 ]
 
 print(len(data_list))
