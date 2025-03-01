@@ -22,8 +22,15 @@ pretrain_model_types_dict = {
 
     "FMBC": "slide_level"
 }
-def get_tuning_methods(model_type):
-    return ["ABMIL", "LR"] if model_type == "patch_level" else ["LR"]
+def get_tuning_methods(pretrain_model):
+    if pretrain_model =='FMBC':
+        combinations = [
+            f"LR_{lr}_{pool}"
+            for lr in ["Frozen", "Same", "Different"]
+            for pool in ["MeanPool", "CLSPool"]
+        ]
+
+    return combinations
 
 # 任务配置
 tasks = {
@@ -42,27 +49,34 @@ tasks = {
         "embedding_dir": "/data4/embedding/AIDPATH",
         "csv_dir": "dataset_csv/subtype/",
         "task_cfg": "task_configs/AIDPATH_IDC.yaml"
+    },
+    "BACH_TUMOR": {
+        "embedding_dir": "/data4/embedding/BACH",
+        "csv_dir": "dataset_csv/subtype/",
+        "dataset": "BACH",
+        "task_cfg": "task_configs/BACH_TUMOR.yaml"
     }, 
+
+
+    'SLNBREAST_SUBTYPE':{
+        "embedding_dir": "/data4/embedding/SLN-Breast",
+        "csv_dir": "dataset_csv/subtype/",
+        "dataset": "SLN-Breast",
+        "task_cfg": "task_configs/SLNBREAST_SUBTYPE.yaml"
+    },
+    'TCGA-BRCA-SUBTYPE':{
+        "embedding_dir": "/data4/embedding/TCGA-BRCA",
+        "csv_dir": "dataset_csv/subtype/",
+        "dataset": "TCGA-BRCA",
+        "task_cfg": "task_configs/TCGA-BRCA-SUBTYPE.yaml"
+    },
     "IMPRESS_PR": {
         "embedding_dir": "/data4/embedding/IMPRESS",
         "csv_dir": "dataset_csv/biomarker/",
         "dataset": "IMPRESS",
         "task_cfg": "task_configs/IMPRESS_PR.yaml"
     },
-    'SLNbreast_2subtype':{
-        "embedding_dir": "/data4/embedding/SLN-Breast",
-        "csv_dir": "dataset_csv/subtype/",
-        "dataset": "SLN-Breast",
-        "task_cfg": "task_configs/SLNbreast_2subtype.yaml"
-    },
-    'TCGA-BRCA-Subtype':{
-        "embedding_dir": "/data4/embedding/TCGA-BRCA",
-        "csv_dir": "dataset_csv/subtype/",
-        "dataset": "TCGA-BRCA",
-        "task_cfg": "task_configs/TCGA-BRCA-Subtype.yaml"
-    }
 }
-
 def get_available_gpus():
     return list(gpu_config.keys())
 
@@ -92,7 +106,7 @@ for task_name, config in tasks.items():
     
     for pretrain_model in pretrain_models:
         pretrain_model_type = pretrain_model_types_dict[pretrain_model]
-        tuning_methods = get_tuning_methods(pretrain_model_type)
+        tuning_methods = get_tuning_methods(pretrain_model)
         input_dim = pretrain_model_dim_dict[pretrain_model]
         root_path = os.path.join(embedding_dir, pretrain_model)
         dataset_csv = os.path.join(csv_dir, f"{task_name}.csv")
@@ -119,3 +133,5 @@ while task_queue or any(len(v) > 0 for v in running_tasks.values()):
     time.sleep(10)
 
 print("All tasks completed.")
+
+

@@ -227,12 +227,10 @@ def param_groups_lrd(model, weight_decay=0.05, no_weight_decay_list=[], layer_de
         if not p.requires_grad:
             continue
         
-        # 跳过mask_token和slide_encoder
-        if 'mask_token' in n: #or 'slide_encoder' in n: # if fronzen the slide encoder
+
+        if 'mask_token' in n:
             continue
 
-        # no decay: all 1D parameters and model specific ones
-        # 如果参数是一维的或者参数名在no_weight_decay_list中，则不进行权重衰减
         if p.ndim == 1 or n in no_weight_decay_list:
             g_decay = "no_decay"
             this_decay = 0.
@@ -261,14 +259,13 @@ def param_groups_lrd(model, weight_decay=0.05, no_weight_decay_list=[], layer_de
                 "params": [],
             }
 
-        # 将参数名和参数添加到参数组中
+
         param_group_names[group_name]["params"].append(n)
         param_groups[group_name]["params"].append(p)
 
-    # 返回参数组列表
+
     return list(param_groups.values())
-    # for i in param_groups.keys():
-    #     print(i)
+   
 
 def get_layer_id(name, num_layers):
     # ------------------------------------------------------------------------------------------
@@ -306,10 +303,10 @@ def adjust_learning_rate(optimizer, epoch, args):
 
 def get_optimizer(args, model):
     if args.pretrain_model =='FMBC':
-        #param_groups = param_groups_lrd(model, args.optim_wd,layer_decay=args.layer_decay)
-        param_groups = model.parameters()
-    else:
-        param_groups = model.parameters()
+        if args.lr_strategy =="Different":
+            param_groups = param_groups_lrd(model, args.optim_wd,layer_decay=args.layer_decay)
+        else:
+            param_groups = model.parameters()
 
     # make the optimizer
     optim_func = torch.optim.AdamW if args.optim == 'adamw' else torch.optim.Adam

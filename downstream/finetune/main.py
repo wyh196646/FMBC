@@ -13,7 +13,7 @@ from datasets.slide_datatset import SlideDataset
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 if __name__ == '__main__':
     args = get_finetune_params()
-    print(args)
+    #print(args)
 
     # set the device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -61,13 +61,18 @@ if __name__ == '__main__':
     
 
     DatasetClass = SlideDataset
-
-    # use the slide dataset, set up the dataset class
     pretrain_model_type = args.pretrain_model_type
     DatasetClass = SlideDataset
     
-
-    # set up the results dictionary
+    if args.pretrain_model == 'FMBC':
+        #针对FMBC模型的多轮测试，要理解这么做
+        #basline稍微少一点无所谓，这个一定要好好测试
+        #FMBC的测试，要好好测试, 然后选比较好的结果
+        tuning_method = args.tuning_method
+        _, args.lr_strategy, args.pool_method = tuning_method.split('_')
+        if args.lr_strategy == 'Frozen':
+            args.freeze = True
+            
     results = {}
     predict_results ={}
     # start cross validation

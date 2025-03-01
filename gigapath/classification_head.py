@@ -112,9 +112,9 @@ class ClassificationHead(nn.Module):
                             dtype=torch.bool).to(device=images.device)
         
         img_enc = self.slide_encoder(images, coords, masks)
-        if self.pool_method == 'mean':
+        if self.pool_method == 'MeanPool':
             img_enc = torch.mean(img_enc[:, 1:], dim=1)
-        elif self.pool_method == 'cls_token':
+        elif self.pool_method == 'CLSPool':
             img_enc = img_enc[:, 0]
         logits = self.classifier(img_enc)
         return logits

@@ -59,8 +59,6 @@ def get_finetune_params():
     parser.add_argument('--return_all_tokens', action='store_true', default=True, help='Return all tokens')
     parser.add_argument('--pool_method',type=str, default='cls_token', help='Return all tokens')
     
-    ## Fintuning Settings
- 
-    parser.add_argument('--tuning_method', type=str,  default='linear_probe', help='Tuning method')
+    parser.add_argument('--tuning_method', type=str,  default='LR', help='Tuning method')
 
     return parser.parse_args()
