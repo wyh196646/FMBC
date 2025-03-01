@@ -1,0 +1,9 @@
+name: AIDPATH_GRADE
+setting: multi_class
+label_dict:
+  #1: 0
+  2: 0
+  3: 1
+max_tiles: 4000
+shuffle_tiles: true
+add_metrics: ['qwk']

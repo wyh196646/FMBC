@@ -63,6 +63,7 @@ class SlideDatasetForTasks(Dataset):
         
         self.max_tiles = task_config.get('max_tiles', 1000)
         self.shuffle_tiles = task_config.get('shuffle_tiles', False)
+        #print(self.labels)
         print('Dataset has been initialized!')
         
     def get_valid_slides(self, root_path: str, slides: list) -> list:
@@ -150,9 +151,12 @@ class SlideDatasetForTasks(Dataset):
         # get the corresponding splits
         assert self.split_key in df.columns, 'No {} column found in the dataframe'.format(self.split_key)
         df = df[df[self.split_key].isin(splits)]
+       #print(df)
         images = df[self.slide_key].to_list()
+        #print(df[['label']])
         labels = df[['label']].to_numpy().astype(int)
         #print(labels)
+        #print(df[['label']].to_numpy())
         return df, images, labels, n_classes
         
     def prepare_multi_label_data(self, df: pd.DataFrame, splits: list):
