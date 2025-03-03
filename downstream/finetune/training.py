@@ -2,26 +2,25 @@ import os
 import sys
 from pathlib import Path
 
-# For convinience
+# For convenience
 this_file_dir = Path(__file__).resolve().parent
 sys.path.append(str(this_file_dir.parent))
 sys.path.append('/home/yuhaowang/project/FMBC')
 import time
 import wandb
 os.environ["WANDB_API_KEY"] = '6ebb1c769075243eb73a32c4f9f7011ddd41f20a'
-#os.environ["WANDB_MODE"] = "offline"
 
 import torch
 import numpy as np
 import torch.utils.tensorboard as tensorboard
-import sys
 from gigapath.classification_head import get_model
 from metrics import calculate_metrics_with_task_cfg
-from finetune_utils import (get_optimizer, get_loss_function, \
-                  Monitor_Score, get_records_array,
-                  log_writer, adjust_learning_rate, release_nested_dict,
-                  initiate_mil_model,initiate_linear_model)
-
+from finetune_utils import (
+    get_optimizer, get_loss_function, Monitor_Score, get_records_array,
+    log_writer, adjust_learning_rate, release_nested_dict,
+    initiate_mil_model, initiate_linear_model
+)
+#from fewshot_algorithms import FewShot, SimpleShot, NearestNeighbors
 
 def train(dataloader, fold, args):
     train_loader, val_loader, test_loader = dataloader
@@ -46,8 +45,6 @@ def train(dataloader, fold, args):
     elif "tensorboard" in args.report_to:
         writer = tensorboard.SummaryWriter(writer_dir, flush_secs=15)
     if args.pretrain_model_type =='patch_level':
-        #model = initiate_mil_model(args)
-        #linear_probe', 'mil'
         if args.tuning_method == 'LR':
             model = initiate_linear_model(args)
         elif args.tuning_method == 'ABMIL':
@@ -55,7 +52,6 @@ def train(dataloader, fold, args):
     else:
         if args.pretrain_model == 'FMBC':
             model = get_model(**vars(args))
-            #model = initiate_linear_model(args)
         else:
             model = initiate_linear_model(args)
     model = model.to(args.device)
@@ -70,6 +66,8 @@ def train(dataloader, fold, args):
     if args.fp16:
         fp16_scaler = torch.cuda.amp.GradScaler()
         print('Using fp16 training')
+    
+    
 
     print('Training on {} samples'.format(len(train_loader.dataset)))
     print('Validating on {} samples'.format(len(val_loader.dataset))) if val_loader is not None else None
@@ -77,9 +75,7 @@ def train(dataloader, fold, args):
     print('Training starts!')
 
 
-
     val_records, test_records = None, None
-
     for i in range(args.epochs):
         print('Epoch: {}'.format(i))
         train_records = train_one_epoch(train_loader, model, fp16_scaler, optimizer, loss_fn, i, args)
@@ -233,7 +229,9 @@ def evaluate(loader, model, fp16_scaler, loss_fn, epoch, args):
                 records['prob'][batch_idx] = logits.cpu().numpy()
                 records['label'][batch_idx] = label.cpu().numpy()
                 records['slide_id'].extend(slide_id)
-    records.update(release_nested_dict(calculate_metrics_with_task_cfg(records['prob'], records['label'], args.task_config)))
+    records.update(release_nested_dict(calculate_metrics_with_task_cfg(records['prob'], 
+                                                                       records['label'], 
+                                                                       args.task_config)))
     
     records['loss'] = records['loss'] / len(loader)
 
@@ -249,6 +247,3 @@ def evaluate(loader, model, fp16_scaler, loss_fn, epoch, args):
     return records
 
 
-# CUDA_VISIBLE_DEVICES=0 python main.py --task_cfg_path task_configs/BCNB_ALN.yaml 
-# --dataset_csv dataset_csv/subtype/BCNB_ALN.csv --root_path /data4/fm_embedding/embedding/BCNB/CHIEF
-# --input_dim 768 --pretrain_model CHIEF --pretrain_model_type slide_level --tuning_method LR

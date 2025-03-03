@@ -307,7 +307,8 @@ def get_optimizer(args, model):
             param_groups = param_groups_lrd(model, args.optim_wd,layer_decay=args.layer_decay)
         else:
             param_groups = model.parameters()
-
+    else:
+        param_groups = model.parameters()
     # make the optimizer
     optim_func = torch.optim.AdamW if args.optim == 'adamw' else torch.optim.Adam
     optimizer = optim_func(param_groups, lr=args.lr)

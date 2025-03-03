@@ -35,52 +35,65 @@ pretrain_model_types_dict = {
     "CHIEF": "slide_level",
 }
 def get_tuning_methods(model_type):
-    return ["ABMIL", "LR"] if model_type == "patch_level" else ["LR"]
+    return ["LR"] if model_type == "patch_level" else ["LR"]
 
 # 任务配置
 tasks = {
-    "BCNB_ALN": {
-        "embedding_dir": "/data4/embedding/BCNB",
-        "csv_dir": "dataset_csv/subtype/",
-        "dataset": "BCNB",
-        "task_cfg": "task_configs/BCNB_ALN.yaml"
-    }, 
-    "AIDPATH_GRADE": {
-        "embedding_dir": "/data4/embedding/AIDPATH",
-        "csv_dir": "dataset_csv/subtype/",
-        "task_cfg": "task_configs/AIDPATH_GRADE.yaml"
-    }, 
-    "AIDPATH_IDC": {
-        "embedding_dir": "/data4/embedding/AIDPATH",
-        "csv_dir": "dataset_csv/subtype/",
-        "task_cfg": "task_configs/AIDPATH_IDC.yaml"
-    },
-    "BACH_TUMOR": {
-        "embedding_dir": "/data4/embedding/BACH",
-        "csv_dir": "dataset_csv/subtype/",
-        "dataset": "BACH",
-        "task_cfg": "task_configs/BACH_TUMOR.yaml"
-    }, 
-
-
-    'SLNBREAST_SUBTYPE':{
-        "embedding_dir": "/data4/embedding/SLN-Breast",
-        "csv_dir": "dataset_csv/subtype/",
-        "dataset": "SLN-Breast",
-        "task_cfg": "task_configs/SLNBREAST_SUBTYPE.yaml"
-    },
+    # "BCNB_ALN": {
+    #     "embedding_dir": "/data4/embedding/BCNB",
+    #     "csv_dir": "dataset_csv/subtype/",
+    #     "dataset": "BCNB",
+    #     "task_cfg": "task_configs/BCNB_ALN.yaml"
+    # }, 
+    # "AIDPATH_GRADE": {
+    #     "embedding_dir": "/data4/embedding/AIDPATH",
+    #     "csv_dir": "dataset_csv/subtype/",
+    #     "task_cfg": "task_configs/AIDPATH_GRADE.yaml"
+    # }, 
+    # "AIDPATH_IDC": {
+    #     "embedding_dir": "/data4/embedding/AIDPATH",
+    #     "csv_dir": "dataset_csv/subtype/",
+    #     "task_cfg": "task_configs/AIDPATH_IDC.yaml"
+    # },
+    # "BACH_TUMOR": {
+    #     "embedding_dir": "/data4/embedding/BACH",
+    #     "csv_dir": "dataset_csv/subtype/",
+    #     "dataset": "BACH",
+    #     "task_cfg": "task_configs/BACH_TUMOR.yaml"
+    # }, 
+    # "BRACS_FINE":
+    # {
+    #     "embedding_dir": "/data4/embedding/BRACS",
+    #     "csv_dir": "dataset_csv/subtype/",
+    #     "dataset": "BRACS",
+    #     "task_cfg": "task_configs/BRACS_FINE.yaml"
+    # },
+    # "BRACS_COARSE":
+    # {
+    #     "embedding_dir": "/data4/embedding/BRACS",
+    #     "csv_dir": "dataset_csv/subtype/",
+    #     "dataset": "BRACS",
+    #     "task_cfg": "task_configs/BRACS_COARSE.yaml"
+        
+    # },
+    # 'SLNBREAST_SUBTYPE':{
+    #     "embedding_dir": "/data4/embedding/SLN-Breast",
+    #     "csv_dir": "dataset_csv/subtype/",
+    #     "dataset": "SLN-Breast",
+    #     "task_cfg": "task_configs/SLNBREAST_SUBTYPE.yaml"
+    # },
     'TCGA-BRCA-SUBTYPE':{
         "embedding_dir": "/data4/embedding/TCGA-BRCA",
         "csv_dir": "dataset_csv/subtype/",
         "dataset": "TCGA-BRCA",
         "task_cfg": "task_configs/TCGA-BRCA-SUBTYPE.yaml"
     },
-    "IMPRESS_PR": {
-        "embedding_dir": "/data4/embedding/IMPRESS",
-        "csv_dir": "dataset_csv/biomarker/",
-        "dataset": "IMPRESS",
-        "task_cfg": "task_configs/IMPRESS_PR.yaml"
-    },
+    # "IMPRESS_PR": {
+    #     "embedding_dir": "/data4/embedding/IMPRESS",
+    #     "csv_dir": "dataset_csv/biomarker/",
+    #     "dataset": "IMPRESS",
+    #     "task_cfg": "task_configs/IMPRESS_PR.yaml"
+    # },
 }
 
 def get_available_gpus():
