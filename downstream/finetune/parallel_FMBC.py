@@ -134,7 +134,7 @@ for task_name, config in tasks.items():
             
             command = f"python main.py --task_cfg_path {task_cfg} --dataset_csv {dataset_csv} " \
                       f"--root_path {root_path} --input_dim {input_dim} --pretrain_model {pretrain_model} " \
-                      f"--pretrain_model_type {pretrain_model_type} --tuning_method {tuning_method}"
+                      f"--pretrain_model_type {pretrain_model_type} --tuning_method {tuning_method} "# --lr 0.01
             task_queue.append((task_name, command))
 
 while task_queue or any(len(v) > 0 for v in running_tasks.values()):

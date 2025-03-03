@@ -28,39 +28,39 @@ def get_tuning_methods(model_type):
 
 # 任务配置
 tasks = {
-    "BCNB_ALN": {
-        "embedding_dir": "/data4/fm_embedding/embedding/BCNB",
-        "csv_dir": "dataset_csv/subtype/",
-        "dataset": "BCNB",
-        "task_cfg": "task_configs/BCNB_ALN.yaml"
-    }, 
-    "AIDPATH_GRADE": {
-        "embedding_dir": "/data4/fm_embedding/embedding/AIDPATH",
-        "csv_dir": "dataset_csv/subtype/",
-        "task_cfg": "task_configs/AIDPATH_GRADE.yaml"
-    }, 
-    "AIDPATH_IDC": {
-        "embedding_dir": "/data4/fm_embedding/embedding/AIDPATH",
-        "csv_dir": "dataset_csv/subtype/",
-        "task_cfg": "task_configs/AIDPATH_IDC.yaml"
-    }, 
-    "IMPRESS_PR": {
-        "embedding_dir": "/data4/fm_embedding/embedding/IMPRESS",
-        "csv_dir": "dataset_csv/biomarker/",
-        "dataset": "IMPRESS",
-        "task_cfg": "task_configs/IMPRESS_PR.yaml"
-    },
-    'SLNbreast_2subtype':{
-        "embedding_dir": "/data4/fm_embedding/embedding/SLN-Breast",
-        "csv_dir": "dataset_csv/subtype/",
-        "dataset": "SLN-Breast",
-        "task_cfg": "task_configs/SLNbreast_2subtype.yaml"
-    },
-    'TCGA-BRCA-Subtype':{
-        "embedding_dir": "/data4/fm_embedding/embedding/TCGA-BRCA",
+    # "BCNB_ALN": {
+    #     "embedding_dir": "/data4/fm_embedding/embedding/BCNB",
+    #     "csv_dir": "dataset_csv/subtype/",
+    #     "dataset": "BCNB",
+    #     "task_cfg": "task_configs/BCNB_ALN.yaml"
+    # }, 
+    # "AIDPATH_GRADE": {
+    #     "embedding_dir": "/data4/fm_embedding/embedding/AIDPATH",
+    #     "csv_dir": "dataset_csv/subtype/",
+    #     "task_cfg": "task_configs/AIDPATH_GRADE.yaml"
+    # }, 
+    # "AIDPATH_IDC": {
+    #     "embedding_dir": "/data4/fm_embedding/embedding/AIDPATH",
+    #     "csv_dir": "dataset_csv/subtype/",
+    #     "task_cfg": "task_configs/AIDPATH_IDC.yaml"
+    # }, 
+    # "IMPRESS_PR": {
+    #     "embedding_dir": "/data4/fm_embedding/embedding/IMPRESS",
+    #     "csv_dir": "dataset_csv/biomarker/",
+    #     "dataset": "IMPRESS",
+    #     "task_cfg": "task_configs/IMPRESS_PR.yaml"
+    # },
+    # 'SLNbreast_2subtype':{
+    #     "embedding_dir": "/data4/fm_embedding/embedding/SLN-Breast",
+    #     "csv_dir": "dataset_csv/subtype/",
+    #     "dataset": "SLN-Breast",
+    #     "task_cfg": "task_configs/SLNbreast_2subtype.yaml"
+    # },
+    'TCGA-BRCA-SUBTYPE':{
+        "embedding_dir": "/data4/embedding/TCGA-BRCA",
         "csv_dir": "dataset_csv/subtype/",
         "dataset": "TCGA-BRCA",
-        "task_cfg": "task_configs/TCGA-BRCA-Subtype.yaml"
+        "task_cfg": "task_configs/TCGA-BRCA-SUBTYPE.yaml"
     }
 }
 root_dir = '/home/yuhaowang/project/FMBC/downstream/finetune'

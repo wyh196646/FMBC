@@ -35,8 +35,8 @@ def train(dataloader, fold, args):
     if "wandb" in args.report_to:
         wandb.init(
             project= args.task,
-            name=args.pretrain_model + '_fold_' + str(fold)+ '_'+ str(args.tuning_method),
-            id='fold_' + str(fold)+'_'+str(args.pretrain_model)+'_'+  str(args.tuning_method),
+            name=args.pretrain_model + '_fold_' + str(fold)+ '_'+ str(args.tuning_method)+'_'+str(args.lr),
+            id='fold_' + str(fold)+'_'+str(args.pretrain_model)+'_'+  str(args.tuning_method)+'_'+str(args.lr),
             tags=[],
             config=vars(args),
             settings=wandb.Settings(init_timeout=120)

@@ -80,7 +80,8 @@ class ClassificationHead(nn.Module):
         self.pool_method = pool_method
         
         #self.slide_encoder = slide_encoder.create_model(pretrained, model_arch, in_chans=input_dim, **kwargs)
-        self.slide_encoder=vits.__dict__[model_arch](slide_embedding_size=input_dim, return_all_tokens=self.return_all_tokens)
+        self.slide_encoder=vits.__dict__[model_arch](slide_embedding_size=input_dim,
+                                                     return_all_tokens=self.return_all_tokens)
         load_pretrained_weights(self.slide_encoder, pretrained, 'teacher')
         # whether to freeze the pretrained model
         if freeze:

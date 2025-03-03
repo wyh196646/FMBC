@@ -37,63 +37,87 @@ pretrain_model_types_dict = {
 def get_tuning_methods(model_type):
     return ["LR"] if model_type == "patch_level" else ["LR"]
 
-# 任务配置
+learning_rates = [0.01,0.001, 0.0001]
 tasks = {
-    # "BCNB_ALN": {
-    #     "embedding_dir": "/data4/embedding/BCNB",
-    #     "csv_dir": "dataset_csv/subtype/",
-    #     "dataset": "BCNB",
-    #     "task_cfg": "task_configs/BCNB_ALN.yaml"
-    # }, 
-    # "AIDPATH_GRADE": {
-    #     "embedding_dir": "/data4/embedding/AIDPATH",
-    #     "csv_dir": "dataset_csv/subtype/",
-    #     "task_cfg": "task_configs/AIDPATH_GRADE.yaml"
-    # }, 
-    # "AIDPATH_IDC": {
-    #     "embedding_dir": "/data4/embedding/AIDPATH",
-    #     "csv_dir": "dataset_csv/subtype/",
-    #     "task_cfg": "task_configs/AIDPATH_IDC.yaml"
-    # },
-    # "BACH_TUMOR": {
-    #     "embedding_dir": "/data4/embedding/BACH",
-    #     "csv_dir": "dataset_csv/subtype/",
-    #     "dataset": "BACH",
-    #     "task_cfg": "task_configs/BACH_TUMOR.yaml"
-    # }, 
-    # "BRACS_FINE":
-    # {
-    #     "embedding_dir": "/data4/embedding/BRACS",
-    #     "csv_dir": "dataset_csv/subtype/",
-    #     "dataset": "BRACS",
-    #     "task_cfg": "task_configs/BRACS_FINE.yaml"
-    # },
-    # "BRACS_COARSE":
-    # {
-    #     "embedding_dir": "/data4/embedding/BRACS",
-    #     "csv_dir": "dataset_csv/subtype/",
-    #     "dataset": "BRACS",
-    #     "task_cfg": "task_configs/BRACS_COARSE.yaml"
+    "BCNB_ALN": {
+        "embedding_dir": "/data4/embedding/BCNB",
+        "csv_dir": "dataset_csv/subtype/",
+        "dataset": "BCNB",
+        "task_cfg": "task_configs/BCNB_ALN.yaml"
+    }, 
+    "AIDPATH_GRADE": {
+        "embedding_dir": "/data4/embedding/AIDPATH",
+        "csv_dir": "dataset_csv/subtype/",
+        "task_cfg": "task_configs/AIDPATH_GRADE.yaml"
+    }, 
+    "AIDPATH_IDC": {
+        "embedding_dir": "/data4/embedding/AIDPATH",
+        "csv_dir": "dataset_csv/subtype/",
+        "task_cfg": "task_configs/AIDPATH_IDC.yaml"
+    },
+    "BACH_TUMOR": {
+        "embedding_dir": "/data4/embedding/BACH",
+        "csv_dir": "dataset_csv/subtype/",
+        "dataset": "BACH",
+        "task_cfg": "task_configs/BACH_TUMOR.yaml"
+    }, 
+    "BRACS_FINE":
+    {
+        "embedding_dir": "/data4/embedding/BRACS",
+        "csv_dir": "dataset_csv/subtype/",
+        "dataset": "BRACS",
+        "task_cfg": "task_configs/BRACS_FINE.yaml"
+    },
+    "BRACS_COARSE":
+    {
+        "embedding_dir": "/data4/embedding/BRACS",
+        "csv_dir": "dataset_csv/subtype/",
+        "dataset": "BRACS",
+        "task_cfg": "task_configs/BRACS_COARSE.yaml"
         
-    # },
-    # 'SLNBREAST_SUBTYPE':{
-    #     "embedding_dir": "/data4/embedding/SLN-Breast",
-    #     "csv_dir": "dataset_csv/subtype/",
-    #     "dataset": "SLN-Breast",
-    #     "task_cfg": "task_configs/SLNBREAST_SUBTYPE.yaml"
-    # },
+    },
+    "BCNB_ER":
+    {
+        "embedding_dir": "/data4/embedding/BCNB",
+        "csv_dir": "dataset_csv/biomarker/",
+        "dataset": "BCNB",
+        "task_cfg": "task_configs/BCNB_ER.yaml"
+        
+    },
+    "BCNB_PR":
+    {
+        "embedding_dir": "/data4/embedding/BCNB",
+        "csv_dir": "dataset_csv/biomarker/",
+        "dataset": "BCNB",
+        "task_cfg": "task_configs/BCNB_PR.yaml"
+        
+    },
+    "BCNB_HER2":
+    {
+        "embedding_dir": "/data4/embedding/BCNB",
+        "csv_dir": "dataset_csv/biomarker/",
+        "dataset": "BCNB",
+        "task_cfg": "task_configs/BCNB_HER2.yaml"
+        
+    },
+    'SLNBREAST_SUBTYPE':{
+        "embedding_dir": "/data4/embedding/SLN-Breast",
+        "csv_dir": "dataset_csv/subtype/",
+        "dataset": "SLN-Breast",
+        "task_cfg": "task_configs/SLNBREAST_SUBTYPE.yaml"
+    },
     'TCGA-BRCA-SUBTYPE':{
         "embedding_dir": "/data4/embedding/TCGA-BRCA",
         "csv_dir": "dataset_csv/subtype/",
         "dataset": "TCGA-BRCA",
         "task_cfg": "task_configs/TCGA-BRCA-SUBTYPE.yaml"
     },
-    # "IMPRESS_PR": {
-    #     "embedding_dir": "/data4/embedding/IMPRESS",
-    #     "csv_dir": "dataset_csv/biomarker/",
-    #     "dataset": "IMPRESS",
-    #     "task_cfg": "task_configs/IMPRESS_PR.yaml"
-    # },
+    "IMPRESS_PR": {
+        "embedding_dir": "/data4/embedding/IMPRESS",
+        "csv_dir": "dataset_csv/biomarker/",
+        "dataset": "IMPRESS",
+        "task_cfg": "task_configs/IMPRESS_PR.yaml"
+    },
 }
 
 def get_available_gpus():
@@ -129,18 +153,24 @@ for task_name, config in tasks.items():
         input_dim = pretrain_model_dim_dict[pretrain_model]
         root_path = os.path.join(embedding_dir, pretrain_model)
         dataset_csv = os.path.join(csv_dir, f"{task_name}.csv")
-        
+        #We find that the learning rate is different for different pretrain types
+        #slide level need large learning rate, while patch level need small learning rate
+        # if pretrain_model_type == "slide_level":
+        #     learning_rate = 0.001
+        # else:
+        #     learning_rate = 0.0001
+            
         for tuning_method in tuning_methods:
-            output_prediction = os.path.join('outputs', task_name, pretrain_model, tuning_method, 'prediction_results', 'val_predict.csv')
-            
-            if os.path.exists(output_prediction):
-                print(f"Skipping task: {output_prediction} already exists")
-                continue
-            
-            command = f"python main.py --task_cfg_path {task_cfg} --dataset_csv {dataset_csv} " \
-                      f"--root_path {root_path} --input_dim {input_dim} --pretrain_model {pretrain_model} " \
-                      f"--pretrain_model_type {pretrain_model_type} --tuning_method {tuning_method}"
-            task_queue.append((task_name, command))
+            for learning_rate in learning_rates:
+                output_prediction = os.path.join('outputs', task_name, pretrain_model, tuning_method, 'prediction_results', 'val_predict.csv')
+                
+                if os.path.exists(output_prediction):
+                    print(f"Skipping task: {output_prediction} already exists")
+                    continue
+                command = f"python main.py --task_cfg_path {task_cfg} --dataset_csv {dataset_csv} " \
+                        f"--root_path {root_path} --input_dim {input_dim} --pretrain_model {pretrain_model} " \
+                        f"--pretrain_model_type {pretrain_model_type} --tuning_method {tuning_method}, --lr {learning_rate}"
+                task_queue.append((task_name, command))
 
 while task_queue or any(len(v) > 0 for v in running_tasks.values()):
     for gpu in gpu_list:

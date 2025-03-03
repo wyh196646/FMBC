@@ -1,0 +1,212 @@
+wandb_version: 1
+
+task_cfg_path:
+  desc: null
+  value: task_configs/BCNB_ALN.yaml
+exp_name:
+  desc: null
+  value: ''
+pat_strat:
+  desc: null
+  value: false
+dataset_csv:
+  desc: null
+  value: dataset_csv/subtype/BCNB_ALN.csv
+split_dir:
+  desc: null
+  value: data_split/BCNB_ALN
+pre_split_dir:
+  desc: null
+  value: ''
+root_path:
+  desc: null
+  value: /data4/embedding/BCNB/UNI
+tile_size:
+  desc: null
+  value: 256
+max_wsi_size:
+  desc: null
+  value: 250000
+model_arch:
+  desc: null
+  value: vit_base
+input_dim:
+  desc: null
+  value: 1024
+latent_dim:
+  desc: null
+  value: 768
+feat_layer:
+  desc: null
+  value: '11'
+pretrained:
+  desc: null
+  value: /home/yuhaowang/project/FMBC/ibot/checkpoint0050.pth
+freeze:
+  desc: null
+  value: false
+global_pool:
+  desc: null
+  value: false
+seed:
+  desc: null
+  value: 0
+epochs:
+  desc: null
+  value: 25
+warmup_epochs:
+  desc: null
+  value: 0
+batch_size:
+  desc: null
+  value: 1
+lr:
+  desc: null
+  value: 0.0001
+blr:
+  desc: null
+  value: 0.004
+min_lr:
+  desc: null
+  value: 1.0e-06
+lr_scheduler:
+  desc: null
+  value: cosine
+gc:
+  desc: null
+  value: 32
+folds:
+  desc: null
+  value: 5
+optim:
+  desc: null
+  value: adamw
+optim_wd:
+  desc: null
+  value: 0.05
+layer_decay:
+  desc: null
+  value: 0.95
+dropout:
+  desc: null
+  value: 0.1
+drop_path_rate:
+  desc: null
+  value: 0.0
+val_r:
+  desc: null
+  value: 0.0
+model_select:
+  desc: null
+  value: val
+save_dir:
+  desc: null
+  value: outputs/BCNB_ALN/UNI/LR,
+num_workers:
+  desc: null
+  value: 10
+report_to:
+  desc: null
+  value: wandb
+fp16:
+  desc: null
+  value: true
+weighted_sample:
+  desc: null
+  value: false
+mil_model_size:
+  desc: null
+  value: small
+mil_type:
+  desc: null
+  value: clam_sb
+pretrain_model:
+  desc: null
+  value: UNI
+pretrain_model_type:
+  desc: null
+  value: patch_level
+experiment:
+  desc: null
+  value: finetune
+return_all_tokens:
+  desc: null
+  value: true
+pool_method:
+  desc: null
+  value: cls_token
+tuning_method:
+  desc: null
+  value: LR,
+device:
+  desc: null
+  value: cuda
+task_config:
+  desc: null
+  value:
+    name: BCNB_ALN
+    setting: multi_class
+    label_dict:
+      N0: 0
+      N+(>2): 1
+      N+(1-2): 2
+    max_tiles: 4000
+    shuffle_tiles: true
+    add_metrics:
+    - qwk
+task:
+  desc: null
+  value: BCNB_ALN
+model_code:
+  desc: null
+  value: eval_pretrained
+task_code:
+  desc: null
+  value: BCNB_ALN
+exp_code:
+  desc: null
+  value: eval_pretrained_BCNB_ALN
+split_key:
+  desc: null
+  value: slide_id
+n_classes:
+  desc: null
+  value: 3
+_wandb:
+  desc: null
+  value:
+    python_version: 3.10.16
+    cli_version: 0.17.8
+    framework: torch
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    start_time: 1741000954
+    t:
+      1:
+      - 1
+      - 5
+      - 41
+      - 49
+      - 51
+      - 53
+      - 55
+      - 63
+      2:
+      - 1
+      - 5
+      - 41
+      - 49
+      - 51
+      - 53
+      - 55
+      - 63
+      3:
+      - 13
+      - 14
+      - 16
+      - 23
+      4: 3.10.16
+      5: 0.17.8
+      8:
+      - 5
+      13: linux-x86_64
