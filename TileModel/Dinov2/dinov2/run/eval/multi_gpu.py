@@ -22,15 +22,18 @@ def get_available_gpus():
     return available_gpus
 
 
-def get_unprocessed_datasets(data_dir, processed_dir):
+def get_unprocessed_datasets(data_dir, processed_dir,feat_prefix_name):
     """获取未处理的数据集"""
     all_datasets = os.listdir(data_dir)
+    all_datasets = ['BRACS']
     processed_datasets = os.listdir(processed_dir) if os.path.exists(processed_dir) else []
     
 
     unprocessed_dataset = []
     for d in all_datasets:
-        if len(os.listdir(os.path.join(data_dir, d, 'output'))) - len(os.listdir(os.path.join(processed_dir, d, 'FMBC')))>10:
+        if not os.path.exists(os.path.join(processed_dir, d, feat_prefix_name)):
+            os.makedirs(os.path.join(processed_dir, d, feat_prefix_name))
+        if len(os.listdir(os.path.join(data_dir, d, 'output'))) - len(os.listdir(os.path.join(processed_dir, d, feat_prefix_name)))>10:
             unprocessed_dataset.append(d)
     return unprocessed_dataset
 
@@ -38,6 +41,7 @@ def main():
     data_dir = '/home/yuhaowang/data/'
     save_dir = '/data4/embedding'
     script_path = 'feature_extrac.py'
+    feat_prefix_name = 'FMBC_resume399999'
     
     active_tasks = {}  # 记录当前正在运行的任务 {gpu_id: process}
 
@@ -55,7 +59,7 @@ def main():
 
         # 2. 获取可用 GPU 和未处理的数据集
         available_gpus = get_available_gpus()
-        unprocessed_datasets = get_unprocessed_datasets(data_dir, save_dir)
+        unprocessed_datasets = get_unprocessed_datasets(data_dir, save_dir,feat_prefix_name)
 
         # 3. 任务调度
         for gpu in available_gpus:
@@ -73,7 +77,8 @@ def main():
                 "--dataset_name", dataset, 
                 "--gpu", gpu, 
                 "--img_dir", data_dir, 
-                "--save_dir", save_dir
+                "--save_dir", save_dir,
+                "--prefix_name", feat_prefix_name
             ])
 
             # 记录该 GPU 的任务

@@ -6,64 +6,70 @@ import traceback
 import argparse
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from easydict import EasyDict
 import sys
-sys.path.append('/home/yuhaowang/project/FMBC/dinov2')
-from dinov2.data import make_dataset
-from dinov2.data.transforms import make_classification_eval_transform
-from dinov2.models import build_model_from_cfg
-import dinov2.utils.utils as dinov2_utils
+import os
+import torch
+from torchvision import transforms
+import timm
+from huggingface_hub import login, hf_hub_download
 import random
+sys.path.append('/home/yuhaowang/project/FMBC/TileModel/Dinov2')
+from dinov2.data import make_dataset
 
-
-
-def build_model_for_eval(config, pretrained_weights):
-    model, _ = build_model_from_cfg(config, only_teacher=True)
-    dinov2_utils.load_pretrained_weights(model, pretrained_weights, "teacher")
-    model.eval()
-    model.cuda()
-    return model
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Extract features for a single dataset")
     parser.add_argument('--img_dir', type=str, default='/ruiyan/yuhao/data', help='Directory containing datasets')
     parser.add_argument('--save_dir', type=str, default='/ruiyan/yuhao/embedding', help='Directory to save extracted features')
-    parser.add_argument('--pretrained_weights', type=str, default='/home/yuhaowang/project/FMBC/dinov2/finetuning_399999.pth', help='Path to pretrained model weights')
     parser.add_argument('--batch_size', type=int, default=120, help='Batch size for data loading')
     parser.add_argument('--num_workers', type=int, default=16, help='Number of workers for data loading')
     parser.add_argument('--dataset_name', type=str, required=True, help='Single dataset name to process')
-    parser.add_argument('--gpu', type=str, default='0', help='CUDA GPU id to use')
+    parser.add_argument('--gpu', type=str, default='0', help='CUDA GPU id to use')  
+    parser.add_argument('--prefix_name',type=str, default='FMBC', help='Prefix name for saving features')
     return parser.parse_args()
 
 def main():
     args = parse_args()
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    config = EasyDict({
-        'student': EasyDict({
-            'arch': 'vit_h',
-            'patch_size': 14,
-            'drop_path_rate': 0.4,
-            'layerscale': 1e-4,
-            'ffn_layer': 'SwiGLUPacked',
-            'block_chunks': 4,
-            'num_register_tokens': 8,
-            'interpolate_offset': 0.1,
-            'qkv_bias': True,
-            'proj_bias': True,
-            'ffn_bias': True,
-            'interpolate_antialias': False,
-            'interpolate_offset': 0.1
-        }),
-        'crops': EasyDict({
-            'global_crops_size': 224,
-        })    
-    })
+    login(token='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')  # login with your User Access Token, found at https://huggingface.co/settings/tokens
 
-    model = build_model_for_eval(config, args.pretrained_weights)
-    transform = make_classification_eval_transform(resize_size=224)
+    local_dir = "./"
+    os.makedirs(local_dir, exist_ok=True)  # create directory if it does not exist
+    
+    hf_hub_download("MahmoodLab/UNI2-h", filename="pytorch_model.bin", local_dir=local_dir)
+    timm_kwargs = {
+                'model_name': 'vit_giant_patch14_224',
+                'img_size': 224, 
+                'patch_size': 14, 
+                'depth': 24,
+                'num_heads': 24,
+                'init_values': 1e-5, 
+                'embed_dim': 1536,
+                'mlp_ratio': 2.66667*2,
+                'num_classes': 0, 
+                'no_embed_class': True,
+                'mlp_layer': timm.layers.SwiGLUPacked, 
+                'act_layer': torch.nn.SiLU, 
+                'reg_tokens': 8, 
+                'dynamic_img_size': True
+            }
+    model = timm.create_model(
+        pretrained=False, **timm_kwargs
+    )
+    model.load_state_dict(torch.load(os.path.join(local_dir, "pytorch_model.bin")), strict=True)
+    transform = transforms.Compose(
+        [
+            transforms.Resize(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+        ]
+    )
+    model.eval()
+    model.cuda()
 
-    dataset_save_dir = os.path.join(args.save_dir, args.dataset_name, 'FMBC')
+
+    dataset_save_dir = os.path.join(args.save_dir, args.dataset_name, args.prefix_name)
     os.makedirs(dataset_save_dir, exist_ok=True)
 
     dataset_path = os.path.join(args.img_dir, args.dataset_name, 'output')
@@ -87,13 +93,13 @@ def main():
 
             collated_outputs = {'tile_embeds': [], 'coords': []}
 
-            with torch.cuda.amp.autocast(dtype=torch.float16):
-                for batch in tqdm(tile_dl, desc='Running inference'):
-                    sample = batch['sample'][0].cuda()
-                    coords = torch.stack(batch['coords'], dim=1)
+           
+            for batch in tqdm(tile_dl, desc='Running inference'):
+                sample = batch['sample'][0].cuda()
+                coords = torch.stack(batch['coords'], dim=1)
 
-                    collated_outputs['tile_embeds'].append(model(sample).detach().cpu())
-                    collated_outputs['coords'].append(coords.cpu())
+                collated_outputs['tile_embeds'].append(model(sample).detach().cpu())
+                collated_outputs['coords'].append(coords.cpu())
 
             feature = torch.cat(collated_outputs['tile_embeds'])
             coords = torch.cat(collated_outputs['coords'])
