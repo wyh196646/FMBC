@@ -25,7 +25,7 @@ def get_available_gpus():
 def get_unprocessed_datasets(data_dir, processed_dir,feat_prefix_name):
     """获取未处理的数据集"""
     all_datasets = os.listdir(data_dir)
-    all_datasets = ['BRACS']
+    #all_datasets = ['BRACS']
     processed_datasets = os.listdir(processed_dir) if os.path.exists(processed_dir) else []
     
 
@@ -38,8 +38,8 @@ def get_unprocessed_datasets(data_dir, processed_dir,feat_prefix_name):
     return unprocessed_dataset
 
 def main():
-    data_dir = '/home/yuhaowang/data/'
-    save_dir = '/data4/embedding'
+    data_dir = '/ruiyan/yuhao/data'
+    save_dir = '/ruiyan/yuhao/embedding'
     script_path = 'feature_extrac.py'
     feat_prefix_name = 'UNI-2'
     

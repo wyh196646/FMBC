@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from easydict import EasyDict
 import sys
-sys.path.append('/home/yuhaowang/project/FMBC/TileModel/Dinov2')
+sys.path.append('/home/yuhaowang/project/FMBC/dinov2')
 from dinov2.data import make_dataset
 from dinov2.data.transforms import make_classification_eval_transform
 from dinov2.models import build_model_from_cfg
@@ -19,7 +19,7 @@ import random
 
 def build_model_for_eval(config, pretrained_weights):
     model, _ = build_model_from_cfg(config, only_teacher=True)
-    model  = dinov2_utils.load_pretrained_weights(model, pretrained_weights, "teacher")
+    model = dinov2_utils.load_pretrained_weights(model, pretrained_weights, "teacher")
     model.eval()
     model.cuda()
     return model
@@ -28,12 +28,11 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Extract features for a single dataset")
     parser.add_argument('--img_dir', type=str, default='/ruiyan/yuhao/data', help='Directory containing datasets')
     parser.add_argument('--save_dir', type=str, default='/ruiyan/yuhao/embedding', help='Directory to save extracted features')
-    parser.add_argument('--pretrained_weights', type=str, default='/home/yuhaowang/project/FMBC/TileModel/Dinov2/finetuning_399999.pth', help='Path to pretrained model weights')
+    parser.add_argument('--pretrained_weights', type=str, default='/home/yuhaowang/project/FMBC/dinov2/finetuning_399999.pth', help='Path to pretrained model weights')
     parser.add_argument('--batch_size', type=int, default=120, help='Batch size for data loading')
     parser.add_argument('--num_workers', type=int, default=16, help='Number of workers for data loading')
     parser.add_argument('--dataset_name', type=str, required=True, help='Single dataset name to process')
-    parser.add_argument('--gpu', type=str, default='0', help='CUDA GPU id to use')  
-    parser.add_argument('--prefix_name',type=str, default='FMBC', help='Prefix name for saving features')
+    parser.add_argument('--gpu', type=str, default='0', help='CUDA GPU id to use')
     return parser.parse_args()
 
 def main():
@@ -64,7 +63,7 @@ def main():
     model = build_model_for_eval(config, args.pretrained_weights)
     transform = make_classification_eval_transform(resize_size=224)
 
-    dataset_save_dir = os.path.join(args.save_dir, args.dataset_name, args.prefix_name)
+    dataset_save_dir = os.path.join(args.save_dir, args.dataset_name, 'FMBC')
     os.makedirs(dataset_save_dir, exist_ok=True)
 
     dataset_path = os.path.join(args.img_dir, args.dataset_name, 'output')
