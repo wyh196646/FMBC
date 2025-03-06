@@ -1,0 +1,17 @@
+__pycache__/
+*egg-info*
+
+dev*.ipynb
+dev*.py
+_hidden/
+
+artifacts/
+
+_test*/
+_deprecated*
+_tutorial*/
+
+*.pt
+*.pth
+*.bin
+tf_logs/
