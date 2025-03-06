@@ -3,12 +3,18 @@ import time
 import subprocess
 import torch
 
+# 可配置的 GPU 列表，例如 ["0", "1", "3"] 表示仅使用 GPU 0、1 和 3
+ALLOWED_GPUS = [ "1", "2", "3", "4", "5", "6", "7"]
+
 def get_available_gpus():
-    """获取当前可用的 GPU 列表"""
+    """获取当前可用的 GPU 列表，仅返回允许使用的 GPU"""
     num_gpus = torch.cuda.device_count()
     available_gpus = []
     
     for i in range(num_gpus):
+        if str(i) not in ALLOWED_GPUS:  # 仅允许指定的 GPU
+            continue
+        
         try:
             gpu_info = subprocess.check_output(
                 ["nvidia-smi", "--query-gpu=memory.used", "--format=csv,noheader,nounits"]
@@ -22,26 +28,25 @@ def get_available_gpus():
     return available_gpus
 
 
-def get_unprocessed_datasets(data_dir, processed_dir,feat_prefix_name):
+def get_unprocessed_datasets(data_dir, processed_dir, feat_prefix_name):
     """获取未处理的数据集"""
     all_datasets = os.listdir(data_dir)
-    #all_datasets = ['BRACS']
     processed_datasets = os.listdir(processed_dir) if os.path.exists(processed_dir) else []
     
-
     unprocessed_dataset = []
     for d in all_datasets:
         if not os.path.exists(os.path.join(processed_dir, d, feat_prefix_name)):
-            os.makedirs(os.path.join(processed_dir, d, feat_prefix_name))
-        if len(os.listdir(os.path.join(data_dir, d, 'output'))) - len(os.listdir(os.path.join(processed_dir, d, feat_prefix_name)))>10:
+            os.makedirs(os.path.join(processed_dir, d, feat_prefix_name), exist_ok=True)
+        if len(os.listdir(os.path.join(data_dir, d, 'output'))) - len(os.listdir(os.path.join(processed_dir, d, feat_prefix_name))) > 10:
             unprocessed_dataset.append(d)
     return unprocessed_dataset
 
+
 def main():
-    data_dir = '/ruiyan/yuhao/data'
-    save_dir = '/ruiyan/yuhao/embedding'
-    script_path = 'feature_extrac.py'
-    feat_prefix_name = 'UNI-2'
+    data_dir = '/data4/processed_data'  # 数据集目录
+    save_dir = '/data4/embedding/temp/embedding'  # 保存目录
+    script_path = 'feature_extrac.py'  # 脚本路径
+    feat_prefix_name = 'UNI-2'  # 特征前缀名
     
     active_tasks = {}  # 记录当前正在运行的任务 {gpu_id: process}
 
@@ -59,7 +64,7 @@ def main():
 
         # 2. 获取可用 GPU 和未处理的数据集
         available_gpus = get_available_gpus()
-        unprocessed_datasets = get_unprocessed_datasets(data_dir, save_dir,feat_prefix_name)
+        unprocessed_datasets = get_unprocessed_datasets(data_dir, save_dir, feat_prefix_name)
 
         # 3. 任务调度
         for gpu in available_gpus:

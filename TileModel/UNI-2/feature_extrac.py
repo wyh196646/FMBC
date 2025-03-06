@@ -32,7 +32,7 @@ def main():
     args = parse_args()
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    login(token='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')  # login with your User Access Token, found at https://huggingface.co/settings/tokens
+   # login(token='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')  # login with your User Access Token, found at https://huggingface.co/settings/tokens
 
     local_dir = "./"
     os.makedirs(local_dir, exist_ok=True)  # create directory if it does not exist

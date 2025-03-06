@@ -9,5 +9,5 @@
 ```rsync -avz --progress --partial -e 'ssh -p 30215' root@172.16.120.7:/ruiyan/yuhao/project/FMBC/pretrain_weights/pytorch_model.bin  ./``` 
 
 
-## scp the h5 file, feature embedding
+## scp the UNI-2 h5 file, feature embedding
 ```rsync -avz --progress --partial -e 'ssh -p 30215' root@172.16.120.7:/ruiyan/yuhao/embedding /data4/embedding/temp ```

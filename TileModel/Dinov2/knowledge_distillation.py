@@ -84,6 +84,7 @@ def transforms(examples):
 dataset_str = "/data4/processed_data/SLN-Breast/output/HobI16-053768896760.svs"
 #glob all png recursive
 image_dir = glob.glob(os.path.join(dataset_str, "**/*.png"), recursive=True)
+
 #remove all png contain thumbnail
 image_dir = [x for x in image_dir if "thumbnail" not in x]
 #split train and val
@@ -95,10 +96,6 @@ dataset_val = Dataset.from_dict({"image": val_dir}).cast_column("image", Image()
 dataset_train.set_transform(transforms)
 dataset_val.set_transform(transforms)
 # full_dataset = make_dataset(dataset_str=dataset_str, transform=transform, target_transform=None)
-
-# train_size = int(0.8 * len(full_dataset))
-# val_size = len(full_dataset) - train_size
-# train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
 
 student_model = build_student(student_config)
 teacher_model = build_teacher()
@@ -127,7 +124,7 @@ class knowledge_distillation(nn.Module):
         # Distillation loss
         # 对教师模型的输出进行softmax操作，并除以温度参数
         soft_teacher = torch.nn.functional.softmax(teacher_logits / self.temperature, dim=-1)
-        # 对学生模型的输出进行log_softmax操作，并除以温度参数
+
         soft_student = torch.nn.functional.log_softmax(student_logits / self.temperature, dim=-1)
         # 计算蒸馏损失，乘以温度参数的平方
         distillation_loss = self.loss_function(soft_student, soft_teacher) * (self.temperature ** 2)
