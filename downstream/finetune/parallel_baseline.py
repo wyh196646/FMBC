@@ -153,13 +153,8 @@ for task_name, config in tasks.items():
         input_dim = pretrain_model_dim_dict[pretrain_model]
         root_path = os.path.join(embedding_dir, pretrain_model)
         dataset_csv = os.path.join(csv_dir, f"{task_name}.csv")
-        #We find that the learning rate is different for different pretrain types
-        #slide level need large learning rate, while patch level need small learning rate
-        # if pretrain_model_type == "slide_level":
-        #     learning_rate = 0.001
-        # else:
-        #     learning_rate = 0.0001
-            
+
+
         for tuning_method in tuning_methods:
             for learning_rate in learning_rates:
                 output_prediction = os.path.join('outputs', task_name, pretrain_model, tuning_method, 'prediction_results', 'val_predict.csv')
