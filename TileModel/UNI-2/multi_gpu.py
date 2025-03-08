@@ -35,6 +35,7 @@ def get_unprocessed_datasets(data_dir, processed_dir, feat_prefix_name):
     #all_datasets drop item BreakHis
     all_datasets.remove("BreakHis")
     #remove BACH
+    all_datasets.remove("HE-vs-MPM")
     all_datasets.remove("BACH")
     unprocessed_dataset = []
     for d in all_datasets:

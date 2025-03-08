@@ -1,18 +1,24 @@
-mkdir -p /data4/processed_data  # 创建统一访问的目录
+mkdir -p /data4/processed_data
 
-# 遍历 /data1 里的数据集，创建软链接
-for dir in /data1/*; do
-    ln -s "$dir" "/data4/processed_data/$(basename "$dir")"
+for dir in /data1/* /data2/* /data3/*; do
+    target="/data4/processed_data/$(basename "$dir")"
+
+    # 获取真实路径，避免创建循环
+    real_path=$(readlink -f "$dir")
+    
+    # 避免创建指向自己的软链接
+    if [[ "$real_path" == /data4/processed_data* ]]; then
+        echo "⚠️ 警告: $dir 指向 /data4/processed_data，跳过"
+        continue
+    fi
+
+    # 如果软链接已经存在，先删除它，防止错误
+    if [ -L "$target" ]; then
+        rm "$target"
+    fi
+
+    # 确保目标路径真实存在
+    if [ -e "$real_path" ]; then
+        ln -s "$real_path" "$target"
+    fi
 done
-
-# 遍历 /data2 里的数据集，创建软链接
-for dir in /data2/*; do
-    ln -s "$dir" "/data4/processed_data/$(basename "$dir")"
-done
-
-for dir in /data3/*; do
-    ln -s "$dir" "/data4/processed_data/$(basename "$dir")"
-done
-
-# 查看 /home/yuhaowang/data 目录下的内容
-ls -l /data4/processed_data

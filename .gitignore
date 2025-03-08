@@ -1,7 +1,7 @@
 checkpoints/
 dataset_csvs/
 # src/*.sh
-
+*.ckpt
 tests/data/
 *.pt
 *.pth
