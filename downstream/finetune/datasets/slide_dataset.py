@@ -314,5 +314,3 @@ class SlideDataset(SlideDatasetForTasks):
     def __getitem__(self, idx):
         sample = self.get_sample_with_try(idx)
         return sample
-
-

@@ -19,11 +19,11 @@ from dinov2.data import make_dataset
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Extract features for a single dataset")
-    parser.add_argument('--img_dir', type=str, default='/ruiyan/yuhao/data', help='Directory containing datasets')
-    parser.add_argument('--save_dir', type=str, default='/ruiyan/yuhao/embedding', help='Directory to save extracted features')
+    parser.add_argument('--img_dir', type=str, default='/data4/processed_data', help='Directory containing datasets')
+    parser.add_argument('--save_dir', type=str, default='/data4/embedding', help='Directory to save extracted features')
     parser.add_argument('--batch_size', type=int, default=120, help='Batch size for data loading')
     parser.add_argument('--num_workers', type=int, default=16, help='Number of workers for data loading')
-    parser.add_argument('--dataset_name', type=str, required=True, help='Single dataset name to process')
+    parser.add_argument('--dataset_name', type=str, default='TCGA-BRCA', help='Single dataset name to process')
     parser.add_argument('--gpu', type=str, default='0', help='CUDA GPU id to use')  
     parser.add_argument('--prefix_name',type=str, default='FMBC', help='Prefix name for saving features')
     return parser.parse_args()
@@ -32,7 +32,7 @@ def main():
     args = parse_args()
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-   # login(token='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')  # login with your User Access Token, found at https://huggingface.co/settings/tokens
+    #login(token='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')  # login with your User Access Token, found at https://huggingface.co/settings/tokens
 
     local_dir = "./"
     os.makedirs(local_dir, exist_ok=True)  # create directory if it does not exist

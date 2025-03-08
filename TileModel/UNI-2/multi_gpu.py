@@ -32,7 +32,10 @@ def get_unprocessed_datasets(data_dir, processed_dir, feat_prefix_name):
     """获取未处理的数据集"""
     all_datasets = os.listdir(data_dir)
     processed_datasets = os.listdir(processed_dir) if os.path.exists(processed_dir) else []
-    
+    #all_datasets drop item BreakHis
+    all_datasets.remove("BreakHis")
+    #remove BACH
+    all_datasets.remove("BACH")
     unprocessed_dataset = []
     for d in all_datasets:
         if not os.path.exists(os.path.join(processed_dir, d, feat_prefix_name)):

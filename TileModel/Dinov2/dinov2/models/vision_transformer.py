@@ -335,8 +335,11 @@ class DinoVisionTransformer(nn.Module):
 
 def init_weights_vit_timm(module: nn.Module, name: str = ""):
     """ViT weight initialization, original timm impl (for reproducibility)"""
+    # 判断传入的module是否为nn.Linear类型
     if isinstance(module, nn.Linear):
+        # 使用trunc_normal_函数对module的weight进行初始化，std为0.02
         trunc_normal_(module.weight, std=0.02)
+        # 如果module的bias不为空，则将其初始化为0
         if module.bias is not None:
             nn.init.zeros_(module.bias)
 

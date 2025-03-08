@@ -10,6 +10,5 @@ label_dict:
   0: AT
   1: BT
   2: MT
-
 sample_col: slide_id
 num_samples: 547

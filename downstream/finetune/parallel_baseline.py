@@ -37,14 +37,8 @@ pretrain_model_types_dict = {
 def get_tuning_methods(model_type):
     return ["LR"] if model_type == "patch_level" else ["LR"]
 
-learning_rates = [0.01,0.001, 0.0001]
+learning_rates = [0.1,0.01,0.001, 0.0001]
 tasks = {
-    "BCNB_ALN": {
-        "embedding_dir": "/data4/embedding/BCNB",
-        "csv_dir": "dataset_csv/subtype/",
-        "dataset": "BCNB",
-        "task_cfg": "task_configs/BCNB_ALN.yaml"
-    }, 
     "AIDPATH_GRADE": {
         "embedding_dir": "/data4/embedding/AIDPATH",
         "csv_dir": "dataset_csv/subtype/",
@@ -55,19 +49,19 @@ tasks = {
         "csv_dir": "dataset_csv/subtype/",
         "task_cfg": "task_configs/AIDPATH_IDC.yaml"
     },
-    "BACH_TUMOR": {
-        "embedding_dir": "/data4/embedding/BACH",
+    "BCNB_ALN": {
+        "embedding_dir": "/data4/embedding/BCNB",
         "csv_dir": "dataset_csv/subtype/",
-        "dataset": "BACH",
-        "task_cfg": "task_configs/BACH_TUMOR.yaml"
+        "dataset": "BCNB",
+        "task_cfg": "task_configs/BCNB_ALN.yaml"
     }, 
-    "BRACS_FINE":
-    {
-        "embedding_dir": "/data4/embedding/BRACS",
+    "BCNB_TUMOR": {
+        "embedding_dir": "/data4/embedding/BCNB",
         "csv_dir": "dataset_csv/subtype/",
-        "dataset": "BRACS",
-        "task_cfg": "task_configs/BRACS_FINE.yaml"
-    },
+        "dataset": "BCNB",
+        "task_cfg": "task_configs/BCNB_TUMOR.yaml"
+    }, 
+
     "BRACS_COARSE":
     {
         "embedding_dir": "/data4/embedding/BRACS",
@@ -76,13 +70,44 @@ tasks = {
         "task_cfg": "task_configs/BRACS_COARSE.yaml"
         
     },
+    "BRACS_FINE":
+    {
+        "embedding_dir": "/data4/embedding/BRACS",
+        "csv_dir": "dataset_csv/subtype/",
+        "dataset": "BRACS",
+        "task_cfg": "task_configs/BRACS_FINE.yaml"
+    },
+    "CAMELYON16_TEST_CANCER":{
+        "embedding_dir": "/data4/embedding/CAMELYON16",
+        "csv_dir": "dataset_csv/subtype/",
+        "dataset": "CAMELYON16",
+        "task_cfg": "task_configs/CAMELYON16_TEST_CANCER.yaml"
+    },
+    "CAMELYON17_STAGE_4SUBTYPING":{
+        "embedding_dir": "/data4/embedding/CAMELYON16",
+        "csv_dir": "dataset_csv/subtype/",
+        "dataset": "CAMELYON16",
+        "task_cfg": "task_configs/CAMELYON17_STAGE_4SUBTYPING.yaml"
+    },
+    "CAMELYON16_TEST_IDC":{
+        "embedding_dir": "/data4/embedding/CAMELYON16",
+        "csv_dir": "dataset_csv/subtype/",
+        "dataset": "CAMELYON16",
+        "task_cfg": "task_configs/CAMELYON16_TEST_IDC.yaml"
+    },
+    "CAMELYON16_TEST_IDC":{
+        "embedding_dir": "/data4/embedding/CAMELYON16",
+        "csv_dir": "dataset_csv/subtype/",
+        "dataset": "CAMELYON16",
+        "task_cfg": "task_configs/CAMELYON16_TEST_IDC.yaml"
+    },
+
     "BCNB_ER":
     {
         "embedding_dir": "/data4/embedding/BCNB",
         "csv_dir": "dataset_csv/biomarker/",
         "dataset": "BCNB",
         "task_cfg": "task_configs/BCNB_ER.yaml"
-        
     },
     "BCNB_PR":
     {

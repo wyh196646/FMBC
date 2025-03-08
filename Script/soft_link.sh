@@ -11,7 +11,7 @@ for dir in /data2/*; do
 done
 
 for dir in /data3/*; do
-    ln -s "$dir" "/home/yuhaowang/data/$(basename "$dir")"
+    ln -s "$dir" "/data4/processed_data/$(basename "$dir")"
 done
 
 # 查看 /home/yuhaowang/data 目录下的内容
