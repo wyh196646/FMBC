@@ -32,6 +32,7 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=120, help='Batch size for data loading')
     parser.add_argument('--num_workers', type=int, default=16, help='Number of workers for data loading')
     parser.add_argument('--dataset_name', type=str,default='TCGA-BRCA', help='Single dataset name to process')
+    parser.add_argument('--prefix_name', type=str, default='FMBC', help='Model name to use')
     parser.add_argument('--gpu', type=str, default='0', help='CUDA GPU id to use')
     return parser.parse_args()
 
@@ -63,7 +64,7 @@ def main():
     model = build_model_for_eval(config, args.pretrained_weights)
     transform = make_classification_eval_transform(resize_size=224)
 
-    dataset_save_dir = os.path.join(args.save_dir, args.dataset_name, 'FMBC')
+    dataset_save_dir = os.path.join(args.save_dir, args.dataset_name, args.prefix_name)
     os.makedirs(dataset_save_dir, exist_ok=True)
 
     dataset_path = os.path.join(args.img_dir, args.dataset_name, 'output')

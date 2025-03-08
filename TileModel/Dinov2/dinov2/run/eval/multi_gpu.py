@@ -25,9 +25,10 @@ def get_available_gpus():
 def get_unprocessed_datasets(data_dir, processed_dir,feat_prefix_name):
     """获取未处理的数据集"""
     all_datasets = os.listdir(data_dir)
-    all_datasets = ['BRACS']
+    #all_datasets = ['BRACS']
     processed_datasets = os.listdir(processed_dir) if os.path.exists(processed_dir) else []
-    
+    #reorder the all_datasets, the private_* to the end
+    all_datasets = [d for d in all_datasets if not d.startswith('private_')] + [d for d in all_datasets if d.startswith('private_')]
 
     unprocessed_dataset = []
     for d in all_datasets:
@@ -38,10 +39,10 @@ def get_unprocessed_datasets(data_dir, processed_dir,feat_prefix_name):
     return unprocessed_dataset
 
 def main():
-    data_dir = '/home/yuhaowang/data/'
+    data_dir = '/data4/processed_data'
     save_dir = '/data4/embedding'
     script_path = 'feature_extrac.py'
-    feat_prefix_name = 'FMBC_resume399999'
+    feat_prefix_name = 'FMBC'
     
     active_tasks = {}  # 记录当前正在运行的任务 {gpu_id: process}
 

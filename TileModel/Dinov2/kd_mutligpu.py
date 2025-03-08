@@ -124,7 +124,7 @@ if args.debug:
 elif args.multi_gpu:
     os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(map(str, range(torch.cuda.device_count())))
 
-dataset_path = "/data4/processed_data/TCGA-BRCA"
+dataset_path = "/data4/processed_data/ACROBAT/output/40_HE.tiff"
 embedding_root = "/data4/embedding/temp/embedding"
 dataset = KnowledgeDistillationDataset(dataset_path, embedding_root, transform=transform)
 train_dataset, val_dataset = random_split(dataset, [int(0.95 * len(dataset)), len(dataset) - int(0.95 * len(dataset))])
@@ -229,12 +229,20 @@ if not os.path.exists(checkpoint_dir):
     os.makedirs(checkpoint_dir)
 
 
-best_model_callback = ModelCheckpoint(
+# best_model_callback = ModelCheckpoint(
+#     dirpath=checkpoint_dir,
+#     filename="best_model",
+#     monitor="train_loss",
+#     mode="min",
+#     save_top_k=1,
+#     save_weights_only=True
+# )
+save_every_epoch_callback = ModelCheckpoint(
     dirpath=checkpoint_dir,
-    filename="best_model",
+    filename="{epoch:02d}-{train_loss:.2f}",
     monitor="train_loss",
     mode="min",
-    save_top_k=1,
+    save_top_k=-1,
     save_weights_only=True
 )
 
@@ -246,7 +254,7 @@ trainer = pl.Trainer(
     devices=1 if args.debug else torch.cuda.device_count(),
     strategy='ddp_find_unused_parameters_true',
     max_epochs=100,
-    callbacks=[best_model_callback],  
+    callbacks=[save_every_epoch_callback],  
     log_every_n_steps=1,  # Logs every step
     check_val_every_n_epoch=1,  # Ensure validation runs every epoch
 )
@@ -254,10 +262,4 @@ trainer = pl.Trainer(
 
 trainer.fit(model, train_dl, val_dl)
 
-print(f"Model checkpoints are saved in: {checkpoint_dir}")
-print(f"Best model saved as: {best_model_callback.best_model_path}")
-print("Training finished")
 
-
-#  could not find the monitored key in the returned metrics: ['train_loss', 'epoch', 'step']. HINT: Did you call `log('val_loss', value)` in the `LightningModule`?
-# Epoch 7:   0%|                                                                                                   | 0/2 [00:00<?, ?it/s, v_num=j8n5, train_loss=0.187
