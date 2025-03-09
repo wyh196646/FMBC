@@ -15,7 +15,8 @@ from dinov2.models import build_model_from_cfg
 import dinov2.utils.utils as dinov2_utils
 import random
 
-
+# source activate dinov2 && cd /ruiyan/yuhao/project/FMBC/UNI-2/ && python multi_gpu.py 
+# yuhao/project/Dinov2/kd_mutligpu.py
 
 def build_model_for_eval(config, pretrained_weights):
     model, _ = build_model_from_cfg(config, only_teacher=True)

@@ -149,9 +149,12 @@ def get_available_gpus():
     return list(gpu_config.keys())
 
 def is_task_hanging(process):
+    # 运行nvidia-smi命令，查询计算应用的pid和使用的内存，并以csv格式输出，不显示表头
     result = subprocess.run(["nvidia-smi", "--query-compute-apps=pid,used_memory", "--format=csv,noheader"], 
                             capture_output=True, text=True)
+    # 获取命令输出结果
     output = result.stdout.strip()
+    # 判断进程pid是否在输出结果中，并且使用的内存是否为0
     if str(process.pid) in output and "0 MiB" in output:
         return True
     return False
@@ -182,14 +185,14 @@ for task_name, config in tasks.items():
 
         for tuning_method in tuning_methods:
             for learning_rate in learning_rates:
-                output_prediction = os.path.join('outputs', task_name, pretrain_model, tuning_method, 'prediction_results', 'val_predict.csv')
+                output_prediction = os.path.join('outputs', task_name, pretrain_model, tuning_method, str(learning_rate), 'prediction_results', 'val_predict.csv')
                 
                 if os.path.exists(output_prediction):
                     print(f"Skipping task: {output_prediction} already exists")
                     continue
                 command = f"python main.py --task_cfg_path {task_cfg} --dataset_csv {dataset_csv} " \
                         f"--root_path {root_path} --input_dim {input_dim} --pretrain_model {pretrain_model} " \
-                        f"--pretrain_model_type {pretrain_model_type} --tuning_method {tuning_method}, --lr {learning_rate}"
+                        f"--pretrain_model_type {pretrain_model_type} --tuning_method {tuning_method} --lr {learning_rate}"
                 task_queue.append((task_name, command))
 
 while task_queue or any(len(v) > 0 for v in running_tasks.values()):

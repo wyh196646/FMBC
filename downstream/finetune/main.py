@@ -7,7 +7,8 @@ from training import train
 from params import get_finetune_params
 from task_configs.utils import load_task_config
 from finetune_utils import seed_torch, get_exp_code, get_splits, get_loader, save_obj, process_predicted_data
-from datasets.slide_datatset import SlideDataset
+#from datasets.slide_datatset import SlideDataset
+from datasets.slide_dataset import SlideDataset
 
 
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"

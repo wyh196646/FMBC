@@ -29,7 +29,10 @@ def get_unprocessed_datasets(data_dir, processed_dir,feat_prefix_name):
     processed_datasets = os.listdir(processed_dir) if os.path.exists(processed_dir) else []
     #reorder the all_datasets, the private_* to the end
     all_datasets = [d for d in all_datasets if not d.startswith('private_')] + [d for d in all_datasets if d.startswith('private_')]
-
+    all_datasets.remove("BreakHis")
+    #remove BACH
+    all_datasets.remove("HE-vs-MPM")
+    all_datasets.remove("BACH")
     unprocessed_dataset = []
     for d in all_datasets:
         if not os.path.exists(os.path.join(processed_dir, d, feat_prefix_name)):
