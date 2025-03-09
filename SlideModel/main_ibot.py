@@ -35,7 +35,7 @@ warnings.filterwarnings("ignore")
 #CUDA_LAUNCH_BLOCKING=1
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 os.environ['TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD'] = '1'
-#os.environ["CUDA_VISIBLE_DEVICES"] = "4"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
 
 def get_args_parser():
     parser = argparse.ArgumentParser('iBOT', add_help=False)
@@ -128,7 +128,7 @@ def get_args_parser():
         end of optimization. We use a cosine LR schedule with linear warmup.""")
     parser.add_argument('--optimizer', default='adamw', type=str,
         choices=['adamw', 'sgd', 'lars'], help="""Type of optimizer. We recommend using adamw with ViTs.""")
-    parser.add_argument('--load_from', default='./checkpoint0090.pth', help="""Path to load checkpoints to resume training.""")
+    parser.add_argument('--load_from', default='/home/yuhaowang/project/FMBC/SlideModel/checkpoint0020.pth', help="""Path to load checkpoints to resume training.""")
     parser.add_argument('--drop_path', type=float, default=0.1, help="""Drop path rate for student network.""")
 
     # Multi-crop parameters
@@ -151,8 +151,10 @@ def get_args_parser():
     parser.add_argument('--max_tiles', default=8000, type=int, help='number of cluster')
     parser.add_argument('--shuffle_tiles', type=utils.bool_flag, default=True, help="""shuffle the image tiles """)
     # Misc
-    parser.add_argument('--data_path', default='/data4/embedding', type=str,
+    parser.add_argument('--data_path', default='/data4/embedding/', type=str,
         help='Please specify path to the ImageNet training data.')
+    #add pathch encoder name 
+    parser.add_argument('--patch_encoder_name', default='UNI-2', type=str, help='patch encoder name')
     parser.add_argument('--output_dir', default=".", type=str, help='Path to save logs and checkpoints.')
     parser.add_argument('--saveckp_freq', default=10, type=int, help='Save checkpoint every x epochs.')
     parser.add_argument('--seed', default=0, type=int, help='Random seed.')
@@ -181,6 +183,7 @@ def train_ibot(args):
 
     dataset =  SlideEmbeddingMask(
         embedding_root=args.data_path,
+        patch_encoder_name = args.patch_encoder_name,
         patch_sizeembedding_size=args.slide_embedding_size,
         max_tiles=args.max_tiles,
         shuffle_tiles=args.shuffle_tiles,
@@ -631,4 +634,4 @@ if __name__ == '__main__':
 
 
 
-#nohup torchrun --nproc_per_node=8 main_ibot.py &
+#nohup torchrun --nproc_per_node=8 --master_port 15789  main_ibot.py --patch_encoder_name UNI-2 &

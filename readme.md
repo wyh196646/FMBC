@@ -15,7 +15,7 @@
 
 # scp feature from 34 to A800-01
 
-```rsync -avz --progress --partial yuhaowang@172.16.120.34:/data4/embedding/temp/embedding /data/embedding```
+```rsync -avz --progress --partial yuhaowang@172.16.120.34:/data4/embedding /data4/embedding```
 
 
 ## scp patch from 21

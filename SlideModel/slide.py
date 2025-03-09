@@ -88,15 +88,21 @@ class ClusterTransform:
 class SlideEmbeddingDataset(Dataset):
     def __init__(self,
                  embedding_root: str,
+                 patch_encoder_name: str = 'FMBC',
                  transform: callable = None,
                  num_transforms: int = 1,
                  ):
         
         self.feature_root = embedding_root
+        self.patch_encoder_name = patch_encoder_name
         self.feature_path= [f for f in Path(embedding_root).rglob('*.h5')]
-
+        self.feature_path = [f for f in self.feature_path if self.patch_encoder_name in str(f)]
+        #print(self.feature_path)
         self.transform = transform
         self.num_transforms = num_transforms
+        print(self.patch_encoder_name)
+        ##print the total trainig slides
+        print(f"Total training slides: {len(self.feature_path)}")
         
         
     def __len__(self):
