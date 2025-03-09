@@ -17,6 +17,7 @@
 
 ```rsync -avz --progress --partial yuhaowang@172.16.120.34:/data4/embedding /data4/embedding```
 
+```rsync -avz --progress --partial yuhaowang@172.16.120.34:/home/yuhaowang/project/FMBC/downstream/finetune/outputs /home/yuhaowang/project/FMBC/downstream/finetune`
 
 ## scp patch from 21
 ```rsync -avz --progress --partial yuhaowang@172.16.120.21:/mnt/data/ruiyan/processed_data/AHSL /data2```

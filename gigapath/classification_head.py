@@ -9,7 +9,7 @@ import math
 import numpy as np
 import warnings
 
-import ibot.models.vision_transformer as vits
+import SlideModel.models.vision_transformer as vits
 
 def reshape_input(imgs, coords, pad_mask=None):
     if len(imgs.shape) == 4:

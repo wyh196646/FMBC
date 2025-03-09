@@ -39,7 +39,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+    os.environ['CUDA_VISIBLE_DEVICES'] = str(args.gpu)
 
     config = EasyDict({
         'student': EasyDict({
