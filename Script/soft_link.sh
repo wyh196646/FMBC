@@ -1,6 +1,6 @@
 mkdir -p /data4/processed_data
 
-for dir in /data1/* /data2/* /data3/*; do
+for dir in /data1/yuhaowang/* /data2/yuhaowang/* /data3/yuhaowang/*; do
     target="/data4/processed_data/$(basename "$dir")"
 
     # 获取真实路径，避免创建循环

@@ -4,25 +4,26 @@ import time
 
 # 用户可配置的 GPU 列表及最大任务数
 gpu_config = {
-    0: 4,  # GPU 0 最多 4 个任务
-    1: 4,  # GPU 1 最多 3 个任务
-    2: 4,  # GPU 2 最多 2 个任务
-    3: 4,  # GPU 3 最多 2 个任务
-    4: 4,  # GPU 4 最多 2 个任务
-    5: 4,  # GPU 5 最多 2 个任务
-    6: 4,  # GPU 6 最多 2 个任务
-    7: 4,  # GPU 7 最多 2 个任务
+    0: 6,  
+    1: 6, 
+    2: 6, 
+    3: 6,  
+    4: 6, 
+    5: 6,  
+    6: 6,  
+    7: 6,  
 }
-pretrain_models = ['Gigapath_tile', 'CONCH', 'UNI', 'TITAN', 'Virchow', 'CHIEF_tile', 'Gigapath', 'CHIEF']
+pretrain_models = ['Gigapath_tile', 'CONCH', 'UNI', 'TITAN', 'Virchow', 'CHIEF_tile', 'Gigapath', 'CHIEF','FMBC']
 pretrain_model_dim_dict = {
     "UNI": 1024,
     "CONCH": 768,
     "CHIEF_tile": 768,
     "TITAN": 768,
-    "Virchow": 1280,
+    "Virchow": 2560,
     "Gigapath_tile": 1536,
     "Gigapath": 768,
-    "CHIEF": 768
+    "CHIEF": 768,
+    'FMBC':768,
 }
 pretrain_model_types_dict = {
     "UNI": "patch_level",
@@ -33,88 +34,175 @@ pretrain_model_types_dict = {
     "Gigapath_tile": "patch_level",
     "Gigapath": "slide_level",
     "CHIEF": "slide_level",
+    'FMBC': 'patch_level',
 }
-def get_tuning_methods(model_type):
+# 根据模型类型返回调参方法
+def get_tuning_methods(pretrain_model,model_type):
+    if pretrain_model =='FMBC':
+        return ["LR_Same_Patch"]
+    # 如果模型类型为patch_level，则返回["LR"]，否则返回["LR"]
     return ["LR"] if model_type == "patch_level" else ["LR"]
 
 learning_rates = [0.1,0.01,0.001, 0.0001]
 tasks = {
-    "AIDPATH_GRADE": {
-        "embedding_dir": "/data4/embedding/AIDPATH",
-        "csv_dir": "dataset_csv/subtype/",
-        "task_cfg": "task_configs/AIDPATH_GRADE.yaml"
-    }, 
-    "AIDPATH_IDC": {
-        "embedding_dir": "/data4/embedding/AIDPATH",
-        "csv_dir": "dataset_csv/subtype/",
-        "task_cfg": "task_configs/AIDPATH_IDC.yaml"
+    "TCGA-BRCA-SUBTYPE": {
+        "embedding_dir": "/data4/embedding/TCGA-BRCA",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/TCGA-BRCA-SUBTYPE.yaml"
+    },
+    "CAMELYON16_TEST_CANCER": {
+        "embedding_dir": "/data4/embedding/CAMELYON16",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/CAMELYON16_TEST_CANCER.yaml"
+    },
+    "DORID_2": {
+        "embedding_dir": "/data4/embedding/DORID",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/DORID_2.yaml"
+    },
+    "TCGA-BRCA_T": {
+        "embedding_dir": "/data4/embedding/TCGA-BRCA",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/TCGA-BRCA_T.yaml"
+    },
+    "BRACS_COARSE": {
+        "embedding_dir": "/data4/embedding/BRACS_COARSE",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/BRACS_COARSE.yaml"
+    },
+    "AHSL-NON-IDC-GRADE": {
+        "embedding_dir": "/data4/embedding/AHSL",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/AHSL-NON-IDC-GRADE.yaml"
+    },
+    "CAMELYON16_TEST_IDC": {
+        "embedding_dir": "/data4/embedding/CAMELYON16",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/CAMELYON16_TEST_IDC.yaml"
+    },
+    "BCNB_TUMOR": {
+        "embedding_dir": "/data4/embedding/BCNB",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/BCNB_TUMOR.yaml"
     },
     "BCNB_ALN": {
         "embedding_dir": "/data4/embedding/BCNB",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/BCNB_ALN.yaml"
+    },
+    "AIDPATH_IDC": {
+        "embedding_dir": "/data4/embedding/AIDPATH",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/AIDPATH_IDC.yaml"
+    },
+    "CAMELYON17_STAGE_4SUBTYPING": {
+        "embedding_dir": "/data4/embedding/CAMELYON17",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/CAMELYON17_STAGE_4SUBTYPING.yaml"
+    },
+    "IMPRESS_RESIDUAL-TUMOR": {
+        "embedding_dir": "/data4/embedding/IMPRESS",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/IMPRESS_RESIDUAL-TUMOR.yaml"
+    },
+    "AHSL-GRADE-3": {
+        "embedding_dir": "/data4/embedding/AHSL",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/AHSL-GRADE-3.yaml"
+    },
+    "BRACS_FINE": {
+        "embedding_dir": "/data4/embedding/BRACS",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/BRACS_FINE.yaml"
+    },
+    "AHSL-GRADE-1": {
+        "embedding_dir": "/data4/embedding/AHSL",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/AHSL-GRADE-1.yaml"
+    },
+    "BACH_TUMOR": {
+        "embedding_dir": "/data4/embedding/BACH",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/BACH_TUMOR.yaml"
+    },
+    "SLNBREAST_SUBTYPE": {
+        "embedding_dir": "/data4/embedding/SLNBREAST",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/SLNBREAST_SUBTYPE.yaml"
+    },
+    "TCGA-BRCA_STAGE": {
+        "embedding_dir": "/data4/embedding/TCGA-BRCA",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/TCGA-BRCA_STAGE.yaml"
+    },
+    "POST-NAT-3TYPE": {
+        "embedding_dir": "/data4/embedding/POST-NAT",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/POST-NAT-3TYPE.yaml"
+    },
+    "TCGA-BRCA_M": {
+        "embedding_dir": "/data4/embedding/TCGA-BRCA",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/TCGA-BRCA_M.yaml"
+    },
+    "DORID_6": {
+        "embedding_dir": "/data4/embedding/DORID",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/DORID_6.yaml"
+    },
+    "CPTAC_IDC": {
+        "embedding_dir": "/data4/embedding/CPTAC",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/CPTAC_IDC.yaml"
+    },
+    "TUPAC_TUMOR_SCORE": {
+        "embedding_dir": "/data4/embedding/TUPAC",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/TUPAC_TUMOR_SCORE.yaml"
+    },
+    "AIDPATH_GRADE": {
+        "embedding_dir": "/data4/embedding/AIDPATH",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/AIDPATH_GRADE.yaml"
+    },
+    "TCGA-BRCA_N": {
+        "embedding_dir": "/data4/embedding/TCGA-BRCA",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/TCGA-BRCA_N.yaml"
+    },
+    "POST-NAT-HERIHC": {
+        "embedding_dir": "/data4/embedding/POST-NAT",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/POST-NAT-HERIHC.yaml"
+    },
+    "CAMELYON17_STAGE": {
+        "embedding_dir": "/data4/embedding/CAMELYON17",
+        "csv_dir": "dataset_csv/subtype",
+        "task_cfg": "task_configs/subtype/CAMELYON17_STAGE.yaml"
+    },
+    "AIDPATH_GRADE": {
+        "embedding_dir": "/data4/embedding/AIDPATH",
         "csv_dir": "dataset_csv/subtype/",
-        "dataset": "BCNB",
-        "task_cfg": "task_configs/BCNB_ALN.yaml"
-    }, 
-    "BCNB_TUMOR": {
-        "embedding_dir": "/data4/embedding/BCNB",
-        "csv_dir": "dataset_csv/subtype/",
-        "dataset": "BCNB",
-        "task_cfg": "task_configs/BCNB_TUMOR.yaml"
+        "task_cfg": "task_configs/subtype/AIDPATH_GRADE.yaml"
     }, 
 
-    "BRACS_COARSE":
-    {
-        "embedding_dir": "/data4/embedding/BRACS",
-        "csv_dir": "dataset_csv/subtype/",
-        "dataset": "BRACS",
-        "task_cfg": "task_configs/BRACS_COARSE.yaml"
-        
-    },
-    "BRACS_FINE":
-    {
-        "embedding_dir": "/data4/embedding/BRACS",
-        "csv_dir": "dataset_csv/subtype/",
-        "dataset": "BRACS",
-        "task_cfg": "task_configs/BRACS_FINE.yaml"
-    },
-    "CAMELYON16_TEST_CANCER":{
-        "embedding_dir": "/data4/embedding/CAMELYON16",
-        "csv_dir": "dataset_csv/subtype/",
-        "dataset": "CAMELYON16",
-        "task_cfg": "task_configs/CAMELYON16_TEST_CANCER.yaml"
-    },
-    "CAMELYON17_STAGE_4SUBTYPING":{
-        "embedding_dir": "/data4/embedding/CAMELYON16",
-        "csv_dir": "dataset_csv/subtype/",
-        "dataset": "CAMELYON16",
-        "task_cfg": "task_configs/CAMELYON17_STAGE_4SUBTYPING.yaml"
-    },
-    "CAMELYON16_TEST_IDC":{
-        "embedding_dir": "/data4/embedding/CAMELYON16",
-        "csv_dir": "dataset_csv/subtype/",
-        "dataset": "CAMELYON16",
-        "task_cfg": "task_configs/CAMELYON16_TEST_IDC.yaml"
-    },
-    "CAMELYON16_TEST_IDC":{
-        "embedding_dir": "/data4/embedding/CAMELYON16",
-        "csv_dir": "dataset_csv/subtype/",
-        "dataset": "CAMELYON16",
-        "task_cfg": "task_configs/CAMELYON16_TEST_IDC.yaml"
-    },
+
+
+
 
     "BCNB_ER":
     {
         "embedding_dir": "/data4/embedding/BCNB",
         "csv_dir": "dataset_csv/biomarker/",
         "dataset": "BCNB",
-        "task_cfg": "task_configs/BCNB_ER.yaml"
+        "task_cfg": "task_configs/subtype/BCNB_ER.yaml"
     },
     "BCNB_PR":
     {
         "embedding_dir": "/data4/embedding/BCNB",
         "csv_dir": "dataset_csv/biomarker/",
         "dataset": "BCNB",
-        "task_cfg": "task_configs/BCNB_PR.yaml"
+        "task_cfg": "task_configs/subtype/BCNB_PR.yaml"
         
     },
     "BCNB_HER2":
@@ -122,26 +210,21 @@ tasks = {
         "embedding_dir": "/data4/embedding/BCNB",
         "csv_dir": "dataset_csv/biomarker/",
         "dataset": "BCNB",
-        "task_cfg": "task_configs/BCNB_HER2.yaml"
+        "task_cfg": "task_configs/subtype/BCNB_HER2.yaml"
         
     },
     'SLNBREAST_SUBTYPE':{
         "embedding_dir": "/data4/embedding/SLN-Breast",
         "csv_dir": "dataset_csv/subtype/",
         "dataset": "SLN-Breast",
-        "task_cfg": "task_configs/SLNBREAST_SUBTYPE.yaml"
+        "task_cfg": "task_configs/subtype/SLNBREAST_SUBTYPE.yaml"
     },
-    'TCGA-BRCA-SUBTYPE':{
-        "embedding_dir": "/data4/embedding/TCGA-BRCA",
-        "csv_dir": "dataset_csv/subtype/",
-        "dataset": "TCGA-BRCA",
-        "task_cfg": "task_configs/TCGA-BRCA-SUBTYPE.yaml"
-    },
+
     "IMPRESS_PR": {
         "embedding_dir": "/data4/embedding/IMPRESS",
         "csv_dir": "dataset_csv/biomarker/",
         "dataset": "IMPRESS",
-        "task_cfg": "task_configs/IMPRESS_PR.yaml"
+        "task_cfg": "task_configs/subtype/IMPRESS_PR.yaml"
     },
 }
 
@@ -170,38 +253,44 @@ gpu_list = get_available_gpus()
 running_tasks = {gpu: [] for gpu in gpu_list}
 
 task_queue = []
-for task_name, config in tasks.items():
-    embedding_dir = config["embedding_dir"]
-    csv_dir = config["csv_dir"]
-    task_cfg = config["task_cfg"]
+commands_file = "baseline.txt"
+if os.path.exists(commands_file):
+    os.remove(commands_file)
     
-    for pretrain_model in pretrain_models:
-        pretrain_model_type = pretrain_model_types_dict[pretrain_model]
-        tuning_methods = get_tuning_methods(pretrain_model_type)
-        input_dim = pretrain_model_dim_dict[pretrain_model]
-        root_path = os.path.join(embedding_dir, pretrain_model)
-        dataset_csv = os.path.join(csv_dir, f"{task_name}.csv")
+with open(commands_file, "w") as f:    
+    for task_name, config in tasks.items():
+        embedding_dir = config["embedding_dir"]
+        csv_dir = config["csv_dir"]
+        task_cfg = config["task_cfg"]
+        
+        for pretrain_model in pretrain_models:
+            pretrain_model_type = pretrain_model_types_dict[pretrain_model]
+            tuning_methods = get_tuning_methods(pretrain_model, pretrain_model_type)
+            input_dim = pretrain_model_dim_dict[pretrain_model]
+            root_path = os.path.join(embedding_dir, pretrain_model)
+            dataset_csv = os.path.join(csv_dir, f"{task_name}.csv")
 
 
-        for tuning_method in tuning_methods:
-            for learning_rate in learning_rates:
-                output_prediction = os.path.join('outputs', task_name, pretrain_model, tuning_method, str(learning_rate), 'prediction_results', 'val_predict.csv')
-                
-                if os.path.exists(output_prediction):
-                    print(f"Skipping task: {output_prediction} already exists")
-                    continue
-                command = f"python main.py --task_cfg_path {task_cfg} --dataset_csv {dataset_csv} " \
-                        f"--root_path {root_path} --input_dim {input_dim} --pretrain_model {pretrain_model} " \
-                        f"--pretrain_model_type {pretrain_model_type} --tuning_method {tuning_method} --lr {learning_rate}"
-                task_queue.append((task_name, command))
+            for tuning_method in tuning_methods:
+                for learning_rate in learning_rates:
+                    output_prediction = os.path.join('outputs', task_name, pretrain_model, tuning_method, str(learning_rate), 'prediction_results', 'val_predict.csv')
+                    
+                    if os.path.exists(output_prediction):
+                        print(f"Skipping task: {output_prediction} already exists")
+                        continue
+                    command = f"python main.py --task_cfg_path {task_cfg} --dataset_csv {dataset_csv} " \
+                            f"--root_path {root_path} --input_dim {input_dim} --pretrain_model {pretrain_model} " \
+                            f"--pretrain_model_type {pretrain_model_type} --tuning_method {tuning_method} --lr {learning_rate}"
+                    task_queue.append((task_name, command))
+                    save_command = command+'\n'
+                    f.write(save_command)
+    while task_queue or any(len(v) > 0 for v in running_tasks.values()):
+        for gpu in gpu_list:
+            running_tasks[gpu] = [(p, cmd) for p, cmd in running_tasks[gpu] if p.poll() is None]
+            if len(running_tasks[gpu]) < gpu_config[gpu] and task_queue:
+                task_name, cmd = task_queue.pop(0)
+                run_task(task_name, cmd, gpu)
+        
+        time.sleep(10)
 
-while task_queue or any(len(v) > 0 for v in running_tasks.values()):
-    for gpu in gpu_list:
-        running_tasks[gpu] = [(p, cmd) for p, cmd in running_tasks[gpu] if p.poll() is None]
-        if len(running_tasks[gpu]) < gpu_config[gpu] and task_queue:
-            task_name, cmd = task_queue.pop(0)
-            run_task(task_name, cmd, gpu)
-    
-    time.sleep(10)
-
-print("All tasks completed.")
+    print("All tasks completed.")

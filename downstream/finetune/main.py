@@ -66,9 +66,6 @@ if __name__ == '__main__':
     DatasetClass = SlideDataset
     
     if args.pretrain_model == 'FMBC':
-        #针对FMBC模型的多轮测试，要理解这么做
-        #basline稍微少一点无所谓，这个一定要好好测试
-        #FMBC的测试，要好好测试, 然后选比较好的结果
         tuning_method = args.tuning_method
         _, args.lr_strategy, args.pool_method = tuning_method.split('_')
         if args.lr_strategy == 'Frozen':
@@ -134,3 +131,9 @@ if __name__ == '__main__':
     print('Results saved in: {}'.format(os.path.join(args.save_dir, 'summary.csv')))
     print('Done!')
 
+
+
+
+'''
+
+'''

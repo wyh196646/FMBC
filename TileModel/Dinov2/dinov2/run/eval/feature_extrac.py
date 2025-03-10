@@ -1,3 +1,153 @@
+# import logging
+# import os
+# import torch
+# import h5py
+# import traceback
+# import argparse
+# from torch.utils.data import DataLoader
+# from tqdm import tqdm
+# from easydict import EasyDict
+# import sys
+# import random
+
+# sys.path.append('/home/yuhaowang/project/FMBC/TileModel/Dinov2')
+# from dinov2.data import make_dataset
+# from dinov2.data.transforms import make_classification_eval_transform
+# from dinov2.models import build_model_from_cfg
+# import dinov2.utils.utils as dinov2_utils
+
+# # TORCH_USE_CUDA_DSA
+# os.environ["TORCH_USE_CUDA_DSA"] = "1"
+
+# # 设置日志
+# logging.basicConfig(
+#     filename='feature_extraction.log',
+#     level=logging.INFO,
+#     format='%(asctime)s - %(levelname)s - %(message)s'
+# )
+
+# def build_model_for_eval(config, pretrained_weights, device):
+#     """构建并加载模型"""
+#     model, _ = build_model_from_cfg(config, only_teacher=True)
+#     model = dinov2_utils.load_pretrained_weights(model, pretrained_weights, "teacher")
+#     model.eval()
+#     model.to(device)
+#     return model
+
+# def parse_args():
+#     parser = argparse.ArgumentParser(description="Extract features for a single dataset")
+#     parser.add_argument('--img_dir', type=str, default='/data4/processed_data', help='Dataset directory')
+#     parser.add_argument('--save_dir', type=str, default='/data4/embedding', help='Save directory for extracted features')
+#     parser.add_argument('--pretrained_weights', type=str, default='/home/yuhaowang/project/FMBC/TileModel/Dinov2/finetuning_399999.pth', help='Path to pretrained weights')
+#     parser.add_argument('--batch_size', type=int, default=2800, help='Batch size')
+#     parser.add_argument('--num_workers', type=int, default=192, help='Number of workers for data loading')
+#     parser.add_argument('--dataset_name', type=str, default='TCGA-BRCA', help='Dataset name to process')
+#     parser.add_argument('--prefix_name', type=str, default='FMBC', help='Model name prefix')
+#     parser.add_argument('--gpu', type=str, default='0', help='CUDA GPU id to use')
+#     return parser.parse_args()
+
+# def main():
+#     args = parse_args()
+
+#     # 设置 GPU
+#     device = torch.device(f"cuda:{args.gpu}" )#if torch.cuda.is_available() else "cpu"
+#     logging.info(f"Using GPU {args.gpu} (device: {device})")
+
+#     # 配置模型参数
+#     config = EasyDict({
+#         'student': EasyDict({
+#             'arch': 'vit_h',
+#             'patch_size': 14,
+#             'drop_path_rate': 0.4,
+#             'layerscale': 1e-4,
+#             'ffn_layer': 'SwiGLUPacked',
+#             'block_chunks': 4,
+#             'num_register_tokens': 8,
+#             'interpolate_offset': 0.1,
+#             'qkv_bias': True,
+#             'proj_bias': True,
+#             'ffn_bias': True,
+#             'interpolate_antialias': False,
+#             'interpolate_offset': 0.1
+#         }),
+#         'crops': EasyDict({
+#             'global_crops_size': 224,
+#         })    
+#     })
+
+#     # 构建模型
+#     model = build_model_for_eval(config, args.pretrained_weights, device)
+#     transform = make_classification_eval_transform(resize_size=224)
+
+#     dataset_save_dir = os.path.join(args.save_dir, args.dataset_name, args.prefix_name)
+#     os.makedirs(dataset_save_dir, exist_ok=True)
+
+#     dataset_path = os.path.join(args.img_dir, args.dataset_name, 'output')
+#     if not os.path.exists(dataset_path):
+#         logging.warning(f"{dataset_path} does not exist, skipping...")
+#         return
+
+#     slide_list = os.listdir(dataset_path)
+#     random.shuffle(slide_list)
+
+#     logging.info(f"Processing dataset: {args.dataset_name}, total slides: {len(slide_list)}")
+
+#     for slide in tqdm(slide_list, desc=f"Processing {args.dataset_name}"):
+#         slide_name = slide.split('.')[0]
+#         save_path = os.path.join(dataset_save_dir, f"{slide_name}.h5")
+
+#         if os.path.exists(save_path):
+#             logging.info(f"{slide} already processed, skipping.")
+#             continue
+
+#         try:
+#             dataset_str = f"TileDataset:split=VALID:root={dataset_path}/{slide}"
+#             if not os.path.isdir(os.path.join(dataset_path, slide)):
+#                 logging.warning(f"Skipping {slide} as it is not a directory.")
+#                 continue
+
+#             train_dataset = make_dataset(dataset_str=dataset_str, transform=transform, target_transform=None)
+
+#             if len(train_dataset) == 0:
+#                 logging.warning(f"Dataset {slide} is empty, skipping.")
+#                 continue
+
+#             tile_dl = DataLoader(
+#                 train_dataset, 
+#                 batch_size=args.batch_size, 
+#                 shuffle=False, 
+#                 num_workers=args.num_workers, 
+#                 persistent_workers=True
+#             )
+
+#             collated_outputs = {'tile_embeds': [], 'coords': []}
+
+#             with torch.cuda.amp.autocast(dtype=torch.float16), torch.no_grad():
+#                 for batch in tqdm(tile_dl, desc=f'Running inference on {slide}', leave=False):
+#                     sample = batch['sample'][0].to(device)
+#                     coords = torch.stack(batch['coords'], dim=1)
+
+#                     tile_embeds = model(sample).cpu()
+#                     collated_outputs['tile_embeds'].append(tile_embeds)
+#                     collated_outputs['coords'].append(coords.cpu())
+
+#             feature = torch.cat(collated_outputs['tile_embeds'])
+#             coords = torch.cat(collated_outputs['coords'])
+
+#             with h5py.File(save_path, 'w') as f:
+#                 f.create_dataset('features', data=feature.numpy())
+#                 f.create_dataset('coords', data=coords.numpy())
+
+#             logging.info(f"{slide} processed and saved successfully.")
+
+#         except Exception as e:
+#             logging.error(f"Error processing {slide}: {e}")
+#             logging.error(traceback.format_exc())
+
+#     logging.info(f"Dataset {args.dataset_name} processed successfully!")
+
+# if __name__ == "__main__":
+#     main()
 import logging
 import os
 import torch
@@ -14,13 +164,35 @@ from dinov2.data.transforms import make_classification_eval_transform
 from dinov2.models import build_model_from_cfg
 import dinov2.utils.utils as dinov2_utils
 import random
+import logging
+import torch
+import logging 
+from urllib.parse import urlparse
+logger = logging.getLogger("dinov2")
+def load_pretrained_weights(model, pretrained_weights, checkpoint_key=None):
+    if urlparse(pretrained_weights).scheme:  # 如果是 URL
+        state_dict = torch.hub.load_state_dict_from_url(pretrained_weights, map_location="cuda")
+    else:
+        state_dict = torch.load(pretrained_weights, map_location="cuda")
 
-# source activate dinov2 && cd /ruiyan/yuhao/project/FMBC/UNI-2/ && python multi_gpu.py 
-# yuhao/project/Dinov2/kd_mutligpu.py
-
+    if checkpoint_key is not None and checkpoint_key in state_dict:
+        logger.info(f"Take key '{checkpoint_key}' from checkpoint")
+        state_dict = state_dict[checkpoint_key]
+    state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
+    state_dict = {k.replace("backbone.", ""): v for k, v in state_dict.items()}
+    msg = model.load_state_dict(state_dict, strict=False)
+    logger.info(f"Pretrained weights loaded from {pretrained_weights} with message: {msg}")
+    
+    return model
 def build_model_for_eval(config, pretrained_weights):
     model, _ = build_model_from_cfg(config, only_teacher=True)
-    model = dinov2_utils.load_pretrained_weights(model, pretrained_weights, "teacher")
+    dinov2_utils.load_pretrained_weights(model, pretrained_weights, "teacher")
+    model.eval()
+    model.cuda()
+    return model
+def build_model_for_eval(config, pretrained_weights):
+    model, _ = build_model_from_cfg(config, only_teacher=True)
+    dinov2_utils.load_pretrained_weights(model, pretrained_weights, "teacher")
     model.eval()
     model.cuda()
     return model
@@ -31,7 +203,7 @@ def parse_args():
     parser.add_argument('--save_dir', type=str, default='/data4/embedding', help='Directory to save extracted features')
     parser.add_argument('--pretrained_weights', type=str, default='/home/yuhaowang/project/FMBC/TileModel/Dinov2/finetuning_399999.pth', help='Path to pretrained model weights')
     parser.add_argument('--batch_size', type=int, default=120, help='Batch size for data loading')
-    parser.add_argument('--num_workers', type=int, default=16, help='Number of workers for data loading')
+    parser.add_argument('--num_workers', type=int, default=160, help='Number of workers for data loading')
     parser.add_argument('--dataset_name', type=str,default='TCGA-BRCA', help='Single dataset name to process')
     parser.add_argument('--prefix_name', type=str, default='FMBC', help='Model name to use')
     parser.add_argument('--gpu', type=str, default='0', help='CUDA GPU id to use')
@@ -39,28 +211,51 @@ def parse_args():
 
 def main():
     args = parse_args()
-    os.environ['CUDA_VISIBLE_DEVICES'] = str(args.gpu)
+    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
+    # config = EasyDict({
+    #     'student': EasyDict({
+    #         'arch': 'vit_h',
+    #         'patch_size': 14,
+    #         'drop_path_rate': 0.4,
+    #         'layerscale': 1e-4,
+    #         'ffn_layer': 'SwiGLUPacked',
+    #         'block_chunks': 4,
+    #         'num_register_tokens': 8,
+    #         'interpolate_offset': 0.1,
+    #         'qkv_bias': True,
+    #         'proj_bias': True,
+    #         'ffn_bias': True,
+    #         'interpolate_antialias': False,
+    #         'interpolate_offset': 0.1
+    #     }),
+    #     'crops': EasyDict({
+    #         'global_crops_size': 224,
+    #     })    
+    # })
+    
     config = EasyDict({
         'student': EasyDict({
-            'arch': 'vit_h',
-            'patch_size': 14,
-            'drop_path_rate': 0.4,
-            'layerscale': 1e-4,
-            'ffn_layer': 'SwiGLUPacked',
-            'block_chunks': 4,
-            'num_register_tokens': 8,
-            'interpolate_offset': 0.1,
-            'qkv_bias': True,
-            'proj_bias': True,
-            'ffn_bias': True,
-            'interpolate_antialias': False,
-            'interpolate_offset': 0.1
+            'arch': 'vit_base',  # 覆盖默认值 'vit_large'
+            'patch_size': 16,  # 保持不变
+            'drop_path_rate': 0.3,  # 保持不变
+            'layerscale': 1.0e-05,  # 保持不变
+            'drop_path_uniform': True,  # 保持不变
+            'pretrained_weights': '',  # 保持不变
+            'ffn_layer': 'mlp',  # 保持不变
+            'block_chunks': 4,  # 覆盖默认值 0
+            'qkv_bias': True,  # 保持不变
+            'proj_bias': True,  # 保持不变
+            'ffn_bias': True,  # 保持不变
+            'num_register_tokens': 0,  # 保持不变
+            'interpolate_antialias': False,  # 保持不变
+            'interpolate_offset': 0.1  # 保持不变
         }),
         'crops': EasyDict({
             'global_crops_size': 224,
         })    
     })
+
 
     model = build_model_for_eval(config, args.pretrained_weights)
     transform = make_classification_eval_transform(resize_size=224)
@@ -114,6 +309,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-#python multi_gpu.py

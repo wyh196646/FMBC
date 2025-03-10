@@ -1,3 +1,45 @@
+MODEL:
+  WEIGHTS: ''
+compute_precision:
+  grad_scaler: False
+  teacher:
+    backbone:
+      sharding_strategy: SHARD_GRAD_OP
+      mixed_precision:
+        param_dtype: fp32
+        reduce_dtype: fp32
+        buffer_dtype: fp32
+    dino_head:
+      sharding_strategy: SHARD_GRAD_OP
+      mixed_precision:
+        param_dtype: fp32
+        reduce_dtype: fp32
+        buffer_dtype: fp32
+    ibot_head:
+      sharding_strategy: SHARD_GRAD_OP
+      mixed_precision:
+        param_dtype: fp32
+        reduce_dtype: fp32
+        buffer_dtype: fp32
+  student:
+    backbone:
+      sharding_strategy: SHARD_GRAD_OP
+      mixed_precision:
+        param_dtype: fp32
+        reduce_dtype: fp32
+        buffer_dtype: fp32
+    dino_head:
+      sharding_strategy: SHARD_GRAD_OP
+      mixed_precision:
+        param_dtype: fp32
+        reduce_dtype: fp32
+        buffer_dtype: fp32
+    ibot_head:
+      sharding_strategy: SHARD_GRAD_OP
+      mixed_precision:
+        param_dtype: fp32
+        reduce_dtype: fp32
+        buffer_dtype: fp32
 dino:
   head_n_prototypes: 131072
   head_bottleneck_dim: 384
@@ -6,7 +48,8 @@ ibot:
   separate_head: true
   head_n_prototypes: 131072
 train:
-  batch_size_per_gpu: 40
+  batch_size_per_gpu: 20
+  saveckp_freq: 1
   dataset_path: ImageNet:split=TRAIN
   centering: sinkhorn_knopp
   num_workers: 16
@@ -21,10 +64,12 @@ student:
 teacher:
   momentum_teacher: 0.994
 optim:
-  epochs: 4000
+  epochs: 50
   weight_decay_end:  0.2
-  base_lr: 1.0e-03 
+  base_lr: 1.0e-04 
   warmup_epochs: 1
   layerwise_decay: 1.0
 crops:
   local_crops_size: 98
+evaluation:
+  eval_period_iterations: 1250

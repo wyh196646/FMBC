@@ -51,7 +51,10 @@ def train(dataloader, fold, args):
             model = initiate_mil_model(args)
     else:
         if args.pretrain_model == 'FMBC':
-            model = get_model(**vars(args))
+            if args.tuning_method == 'LR_Same_Patch':
+                model = initiate_linear_model(args)
+            else:
+                model = get_model(**vars(args))
         else:
             model = initiate_linear_model(args)
     model = model.to(args.device)
