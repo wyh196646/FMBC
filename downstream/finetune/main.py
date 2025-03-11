@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
     DatasetClass = SlideDataset
     pretrain_model_type = args.pretrain_model_type
-    DatasetClass = SlideDataset
+    #DatasetClass = SlideDataset
     
     if args.pretrain_model == 'FMBC':
         tuning_method = args.tuning_method
@@ -133,7 +133,3 @@ if __name__ == '__main__':
 
 
 
-
-'''
-
-'''

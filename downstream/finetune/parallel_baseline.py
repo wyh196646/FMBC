@@ -4,14 +4,14 @@ import time
 
 # 用户可配置的 GPU 列表及最大任务数
 gpu_config = {
-    0: 6,  
-    1: 6, 
-    2: 6, 
-    3: 6,  
-    4: 6, 
-    5: 6,  
-    6: 6,  
-    7: 6,  
+    0: 8,  
+    1: 8, 
+    2: 8, 
+    3: 8,  
+    4: 8, 
+    5: 8,  
+    6: 8,  
+    7: 8,  
 }
 pretrain_models = ['Gigapath_tile', 'CONCH', 'UNI', 'TITAN', 'Virchow', 'CHIEF_tile', 'Gigapath', 'CHIEF','FMBC']
 pretrain_model_dim_dict = {
@@ -34,7 +34,7 @@ pretrain_model_types_dict = {
     "Gigapath_tile": "patch_level",
     "Gigapath": "slide_level",
     "CHIEF": "slide_level",
-    'FMBC': 'patch_level',
+    'FMBC': 'slide_level',
 }
 # 根据模型类型返回调参方法
 def get_tuning_methods(pretrain_model,model_type):
@@ -118,7 +118,8 @@ tasks = {
     "AHSL-GRADE-1": {
         "embedding_dir": "/data4/embedding/AHSL",
         "csv_dir": "dataset_csv/subtype",
-        "task_cfg": "task_configs/subtype/AHSL-GRADE-1.yaml"
+        "task_cfg": "task_configs/subtype/AHSL-GRADE-1.yaml",
+        "folds": 1,
     },
     "BACH_TUMOR": {
         "embedding_dir": "/data4/embedding/BACH",
@@ -136,7 +137,7 @@ tasks = {
         "task_cfg": "task_configs/subtype/TCGA-BRCA_STAGE.yaml"
     },
     "POST-NAT-3TYPE": {
-        "embedding_dir": "/data4/embedding/POST-NAT",
+        "embedding_dir": "/data4/embedding/Post-NAT-BRCA",
         "csv_dir": "dataset_csv/subtype",
         "task_cfg": "task_configs/subtype/POST-NAT-3TYPE.yaml"
     },
@@ -151,7 +152,7 @@ tasks = {
         "task_cfg": "task_configs/subtype/DORID_6.yaml"
     },
     "CPTAC_IDC": {
-        "embedding_dir": "/data4/embedding/CPTAC",
+        "embedding_dir": "/data4/embedding/CPTAC-BREAST-all",
         "csv_dir": "dataset_csv/subtype",
         "task_cfg": "task_configs/subtype/CPTAC_IDC.yaml"
     },
@@ -171,7 +172,7 @@ tasks = {
         "task_cfg": "task_configs/subtype/TCGA-BRCA_N.yaml"
     },
     "POST-NAT-HERIHC": {
-        "embedding_dir": "/data4/embedding/POST-NAT",
+        "embedding_dir": "/data4/embedding/Post-NAT-BRCA",
         "csv_dir": "dataset_csv/subtype",
         "task_cfg": "task_configs/subtype/POST-NAT-HERIHC.yaml"
     },
@@ -232,7 +233,7 @@ tasks = {
         "task_cfg": "task_configs/biomarker/AIDPATH_KI67PRED.yaml"
     },
     "POST-NAT-PR": {
-        "embedding_dir": "/data4/embedding/POST-NAT",
+        "embedding_dir": "/data4/embedding/Post-NAT-BRCA",
         "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/POST-NAT-PR.yaml"
     },
@@ -257,7 +258,7 @@ tasks = {
         "task_cfg": "task_configs/biomarker/BCNB_PR.yaml"
     },
     "POST-NAT-ER": {
-        "embedding_dir": "/data4/embedding/POST-NAT",
+        "embedding_dir": "/data4/embedding/Post-NAT-BRCA",
         "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/POST-NAT-ER.yaml"
     },
@@ -272,20 +273,32 @@ tasks = {
         "task_cfg": "task_configs/biomarker/AIDPATH_RESTR.yaml"
     },
     "POST-NAT-ANTIHER2": {
-        "embedding_dir": "/data4/embedding/POST-NAT",
+        "embedding_dir": "/data4/embedding/Post-NAT-BRCA",
         "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/POST-NAT-ANTIHER2.yaml"
     },
     "CPTAC_AJCC8SUBTYPE": {
-        "embedding_dir": "/data4/embedding/CPTAC",
+        "embedding_dir": "/data4/embedding/CPTAC-BREAST-all",
         "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
-        "task_cfg": "task_configs/biomarker/CPTAC_AJCC8SUBTYPE.yaml"
+        "task_cfg": "task_configs/biomarker/CPTAC_AJCC8SUBTYPE.yaml",
+        "folds": 1
     },
     "IMPRESS_ER": {
         "embedding_dir": "/data4/embedding/IMPRESS",
         "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/IMPRESS_ER.yaml"
-    }
+    },
+    "TCGA-BRCA_TP53": {
+        "embedding_dir": "/data4/embedding/TCGA-BRCA",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/TCGA-BRCA_TP53.yaml"
+    },
+    "TCGA-BRCA_HRD": {
+        "embedding_dir": "/data4/embedding/TCGA-BRCA",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/TCGA-BRCA_HRD.yaml"
+    },
+    
 }
 
 def get_available_gpus():
@@ -322,7 +335,11 @@ with open(commands_file, "w") as f:
         embedding_dir = config["embedding_dir"]
         csv_dir = config["csv_dir"]
         task_cfg = config["task_cfg"]
-        
+        #if task contain key fold
+        if "folds" in config.keys():
+            folds = config['folds']
+        else:
+            folds = 5
         for pretrain_model in pretrain_models:
             pretrain_model_type = pretrain_model_types_dict[pretrain_model]
             tuning_methods = get_tuning_methods(pretrain_model, pretrain_model_type)
@@ -340,7 +357,7 @@ with open(commands_file, "w") as f:
                         continue
                     command = f"python main.py --task_cfg_path {task_cfg} --dataset_csv {dataset_csv} " \
                             f"--root_path {root_path} --input_dim {input_dim} --pretrain_model {pretrain_model} " \
-                            f"--pretrain_model_type {pretrain_model_type} --tuning_method {tuning_method} --lr {learning_rate}"
+                            f"--pretrain_model_type {pretrain_model_type} --tuning_method {tuning_method} --lr {learning_rate} --folds {folds}"
                     task_queue.append((task_name, command))
                     save_command = command+'\n'
                     f.write(save_command)

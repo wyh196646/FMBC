@@ -68,6 +68,7 @@ def pad_tensors(imgs, coords):
     # mae: https://github.com/facebookresearch/mae/tree/main
     # ------------------------------------------------------------------------------------------
     max_len = max([t.size(0) for t in imgs])  # get the maximum length
+    max_coord_len = max([t.size(0) for t in coords])  # get the maximum length
     padded_tensors = []  # list to store all padded tensors
     padded_coords = []  # list to store all padded coords
     masks = []  # list to store all masks
@@ -77,14 +78,15 @@ def pad_tensors(imgs, coords):
         # coords: [L, 2]
         coord = coords[i]
         N_i = tensor.size(0)  # get the original length
+        C_i = coord.size(0)  # get the original length
         # create a new tensor of shape (max_len, d) filled with zeros
         padded_tensor = torch.zeros(max_len, tensor.size(1))
-        padded_coord = torch.zeros(max_len, 2)
+        padded_coord = torch.zeros(max_coord_len, 2)
         # create a new tensor of shape (max_len) filled with zeros for mask
         mask = torch.zeros(max_len)
         # place the original tensor into the padded tensor
         padded_tensor[:N_i] = tensor
-        padded_coord[:N_i] = coord
+        padded_coord[:C_i] = coord
         # the mask is filled with ones at the same indices as the original tensor
         mask[:N_i] = torch.zeros(N_i)
         padded_tensors.append(padded_tensor)
@@ -99,6 +101,8 @@ def pad_tensors(imgs, coords):
     # convert masks to bool type
     masks = masks.bool()
     return padded_tensors, padded_coords, masks
+
+
 
 
 def slide_collate_fn(samples):

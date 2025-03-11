@@ -144,6 +144,8 @@ class SlideDatasetForTasks(Dataset):
         assert  label_dict, 'No label_dict found in the task configuration'
         # set up the mappings
         assert 'label' in df.columns, 'No label column found in the dataframe'
+        #select df['label'] in label_dict.keys()
+        df = df[df['label'].isin(label_dict.keys())]
         df['label'] = df['label'].map(label_dict)
         #print(df['label'])
         n_classes = len(label_dict)
@@ -246,14 +248,15 @@ class SlideDataset(SlideDatasetForTasks):
             except :
                 coords = torch.zeros((1, 2))
             #print(coords.shape)  
-            if self.shuffle_tiles and coords.shape[0]>1:
+            if self.shuffle_tiles and coords.shape[0]>1 and len(images.size()) != 1:
                 images, coords = self.shuffle_data(images, coords)
-            if images.size(0) > self.max_tiles:
+            if images.size(0) > self.max_tiles and len(images.size()) != 1:
                 images = images[:self.max_tiles, :]
-            if coords.size(0) > self.max_tiles:
+            if coords.size(0) > self.max_tiles and len(images.size()) != 1 :
                 coords = coords[:self.max_tiles, :]
-        
-        # set the input dict
+        if len(images.size()) == 1:
+            images = images.unsqueeze(0)
+            
         data_dict = {'imgs': images,
                 'img_lens': images.size(0),
                 'coords': coords}

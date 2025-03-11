@@ -1,19 +1,11 @@
 add_metrics:
 - qwk
 label_dict:
-  T1: 2
-  T1a: 9
-  T1b: 4
-  T1c: 1
-  T2: 0
-  T2a: 6
-  T2b: 12
-  T3: 3
-  T3a: 8
-  T4: 11
-  T4b: 5
-  T4d: 10
-  TX: 7
+  T1c: 0
+  T2: 1
+  T3: 2
+  # T4: 0
+  # T4b: 5
 max_tiles: 4000
 name: TCGA-BRCA_T
 setting: multi_class

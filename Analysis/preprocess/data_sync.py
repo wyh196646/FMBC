@@ -3,9 +3,7 @@
 
 import os
 import subprocess
-# #ACROBAT  BCNB      CAMELYON16  CPTAC-BREAST-all  HE-vs-MPM  Multi-omic       private_chunk_10  private_chunk_4  private_chunk_7  private_chunk_test  TIGER
-# AIDPATH  BRACS     CAMELYON17  GEO-GSE243280     HyReCo     Post-NAT-BRCA    private_chunk_2   private_chunk_5  private_chunk_8  SLN-Breast          TUPAC
-# BACH     BreakHis  CMB-BRCA    GTEX_Breast       IMPRESS    private_chunk_1  private_chunk_3   private_chunk_6  private_chunk_9  TCGA-BRCA
+
 data_list = [
     # "AIDPATH", "BRACS", "CAMELYON17", "GEO-GSE243280", "IMPRESS",  "TCGA-BRCA",
     # "ACROBAT", "BCNB", "CAMELYON16", "CPTAC-BREAST-all", "HE-vs-MPM", "Multi-omic",  "private_chunk_test", "TIGER",
