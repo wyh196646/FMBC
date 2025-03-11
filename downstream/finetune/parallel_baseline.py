@@ -186,46 +186,106 @@ tasks = {
         "task_cfg": "task_configs/subtype/AIDPATH_GRADE.yaml"
     }, 
 
-
-
-
-
-    "BCNB_ER":
-    {
-        "embedding_dir": "/data4/embedding/BCNB",
-        "csv_dir": "dataset_csv/biomarker/",
-        "dataset": "BCNB",
-        "task_cfg": "task_configs/subtype/BCNB_ER.yaml"
+    "TCGA-BRCA_MOLECULAR_SUBTYPING": {
+        "embedding_dir": "/data4/embedding/TCGA-BRCA",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/TCGA-BRCA_MOLECULAR_SUBTYPING.yaml"
     },
-    "BCNB_PR":
-    {
-        "embedding_dir": "/data4/embedding/BCNB",
-        "csv_dir": "dataset_csv/biomarker/",
-        "dataset": "BCNB",
-        "task_cfg": "task_configs/subtype/BCNB_PR.yaml"
-        
+    "IMPRESS_PCR": {
+        "embedding_dir": "/data4/embedding/IMPRES",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/IMPRESS_PCR.yaml"
     },
-    "BCNB_HER2":
-    {
-        "embedding_dir": "/data4/embedding/BCNB",
-        "csv_dir": "dataset_csv/biomarker/",
-        "dataset": "BCNB",
-        "task_cfg": "task_configs/subtype/BCNB_HER2.yaml"
-        
+    "IMPRESS_PD-L1-TUMOR": {
+        "embedding_dir": "/data4/embedding/IMPRESS",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/IMPRESS_PD-L1-TUMOR.yaml"
     },
-    'SLNBREAST_SUBTYPE':{
-        "embedding_dir": "/data4/embedding/SLN-Breast",
-        "csv_dir": "dataset_csv/subtype/",
-        "dataset": "SLN-Breast",
-        "task_cfg": "task_configs/subtype/SLNBREAST_SUBTYPE.yaml"
+    "IMPRESS_CD8-PERITUMORAL": {
+        "embedding_dir": "/data4/embedding/IMPRESS",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/IMPRESS_CD8-PERITUMORAL.yaml"
     },
-
+    "IMPRESS_PD-L1-STROMA": {
+        "embedding_dir": "/data4/embedding/IMPRESS",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/IMPRESS_PD-L1-STROMA.yaml"
+    },
     "IMPRESS_PR": {
         "embedding_dir": "/data4/embedding/IMPRESS",
-        "csv_dir": "dataset_csv/biomarker/",
-        "dataset": "IMPRESS",
-        "task_cfg": "task_configs/subtype/IMPRESS_PR.yaml"
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/IMPRESS_PR.yaml"
     },
+    "IMPRESS_CD163-PERITUMORAL": {
+        "embedding_dir": "/data4/embedding/IMPRESS",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/IMPRESS_CD163-PERITUMORAL.yaml"
+    },
+    "BCNB_HER2": {
+        "embedding_dir": "/data4/embedding/BCNB",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/BCNB_HER2.yaml"
+    },
+    "AIDPATH_KI67PRED": {
+        "embedding_dir": "/data4/embedding/AIDPATH",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/AIDPATH_KI67PRED.yaml"
+    },
+    "POST-NAT-PR": {
+        "embedding_dir": "/data4/embedding/POST-NAT",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/POST-NAT-PR.yaml"
+    },
+    "BCNB_ER": {
+        "embedding_dir": "/data4/embedding/BCNB",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/BCNB_ER.yaml"
+    },
+    "AIDPATH_CERB2": {
+        "embedding_dir": "/data4/embedding/AIDPATH",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/AIDPATH_CERB2.yaml"
+    },
+    "IMPRESS_CD163-INTRATUMORAL": {
+        "embedding_dir": "/data4/embedding/IMPRESS",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/IMPRESS_CD163-INTRATUMORAL.yaml"
+    },
+    "BCNB_PR": {
+        "embedding_dir": "/data4/embedding/BCNB",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/BCNB_PR.yaml"
+    },
+    "POST-NAT-ER": {
+        "embedding_dir": "/data4/embedding/POST-NAT",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/POST-NAT-ER.yaml"
+    },
+    "IMPRESS_CD8-INTRATUMORAL": {
+        "embedding_dir": "/data4/embedding/IMPRESS",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/IMPRESS_CD8-INTRATUMORAL.yaml"
+    },
+    "AIDPATH_RESTR": {
+        "embedding_dir": "/data4/embedding/AIDPATH",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/AIDPATH_RESTR.yaml"
+    },
+    "POST-NAT-ANTIHER2": {
+        "embedding_dir": "/data4/embedding/POST-NAT",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/POST-NAT-ANTIHER2.yaml"
+    },
+    "CPTAC_AJCC8SUBTYPE": {
+        "embedding_dir": "/data4/embedding/CPTAC",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/CPTAC_AJCC8SUBTYPE.yaml"
+    },
+    "IMPRESS_ER": {
+        "embedding_dir": "/data4/embedding/IMPRESS",
+        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/IMPRESS_ER.yaml"
+    }
 }
 
 def get_available_gpus():
@@ -237,7 +297,7 @@ def is_task_hanging(process):
                             capture_output=True, text=True)
     # 获取命令输出结果
     output = result.stdout.strip()
-    # 判断进程pid是否在输出结果中，并且使用的内存是否为0
+
     if str(process.pid) in output and "0 MiB" in output:
         return True
     return False
