@@ -13,17 +13,18 @@ gpu_config = {
     6: 8,  
     7: 8,  
 }
-pretrain_models = ['Gigapath_tile', 'CONCH', 'UNI', 'TITAN', 'Virchow', 'CHIEF_tile', 'Gigapath', 'CHIEF','FMBC']
+pretrain_models = ['Gigapath_tile', 'CONCH', 'UNI', 'TITAN', 'Virchow', 'CHIEF_tile', 'Gigapath', 'CHIEF','FMBC','PRISM']
 pretrain_model_dim_dict = {
     "UNI": 1024,
     "CONCH": 768,
     "CHIEF_tile": 768,
     "TITAN": 768,
-    "Virchow": 2560,
+    "Virchow": 1280,
     "Gigapath_tile": 1536,
     "Gigapath": 768,
     "CHIEF": 768,
     'FMBC':768,
+    'PRISM':1280
 }
 pretrain_model_types_dict = {
     "UNI": "patch_level",
@@ -35,6 +36,7 @@ pretrain_model_types_dict = {
     "Gigapath": "slide_level",
     "CHIEF": "slide_level",
     'FMBC': 'slide_level',
+    'PRISM':'slide_level'
 }
 # 根据模型类型返回调参方法
 def get_tuning_methods(pretrain_model,model_type):
@@ -66,7 +68,7 @@ tasks = {
         "task_cfg": "task_configs/subtype/TCGA-BRCA_T.yaml"
     },
     "BRACS_COARSE": {
-        "embedding_dir": "/data4/embedding/BRACS_COARSE",
+        "embedding_dir": "/data4/embedding/BRACS",
         "csv_dir": "dataset_csv/subtype",
         "task_cfg": "task_configs/subtype/BRACS_COARSE.yaml"
     },
@@ -121,13 +123,13 @@ tasks = {
         "task_cfg": "task_configs/subtype/AHSL-GRADE-1.yaml",
         "folds": 1,
     },
-    "BACH_TUMOR": {
-        "embedding_dir": "/data4/embedding/BACH",
-        "csv_dir": "dataset_csv/subtype",
-        "task_cfg": "task_configs/subtype/BACH_TUMOR.yaml"
-    },
+    # "BACH_TUMOR": {
+    #     "embedding_dir": "/data4/embedding/BACH",
+    #     "csv_dir": "dataset_csv/subtype",
+    #     "task_cfg": "task_configs/subtype/BACH_TUMOR.yaml"
+    # },
     "SLNBREAST_SUBTYPE": {
-        "embedding_dir": "/data4/embedding/SLNBREAST",
+        "embedding_dir": "/data4/embedding/SLN-Breast",
         "csv_dir": "dataset_csv/subtype",
         "task_cfg": "task_configs/subtype/SLNBREAST_SUBTYPE.yaml"
     },
@@ -136,10 +138,11 @@ tasks = {
         "csv_dir": "dataset_csv/subtype",
         "task_cfg": "task_configs/subtype/TCGA-BRCA_STAGE.yaml"
     },
-    "POST-NAT-3TYPE": {
+    "POST-NAT-BRCA-3TYPE": {
         "embedding_dir": "/data4/embedding/Post-NAT-BRCA",
         "csv_dir": "dataset_csv/subtype",
-        "task_cfg": "task_configs/subtype/POST-NAT-3TYPE.yaml"
+        "task_cfg": "task_configs/subtype/POST-NAT-BRCA-3TYPE.yaml",
+        "folds":1
     },
     "TCGA-BRCA_M": {
         "embedding_dir": "/data4/embedding/TCGA-BRCA",
@@ -152,7 +155,7 @@ tasks = {
         "task_cfg": "task_configs/subtype/DORID_6.yaml"
     },
     "CPTAC_IDC": {
-        "embedding_dir": "/data4/embedding/CPTAC-BREAST-all",
+        "embedding_dir": "/data4/embedding/CPTAC",
         "csv_dir": "dataset_csv/subtype",
         "task_cfg": "task_configs/subtype/CPTAC_IDC.yaml"
     },
@@ -171,134 +174,166 @@ tasks = {
         "csv_dir": "dataset_csv/subtype",
         "task_cfg": "task_configs/subtype/TCGA-BRCA_N.yaml"
     },
-    "POST-NAT-HERIHC": {
+    "POST-NAT-BRCA-HERIHC": {
         "embedding_dir": "/data4/embedding/Post-NAT-BRCA",
         "csv_dir": "dataset_csv/subtype",
-        "task_cfg": "task_configs/subtype/POST-NAT-HERIHC.yaml"
+        "task_cfg": "task_configs/subtype/POST-NAT-BRCA-HERIHC.yaml",
+        "folds":1
     },
     "CAMELYON17_STAGE": {
         "embedding_dir": "/data4/embedding/CAMELYON17",
         "csv_dir": "dataset_csv/subtype",
         "task_cfg": "task_configs/subtype/CAMELYON17_STAGE.yaml"
     },
-    "AIDPATH_GRADE": {
-        "embedding_dir": "/data4/embedding/AIDPATH",
-        "csv_dir": "dataset_csv/subtype/",
-        "task_cfg": "task_configs/subtype/AIDPATH_GRADE.yaml"
-    }, 
-
     "TCGA-BRCA_MOLECULAR_SUBTYPING": {
         "embedding_dir": "/data4/embedding/TCGA-BRCA",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "csv_dir": "dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/TCGA-BRCA_MOLECULAR_SUBTYPING.yaml"
     },
     "IMPRESS_PCR": {
-        "embedding_dir": "/data4/embedding/IMPRES",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "embedding_dir": "/data4/embedding/IMPRESS",
+        "csv_dir": "dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/IMPRESS_PCR.yaml"
     },
     "IMPRESS_PD-L1-TUMOR": {
         "embedding_dir": "/data4/embedding/IMPRESS",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "csv_dir": "dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/IMPRESS_PD-L1-TUMOR.yaml"
     },
     "IMPRESS_CD8-PERITUMORAL": {
         "embedding_dir": "/data4/embedding/IMPRESS",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "csv_dir": "dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/IMPRESS_CD8-PERITUMORAL.yaml"
     },
     "IMPRESS_PD-L1-STROMA": {
         "embedding_dir": "/data4/embedding/IMPRESS",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "csv_dir": "dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/IMPRESS_PD-L1-STROMA.yaml"
     },
     "IMPRESS_PR": {
         "embedding_dir": "/data4/embedding/IMPRESS",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "csv_dir": "dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/IMPRESS_PR.yaml"
     },
     "IMPRESS_CD163-PERITUMORAL": {
         "embedding_dir": "/data4/embedding/IMPRESS",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "csv_dir": "dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/IMPRESS_CD163-PERITUMORAL.yaml"
     },
     "BCNB_HER2": {
         "embedding_dir": "/data4/embedding/BCNB",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "csv_dir": "dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/BCNB_HER2.yaml"
     },
     "AIDPATH_KI67PRED": {
         "embedding_dir": "/data4/embedding/AIDPATH",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "csv_dir": "dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/AIDPATH_KI67PRED.yaml"
     },
-    "POST-NAT-PR": {
+    "POST-NAT-BRCA-PR": {
         "embedding_dir": "/data4/embedding/Post-NAT-BRCA",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
-        "task_cfg": "task_configs/biomarker/POST-NAT-PR.yaml"
+        "csv_dir": "dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/POST-NAT-BRCA-PR.yaml",
+        "folds":1
     },
     "BCNB_ER": {
         "embedding_dir": "/data4/embedding/BCNB",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "csv_dir": "dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/BCNB_ER.yaml"
     },
     "AIDPATH_CERB2": {
         "embedding_dir": "/data4/embedding/AIDPATH",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "csv_dir": "dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/AIDPATH_CERB2.yaml"
     },
     "IMPRESS_CD163-INTRATUMORAL": {
         "embedding_dir": "/data4/embedding/IMPRESS",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "csv_dir": "dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/IMPRESS_CD163-INTRATUMORAL.yaml"
     },
     "BCNB_PR": {
         "embedding_dir": "/data4/embedding/BCNB",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "csv_dir": "dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/BCNB_PR.yaml"
     },
-    "POST-NAT-ER": {
+    "POST-NAT-BRCA-ER": {
         "embedding_dir": "/data4/embedding/Post-NAT-BRCA",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
-        "task_cfg": "task_configs/biomarker/POST-NAT-ER.yaml"
+        "csv_dir": "dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/POST-NAT-BRCA-ER.yaml",
+        "folds":1
     },
     "IMPRESS_CD8-INTRATUMORAL": {
         "embedding_dir": "/data4/embedding/IMPRESS",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "csv_dir": "dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/IMPRESS_CD8-INTRATUMORAL.yaml"
     },
     "AIDPATH_RESTR": {
         "embedding_dir": "/data4/embedding/AIDPATH",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "csv_dir": "dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/AIDPATH_RESTR.yaml"
     },
-    "POST-NAT-ANTIHER2": {
+    "POST-NAT-BRCA-ANTIHER2": {
         "embedding_dir": "/data4/embedding/Post-NAT-BRCA",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
-        "task_cfg": "task_configs/biomarker/POST-NAT-ANTIHER2.yaml"
+        "csv_dir": "dataset_csv/biomarker",
+        "task_cfg": "task_configs/biomarker/POST-NAT-BRCA-ANTIHER2.yaml",
+        "folds":1
     },
     "CPTAC_AJCC8SUBTYPE": {
-        "embedding_dir": "/data4/embedding/CPTAC-BREAST-all",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "embedding_dir": "/data4/embedding/CPTAC",
+        "csv_dir": "dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/CPTAC_AJCC8SUBTYPE.yaml",
         "folds": 1
     },
     "IMPRESS_ER": {
         "embedding_dir": "/data4/embedding/IMPRESS",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "csv_dir": "dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/IMPRESS_ER.yaml"
     },
     "TCGA-BRCA_TP53": {
         "embedding_dir": "/data4/embedding/TCGA-BRCA",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "csv_dir": "dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/TCGA-BRCA_TP53.yaml"
     },
     "TCGA-BRCA_HRD": {
-        "embedding_dir": "/data4/embedding/TCGA-BRCA",
-        "csv_dir": "/home/yuhaowang/project/FMBC/downstream/finetune/dataset_csv/biomarker",
+        "embedding_dir": "/data4/embedding/embedding/TCGA-BRCA",
+        "csv_dir": "dataset_csv/biomarker",
         "task_cfg": "task_configs/biomarker/TCGA-BRCA_HRD.yaml"
     },
-    
+    'MULTI_OMICS_ASCAT-PURITY':{
+        "embedding_dir": "/data4/embedding/Multi-omic",
+        "csv_dir": "dataset_csv/gene_exp",
+        "task_cfg": "task_configs/gene_exp/MULTI_OMICS_ASCAT-PURITY.yaml"
+    },
+    'MULTI_OMICS_FRACTION_CANCER':{
+        "embedding_dir": "/data4/embedding/Multi-omic",
+        "csv_dir": "dataset_csv/gene_exp",
+        "task_cfg": "task_configs/gene_exp/MULTI_OMICS_FRACTION_CANCER.yaml"
+    },
+    'MULTI_OMICS_ASCAT-PURITY':{
+        "embedding_dir": "/data4/embedding/Multi-omic",
+        "csv_dir": "dataset_csv/gene_exp",
+        "task_cfg": "task_configs/gene_exp/MULTI_OMICS_ASCAT-PURITY.yaml"
+    },
+    'MULTI_OMICS_HRD':{
+        "embedding_dir": "/data4/embedding/Multi-omic",
+        "csv_dir": "dataset_csv/gene_exp",
+        "task_cfg": "task_configs/gene_exp/MULTI_OMICS_HRD.yaml"
+    },
+    'MULTI_OMICS_IPS':{
+        "embedding_dir": "/data4/embedding/Multi-omic",
+        "csv_dir": "dataset_csv/gene_exp",
+        "task_cfg": "task_configs/gene_exp/MULTI_OMICS_IPS.yaml"
+    },
+    'MULTI_OMICS':{
+        "embedding_dir": "/data4/embedding/Multi-omic",
+        "csv_dir": "dataset_csv/gene_exp",
+        "task_cfg": "task_configs/gene_exp/MULTI_OMICS.yaml"
+    },
+    'TCGA-BRCA-GENE-EXP':{
+        "embedding_dir": "/data4/embedding/TCGA-BRCA",
+        "csv_dir": "dataset_csv/gene_exp",
+        "task_cfg": "task_configs/gene_exp/TCGA-BRCA-GENE-EXP.yaml"
+    }
 }
 
 def get_available_gpus():

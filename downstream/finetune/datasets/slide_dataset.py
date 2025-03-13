@@ -236,7 +236,9 @@ class SlideDataset(SlideDatasetForTasks):
     
     def get_images_from_path(self, img_path: str) -> dict:
         '''Get the images from the path'''
+        # 判断img_path是否包含.pt
         if '.pt' in img_path:
+            # 如果包含.pt，则加载.pt文件中的图像
             images = torch.load(img_path)
             coords = 0
         elif '.h5' in img_path:
@@ -245,7 +247,7 @@ class SlideDataset(SlideDatasetForTasks):
             #print(images.shape)
             try:
                 coords = torch.from_numpy(assets['coords'])
-            except :
+            except:
                 coords = torch.zeros((1, 2))
             #print(coords.shape)  
             if self.shuffle_tiles and coords.shape[0]>1 and len(images.size()) != 1:

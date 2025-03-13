@@ -1,9 +1,0 @@
-name: BCNB_ALN
-setting: multi_class
-label_dict:
-  'N0': 0
-  'N+(>2)': 1
-  'N+(1-2)': 2
-max_tiles: 4000
-shuffle_tiles: true
-add_metrics: ['qwk']

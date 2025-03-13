@@ -1,8 +1,0 @@
-name: BCNB_PR
-setting: multi_class
-label_dict:
-    0 : Normal
-    1: Tumor 
-max_tiles: 4000
-shuffle_tiles: true
-add_metrics: ['qwk']

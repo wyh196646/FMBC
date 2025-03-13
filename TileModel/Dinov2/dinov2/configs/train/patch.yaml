@@ -42,9 +42,11 @@ compute_precision:
         buffer_dtype: fp16
 dino:
   loss_weight: 1.0
+  head_n_prototypes: 384
+  head_bottleneck_dim: 256
   head_nlayers: 3
   head_hidden_dim: 2048
-  koleo_loss_weight: 0.1
+  koleo_loss_weight: 0.0
 ibot:
   loss_weight: 1.0
   mask_sample_probability: 0.5
@@ -52,15 +54,17 @@ ibot:
   - 0.1
   - 0.5
   separate_head: false
+  head_n_prototypes: 384
+  head_bottleneck_dim: 256
   head_nlayers: 3
   head_hidden_dim: 2048
 train:
-  batch_size_per_gpu: 380
+  batch_size_per_gpu: 360
   dataset_path: ImageNet:split=TRAIN
-  output_dir: 
-  saveckp_freq: 5
+  output_dir: /home/baizhiwang/dinov2/dinov2/logoutput
+  saveckp_freq: 20
   seed: 0
-  num_workers: 24
+  num_workers: 10
   OFFICIAL_EPOCH_LENGTH: 1250
   cache_dataset: true
   centering: centering
@@ -84,13 +88,13 @@ teacher:
   final_momentum_teacher: 1
   warmup_teacher_temp: 0.04
   teacher_temp: 0.07
-  warmup_teacher_temp_epochs: 10
+  warmup_teacher_temp_epochs: 30
 optim:
   epochs: 4000
   weight_decay: 0.04
   weight_decay_end: 0.4
   base_lr: 0.004
-  lr: 0.002
+  lr: 0.001
   warmup_epochs: 10
   min_lr: 1.0e-06
   clip_grad: 3.0
