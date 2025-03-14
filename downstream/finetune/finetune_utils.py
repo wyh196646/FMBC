@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader, Sampler, WeightedRandomSampler, RandomS
 from models.ABMIL  import CLAM_MB,CLAM_SB
 from models.model_mil import MIL_fc_mc, MIL_fc
 from models.linear import linear_probe
-from loss.survival_loss import NLLSurvLoss
+from loss.survival_loss import neg_log_partial_likelihood
 def save_obj(obj, name):
     with open(name, 'wb') as f:
         pickle.dump(obj, f)
@@ -200,12 +200,12 @@ def get_loader(train_dataset, val_dataset, test_dataset,
                             collate_fn=slide_collate_fn)
     val_loader = DataLoader(val_dataset, \
                             num_workers=num_workers, \
-                            batch_size=1, sampler=SequentialSampler(val_dataset), \
+                            batch_size=batch_size, sampler=SequentialSampler(val_dataset), \
                             worker_init_fn=seed_worker, \
                             collate_fn=slide_collate_fn) if val_dataset is not None else None
     test_loader = DataLoader(test_dataset, \
                             num_workers=num_workers, \
-                            batch_size=1, sampler=SequentialSampler(test_dataset), \
+                            batch_size=batch_size, sampler=SequentialSampler(test_dataset), \
                             worker_init_fn=seed_worker, \
                             collate_fn=slide_collate_fn) if test_dataset is not None else None
 
@@ -331,7 +331,8 @@ def get_loss_function(task_config: dict):
     elif task_setting == 'regression':
         loss_fn = torch.nn.MSELoss()
     elif task_setting == 'survival':
-        loss_fn = NLLSurvLoss()
+        loss_fn = neg_log_partial_likelihood
+    else:
         raise NotImplementedError
     return loss_fn
 
@@ -399,7 +400,8 @@ def process_predicted_data(data, column_names, section='val'):
     def process_section(section_prefix):
         prob_list = data[f'{section_prefix}_prob']  
         label_list = data[f'{section_prefix}_label']  
-        slide_id_list = data[f'{section_prefix}_slide_id'] 
+        slide_id_list = data[f'{section_prefix}_slide_id']
+        
         prob = np.vstack(prob_list) 
         label = np.vstack(label_list)
         slide_id = sum(slide_id_list, [])  

@@ -4,14 +4,13 @@ import time
 
 # 用户可配置的 GPU 列表及最大任务数
 gpu_config = {
-    0: 1,  # GPU 0 最多 4 个任务
-    1: 1,  # GPU 1 最多 3 个任务
-    2: 1,  # GPU 2 最多 2 个任务
-    3: 1,  # GPU 3 最多 2 个任务
-    4: 1,  # GPU 4 最多 2 个任务
-    5: 1,  # GPU 5 最多 2 个任务
-    6: 1,  # GPU 6 最多 2 个任务
-    7: 1,  # GPU 7 最多 2 个任务
+    0: 2,  
+    2: 2,  
+    3: 2,  
+    4: 2, 
+    5: 2, 
+    6: 2, 
+    7: 2, 
 }
 pretrain_models = ['FMBC']
 pretrain_model_dim_dict = {
@@ -345,6 +344,7 @@ tasks = {
 }
 
 task_queue = []
+slide_weight_path= '/home/yuhaowang/project/FMBC/Weights/slide/train_from_our_FMBC/checkpoint0080.pth'
 learning_rates = [0.1,0.01,0.001, 0.0001]
 for task_name, config in tasks.items():
     embedding_dir = config["embedding_dir"]
@@ -368,7 +368,7 @@ for task_name, config in tasks.items():
                 
                 command = f"python main.py --task_cfg_path {task_cfg} --dataset_csv {dataset_csv} " \
                         f"--root_path {root_path} --input_dim {input_dim} --pretrain_model {pretrain_model} " \
-                        f"--pretrain_model_type {pretrain_model_type} --tuning_method {tuning_method} --lr {learning_rate}"
+                        f"--pretrain_model_type {pretrain_model_type} --tuning_method {tuning_method} --lr {learning_rate} --pretrained {slide_weight_path}"
                 task_queue.append((task_name, command))
 
 while task_queue or any(len(v) > 0 for v in running_tasks.values()):

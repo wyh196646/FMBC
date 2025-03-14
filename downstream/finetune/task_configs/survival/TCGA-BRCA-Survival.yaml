@@ -1,9 +1,0 @@
-name: TCGA-BRCA-Subtype
-setting: survival
-label_dict:
-  'label' : 0
-  'time' : 1
-  'status' : 2
-max_tiles: 4000
-shuffle_tiles: true
-add_metrics: ['qwk']

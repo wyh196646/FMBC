@@ -57,6 +57,9 @@ def train(dataloader, fold, args):
                 model = get_model(**vars(args))
         else:
             model = initiate_linear_model(args)
+    # task_type = args.task_config.get('task_type',None)
+    # if task_type == 'survival':
+    #     model 
     model = model.to(args.device)
     # set up the optimizer
     optimizer = get_optimizer(args, model)
@@ -96,6 +99,8 @@ def train(dataloader, fold, args):
                 scores = val_records['mae']
             elif task_setting == 'binary_classification' or task_setting == 'multi_class':
                 scores = val_records['bacc']
+            elif task_setting == 'survival':
+                scores = val_records['c_index']
             else:
                 scores = val_records['macro_auroc']
                 
@@ -189,8 +194,16 @@ def evaluate(loader, model, fp16_scaler, loss_fn, epoch, args):
 
     # set the evaluation records
     records = get_records_array(len(loader), args.n_classes)
+
     # get the task setting
     task_setting = args.task_config.get('setting', 'multi_class')
+    if task_setting == 'survival':
+        records={
+            'prob': [],
+            'label':[],
+            'slide_id':[],
+            'loss': 0.0,
+        }
     with torch.no_grad():
         for batch_idx, batch in enumerate(loader):
             # load the batch and transform this batch
@@ -229,8 +242,8 @@ def evaluate(loader, model, fp16_scaler, loss_fn, epoch, args):
                 records['label'][batch_idx] = label.cpu().numpy()
                 records['slide_id'].extend(slide_id)
             elif task_setting == 'survival':
-                records['prob'][batch_idx] = logits.cpu().numpy()
-                records['label'][batch_idx] = label.cpu().numpy()
+                records['prob'].extend( logits.squeeze().cpu().numpy())
+                records['label'].extend(label.cpu().numpy())
                 records['slide_id'].extend(slide_id)
     records.update(release_nested_dict(calculate_metrics_with_task_cfg(records['prob'], 
                                                                        records['label'], 
@@ -242,10 +255,13 @@ def evaluate(loader, model, fp16_scaler, loss_fn, epoch, args):
         info = 'Epoch: {}, Loss: {:.4f}, Micro AUROC: {:.4f}, Macro AUROC: {:.4f}, Micro AUPRC: {:.4f}, Macro AUPRC: {:.4f}'.format(epoch, records['loss'], records['micro_auroc'], records['macro_auroc'], records['micro_auprc'], records['macro_auprc'])
     elif task_setting =='regression':
         info = 'Epoch: {}, Loss: {:.4f}, MAE: {:.4f}, RMSE: {:.4f}, Pearson: {:.4f}, spearman: {:.4f}'.format(epoch, records['loss'], records['mae'], records['mse'], records['rmse'], records['average_pearson'], records['average_spearman'])
+    elif task_setting == 'survival':
+        info = 'Epoch: {}, Loss: {:.4f}, C-Index: {:.4f}'.format(epoch, records['loss'], records['c_index'])
     else:
         info = 'Epoch: {}, Loss: {:.4f}, AUROC: {:.4f}, ACC: {:.4f}, BACC: {:.4f}'.format(epoch, records['loss'], records['macro_auroc'], records['acc'], records['bacc'])
         for metric in args.task_config.get('add_metrics', []):
             info += ', {}: {:.4f}'.format(metric, records[metric])
+
     print(info)
     return records
 

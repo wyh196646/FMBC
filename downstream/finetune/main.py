@@ -23,11 +23,11 @@ if __name__ == '__main__':
 
     # load the task configuration
     print('Loading task configuration from: {}'.format(args.task_cfg_path))
-    args.task_config = load_task_config(args.task_cfg_path)
+    args.task_config= load_task_config(args.task_cfg_path)
     label_dict = args.task_config.get('label_dict', None)
     print(args.task_config)
     args.task = args.task_config.get('name', 'task')
-    
+    args.task_type = args.task_config.get('setting', 'classification')
     # set the experiment save directory
     args.save_dir = os.path.join(args.save_dir, args.task, args.pretrain_model, args.tuning_method, str(args.lr))
     args.model_code, args.task_code, args.exp_code, = get_exp_code(args) # get the experiment code
@@ -115,12 +115,12 @@ if __name__ == '__main__':
                         results[key_] = []
                     results[key_].append(records[record_][ key])
     
-    
-    val_predict_df = process_predicted_data(predict_results,label_dict.keys(),'val')
-    val_predict_df.to_csv(os.path.join(prediction_save_dir,'val_predict.csv'),index=True)
-    
-    test_predict_df = process_predicted_data(predict_results,label_dict.keys(),'test')
-    test_predict_df.to_csv(os.path.join(prediction_save_dir,'test_predict.csv'),index=True)
+    if args.task_type != 'survival':
+        val_predict_df = process_predicted_data(['predict_results'],label_dict.keys(),'val')
+        val_predict_df.to_csv(os.path.join(prediction_save_dir,'val_predict.csv'),index=True)
+        
+        test_predict_df = process_predicted_data(predict_results,label_dict.keys(),'test')
+        test_predict_df.to_csv(os.path.join(prediction_save_dir,'test_predict.csv'),index=True)
     
     results_df = pd.DataFrame(results)
     results_df.to_csv(os.path.join(args.save_dir, 'summary.csv'), index=False)

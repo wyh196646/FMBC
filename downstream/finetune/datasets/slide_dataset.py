@@ -130,10 +130,9 @@ class SlideDatasetForTasks(Dataset):
         df = df[df[self.split_key].isin(splits)]
         images = df[self.slide_key].to_list()
         labels = df[label_keys].to_numpy().astype(int)
-        n_bins = self.task_cfg.get('n_bins', 4)
+        #n_bins = self.task_cfg.get('n_bins', 4)
             
-        return df, images, labels, n_bins
-    
+        return df, images, labels , 1
         
     def prepare_multi_class_or_binary_data(self, df: pd.DataFrame, splits: list):
         '''Prepare the data for multi-class classification'''

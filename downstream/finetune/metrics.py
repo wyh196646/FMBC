@@ -104,6 +104,7 @@ class MakeMetrics:
             evaluation_results['average_spearman'] = np.mean(list(evaluation_results.values()))
             return evaluation_results
         elif self.metric == 'c_index':
+            labels =np.array(labels)
             event_times = labels[:, 0]
             censor_flags = labels[:, 1]  
             c_index_value = concordance_index_censored(
