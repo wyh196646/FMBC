@@ -312,13 +312,12 @@ pretrain_model_types_dict = {
     "FMBC": "slide_level"
 }
 def get_tuning_methods(pretrain_model):
-    # 根据预训练模型名称，返回不同的调参方法
+
     if pretrain_model =='FMBC':
-        # 如果预训练模型名称为FMBC，则返回不同的调参方法
         combinations = [
             f"LR_{lr}_{pool}"
             for lr in [ "Same", "Different"]#"Frozen",
-            for pool in ["MeanPool", "CLSPool"]
+            for pool in ["MeanPool" ]#"CLSPool"
         ]
     # combinations = []
     # combinations.append("LR_Same_Patch")

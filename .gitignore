@@ -179,3 +179,4 @@ core.*
 ./finetune/wandb/*
 ./finetune/wandb
 ./downstream/finetune/wandb
+./downstream/finetune/wandb/*
